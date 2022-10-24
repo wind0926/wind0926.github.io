@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="一、背景我是一个小病毒，其他病毒都叫我小 B，我长得就是下图这个样子了。 冠状病毒 我现在已经有 100 nm 大小了，我还有很多触角，人类把我的触角称为冠，所以给我起了个学术名：冠状病毒。对于这个学术名，我一直不满意，怎么能用外貌来取名呢，这是以貌取毒。 我出生在一个蝙蝠身上，每到晚上，这只动物就到处觅食，它最喜欢的就是在森林中觅食，但最近森林的范围急剧减少，它不得不到人类居住的城市来觅食，看着">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Gossip协议">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="一、背景我是一个小病毒，其他病毒都叫我小 B，我长得就是下图这个样子了。 冠状病毒 我现在已经有 100 nm 大小了，我还有很多触角，人类把我的触角称为冠，所以给我起了个学术名：冠状病毒。对于这个学术名，我一直不满意，怎么能用外貌来取名呢，这是以貌取毒。 我出生在一个蝙蝠身上，每到晚上，这只动物就到处觅食，它最喜欢的就是在森林中觅食，但最近森林的范围急剧减少，它不得不到人类居住的城市来觅食，看着">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/8.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/9.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/10.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/11.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/12.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/13.png">
+<meta property="article:published_time" content="2022-10-24T08:28:59.000Z">
+<meta property="article:modified_time" content="2022-10-24T08:32:07.183Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="分布式一致性协议">
+<meta property="article:tag" content="Gossip协议">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/","path":"2022/10/24/Gossip协议/","title":"Gossip协议"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Gossip协议 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">一、背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%84%8F%E5%A4%96"><span class="nav-number">2.</span> <span class="nav-text">二、意外</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%A7%8D%E5%AD%90%E8%8A%82%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text">三、种子节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81Gossip-%E5%8D%8F%E8%AE%AE"><span class="nav-number">4.</span> <span class="nav-text">四、Gossip 协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E7%9B%B4%E6%8E%A5%E9%82%AE%E5%AF%84"><span class="nav-number">4.1.</span> <span class="nav-text">4.1  直接邮寄</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E5%8F%8D%E7%86%B5"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 反熵</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-1-%E6%8E%A8"><span class="nav-number">4.2.1.</span> <span class="nav-text">4.2.1 推</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-2-%E6%8B%89"><span class="nav-number">4.2.2.</span> <span class="nav-text">4.2.2 拉</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-3-%E6%8E%A8%E6%8B%89"><span class="nav-number">4.2.3.</span> <span class="nav-text">4.2.3 推拉</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-4-%E5%8F%8D%E7%86%B5%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">4.2.4.</span> <span class="nav-text">4.2.4 反熵的缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-%E6%B5%81%E8%A1%8C%E7%97%85%E4%BC%A0%E6%92%AD"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 流行病传播</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3-1-%E8%BF%87%E7%A8%8B"><span class="nav-number">4.3.1.</span> <span class="nav-text">4.3.1 过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3-2-%E7%BC%BA%E7%82%B9"><span class="nav-number">4.3.2.</span> <span class="nav-text">4.3.2 缺点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3-3-%E4%BC%98%E7%82%B9"><span class="nav-number">4.3.3.</span> <span class="nav-text">4.3.3 优点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">4.4.</span> <span class="nav-text"></span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Gossip协议 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Gossip协议
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-24 16:28:59 / 修改时间：16:32:07" itemprop="dateCreated datePublished" datetime="2022-10-24T16:28:59+08:00">2022-10-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AE/" itemprop="url" rel="index"><span itemprop="name">分布式一致性协议</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h2><p>我是一个小病毒，其他病毒都叫我小 B，我长得就是下图这个样子了。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/1.png" alt="图片">冠状病毒</p>
+<p>我现在已经有 100 nm 大小了，我还有很多触角，人类把我的触角称为<code>冠</code>，所以给我起了个学术名：<code>冠状病毒</code>。对于这个学术名，我一直不满意，怎么能用外貌来取名呢，这是<code>以貌取毒</code>。</p>
+<p>我出生在一个蝙蝠身上，每到晚上，这只动物就到处觅食，它最喜欢的就是在森林中觅食，但最近森林的范围急剧减少，它不得不到人类居住的城市来觅食，看着五颜六色的灯光，我如痴如醉。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/2.png" alt="图片">出生在一只蝙蝠身上</p>
+<p>这只蝙蝠携带了 100 多种病毒，比如<code>埃博拉</code>病毒、<code>MERS</code> 病毒，我每天和这些病毒一起嬉戏游玩。<code>SARS 病毒</code>是我的近亲，2002 年的时候，它还造成了一次不小的传染病疫情，轰动了整个病毒界，人类称它为<code>非典</code>。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/3.png" alt="图片">蝙蝠携带的病毒</p>
+<h2 id="二、意外"><a href="#二、意外" class="headerlink" title="二、意外"></a>二、意外</h2><p>这天晚上，乌云密布，空气混浊，蝙蝠飞到了密林深处，突然浑身被一股电流击中，猝然倒地，一只大网将其捕获，随之而来的是穿着一袭黑色大衣的人类把蝙蝠关进了笼子里面。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/4.png" alt="图片">被抓住了（图片来源于网络）</p>
+<p>随后的几天，蝙蝠一直被关在笼子里面，直到有一天，蝙蝠被带到了一个随处可见野生动物的地方，但这些动物要么是被粗绳绑起来了，要么是被关在铁笼里。一个肥头大耳的人类走进了蝙蝠，他将手里攒着的一大叠<code>钞票</code>给了黑衣人后，带走了蝙蝠。</p>
+<p>蝙蝠可能与肥头大耳的人类走得太近，我被传到了人类的的<code>手</code>上，随后又通过他接触的<code>食物</code>进入到了他的<code>口</code>中，进而进入到了他的体内。</p>
+<h2 id="三、种子节点"><a href="#三、种子节点" class="headerlink" title="三、种子节点"></a>三、种子节点</h2><p>进入到人体中后，我欺骗了人类的<code>免疫系统</code>，顺利进入到人体细胞中，释放自己的 <code>RNA</code>，通过正常细胞的 <code>RNA 聚合酶</code>来复制自己的 RNA，从而<code>复制</code>出更多的病毒，进而<code>攻击</code>人体肺部器官。</p>
+<p>过了几天后，这名人类出现了<code>发烧</code>现象，同时伴有<code>咳嗽</code>症状，而我的同伴也通过<code>喷嚏</code>传到了其他人体中，同样开始<code>大量复制</code>自己。</p>
+<p><strong>一传十，十传百，这个地级市已有数千名人类被病毒感染</strong>。而我就被称作<code>种子节点</code>，而那名人类被称作<code>零号病人</code>。</p>
+<h2 id="四、Gossip-协议"><a href="#四、Gossip-协议" class="headerlink" title="四、Gossip 协议"></a>四、Gossip 协议</h2><p>人体内的正常细胞对我的传染性非常感兴趣。</p>
+<blockquote>
+<p>“</p>
+<p><strong>正常细胞</strong>：“冠状大哥，你是怎么这么快进行传播的啊？”</p>
+<p><strong>我</strong>：“其实我是利用了 <code>Gossip</code> 协议。”</p>
+<p><strong>我</strong>：Gossip 主要有三大功能，直接邮寄、反熵、谣言传播。</p>
+<p>”</p>
+</blockquote>
+<p>Gossip 的中文意思就是<code>流言蜚语</code>，该协议就像流言蜚语一样，利用一种<code>随机</code>、带有<code>传染性</code>的方式，将信息传播到整个网络中，并在一定时间内，使得系统内的<code>所有节点数据一致</code>。这个就是实现了<code>最终一致性</code>的协议。</p>
+<h3 id="4-1-直接邮寄"><a href="#4-1-直接邮寄" class="headerlink" title="4.1  直接邮寄"></a>4.1  直接邮寄</h3><p>直接发送需要更新的数据到其他节点，当数据<code>发送失败</code>时，将数据<code>缓存</code>下来，然后<code>重传</code>。如下图所示，人类 A 直接将病毒传染给了 C 和 E，而 B 和 D 没有被感染到，需要重新传染。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/5.png" alt="图片">直接邮寄</p>
+<p><strong>优点</strong>：实现容易，数据同步及时。</p>
+<p><strong>缺点</strong>：可能会因为重试的缓存队列满了而丢数据。无法实现最终一致性。</p>
+<p>那如何实现最终一致性呢？那就要用到第二种功能了：<code>反熵</code>。</p>
+<h3 id="4-2-反熵"><a href="#4-2-反熵" class="headerlink" title="4.2 反熵"></a>4.2 反熵</h3><p><code>反熵</code>这个名词怎么理解呢？</p>
+<p><code>熵</code>指混乱程度，<code>反熵</code>就是<code>消除</code>不同节点间数据的<code>差异</code>，<code>提升</code>节点间数据的<code>相似度</code>。</p>
+<p>反熵的过程：</p>
+<ul>
+<li>（1）集群中的节点，每隔段时间就随机选择某个其他节点。</li>
+<li>（2）互相交换自己的所有数据来消除两者之间的差异。</li>
+<li>（3）实现数据的最终一致性。</li>
+</ul>
+<p>下面举个病毒传染的例子来说明反熵。</p>
+<p>首先人类 A 被感染了两种病毒，分别是病毒 T 和病毒 R，如下图所示：</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/6.png" alt="图片">人类 A 感染了两种病毒</p>
+<p>人类  E 被感染了三种病毒，分别是病毒 T、病毒 S、病毒 Y，如下图所示：</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/7.png" alt="图片">人类 E 被感染了四种病毒</p>
+<p>人类 A 将携带的病毒 T 和 R 传染给了人类 E，而 E 本来就携带了病毒 T，所以最后会被传染四种病毒：T、S、Y、R。也就是说通过反熵的方式，修复了人类 E 中缺失的病毒 R。如下图所示：</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/8.png" alt="图片">人类 E 被感染了四种病毒</p>
+<p>其实，反熵主要有三种方式：<code>推、拉、推和拉</code>。</p>
+<h4 id="4-2-1-推"><a href="#4-2-1-推" class="headerlink" title="4.2.1 推"></a>4.2.1 推</h4><p><strong>推</strong>：将自己的副本数据推给对象，修复对方副本中的熵。</p>
+<p>如下图所示，人类 A 将病毒 R 传染（<code>推</code>）给了人类 E，E 中就包含所有 A 的病毒了。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/9.png" alt="图片">推</p>
+<h4 id="4-2-2-拉"><a href="#4-2-2-拉" class="headerlink" title="4.2.2 拉"></a>4.2.2 拉</h4><p><strong>拉</strong>：拉取对方中的所有副本数据，修复自己副本中的熵。</p>
+<p>如下图所示：人类 A 只有病毒 T 和 R，经过主动<code>拉</code>方式后，将人类 E 的病毒 S 和 病毒 Y 同步到人类 A 身上了，最后，人类 A 携带四种病毒：T、R、S、Y。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/10.png" alt="图片">拉方式</p>
+<h4 id="4-2-3-推拉"><a href="#4-2-3-推拉" class="headerlink" title="4.2.3 推拉"></a>4.2.3 推拉</h4><p><strong>推拉</strong>：同时修复自己副本和对象副本中的熵。</p>
+<p>如下图所示：人类 A 和 人类 E 通过推拉的方式最后都被感染了相同的四种病毒：T、R、S、Y。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/11.png" alt="图片">推拉</p>
+<h4 id="4-2-4-反熵的缺点"><a href="#4-2-4-反熵的缺点" class="headerlink" title="4.2.4 反熵的缺点"></a>4.2.4 反熵的缺点</h4><p>（1）通过上面推、拉、推拉的方式，我们可以主要到，反熵是需要节点两两交换和比对自己所有的数据，这样来看的话，通讯成本是很高的，所以不建议实际场景中频繁地执行反熵。</p>
+<p><strong>那有没有办法来减少反熵的次数呢？</strong></p>
+<p>答案是有的，我们可以通过引入校验和等机制来降低需要对比的数据量和通讯信息。</p>
+<p>（2）执行反熵时，相关节点都是已知的，且节点数量不能太多。如果节点动态变化或节点数过多，反熵就不合适。</p>
+<p><strong>那有没有办法来解决动态、多节点的最终一致性呢？</strong></p>
+<p>答案是有的，那就要用到 Gossip 协议的第三种传播功能了，谣言传播或者叫流行病传播。</p>
+<h3 id="4-3-流行病传播"><a href="#4-3-流行病传播" class="headerlink" title="4.3 流行病传播"></a>4.3 流行病传播</h3><h4 id="4-3-1-过程"><a href="#4-3-1-过程" class="headerlink" title="4.3.1 过程"></a>4.3.1 过程</h4><p>Gossip 协议的第三种传播功能，流行病传播，也就是广泛地散播病毒。</p>
+<p>如下图所示：A 传染给了 B 和 E，B 传染给了 C 和 D，D 传染给了 F 和 G。最后 ABCDEFG 都被感染了。</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/12.png" alt="图片">流行病传播过程</p>
+<p>在分布式系统中，当一个节点有了新数据后，这个节点变成活跃状态，并周期性地联系其他节点向其发送新数据，直到所有节点都存储了该数据，可以理解为之前讲的反熵中的<code>推</code>的方式。如下图所示：</p>
+<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/13.png" alt="图片">流行病传播方式&amp;图片来源于网络</p>
+<h4 id="4-3-2-缺点"><a href="#4-3-2-缺点" class="headerlink" title="4.3.2 缺点"></a>4.3.2 缺点</h4><p>流行病传播的方式有如下缺点：</p>
+<ul>
+<li><strong>时间随机</strong>：所有节点达到一致性是一个随机性的概率。可以改进反熵的流程：使用闭环修复。</li>
+<li><strong>消息冗余</strong>：同一节点会多次接收同一消息，增加消息处理的压力，每一次通信都会对网络带宽、CPU 资源造成负载，进而影响达到最终一致性的时间。</li>
+<li><strong>拜占庭问题</strong>：如果有恶意节点出现，那么其他节点也会出问题。所以需要先修复故障节点。</li>
+</ul>
+<h4 id="4-3-3-优点"><a href="#4-3-3-优点" class="headerlink" title="4.3.3 优点"></a>4.3.3 优点</h4><ul>
+<li><strong>支持动态、多节点</strong>：允许动态增加或减少节点，支持非常多的节点。</li>
+<li><strong>大多数节点</strong>：不需要大多数节点正常运行也能达到最终一致性</li>
+<li><strong>容错</strong>：任何节点重启或宕机都不会影响 Gossip 协议的运行，天然的分布式系统容错特性。</li>
+<li><strong>去中心化</strong>：节点都是对等的，没有特殊节点。任何节点出现问题都不会阻止其他节点继续执行反熵。</li>
+<li><strong>速度快</strong>：因为每个节点都可以进行传播，所以速度是指数级的，就像现在的新冠病毒一样。</li>
+</ul>
+<p>因为 Gossip 协议是一个带冗余的容错算法，为了保证最终一致性的算法。虽然所有节点达到一致的时间点不明确，但也可以通过改进反熵的执行过程来达到可预测，比如闭环反熵（不在本文展开论述）。</p>
+<h3 id><a href="#" class="headerlink" title></a></h3><h2 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h2><p>本文通过一个携带冠状病毒的蝙蝠传染人类的故事来讲解了 Gossip 协议。</p>
+<ul>
+<li>Gossip 协议是一种<code>异步修复</code>、实现<code>最终一致性</code>的协议。优先考虑反熵。</li>
+<li>反熵在<code>存储组件</code>中用得比较多。比如 Cassandra、InfluxDB。</li>
+<li>谣言传播（流行病传播）具有传染性，节点之间<code>相互传染</code>。适合<code>动态变化</code>的<code>分布式系统</code>。比如 Cassandra 动态管理集群的节点状态。</li>
+<li>实际场景，<code>直接邮寄</code>一定要实现，性能损耗最低。通过发送更新数据或缓存重传就能修复数据的不一致。</li>
+<li>在存储组件中，节点已知，采用<code>反熵</code>修复数据副本的不一致。</li>
+<li>集群节点变化时，或节点较多时，采用<code>谣言传播</code>方式，来同步更新多节点的数据，来实现最终一致性。</li>
+<li>Gossip 的三种功能其实都是为了实现反熵，第一种用消息队列，第二种用推拉消息，第三种用散播谣言。</li>
+<li>如果节点出现<code>故障</code>，需要先修复故障节点。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AE/" rel="tag"># 分布式一致性协议</a>
+              <a href="/tags/Gossip%E5%8D%8F%E8%AE%AE/" rel="tag"># Gossip协议</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/24/Redis%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/" rel="prev" title="Redis知识点总结">
+                  <i class="fa fa-chevron-left"></i> Redis知识点总结
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/24/Paxos%E5%8D%8F%E8%AE%AE/" rel="next" title="Paxos协议">
+                  Paxos协议 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">370k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">5:37</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>
