@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="从输入URL到浏览器显示页面的流程当在浏览器中输入域名，敲下回车后，不一会儿浏览器就会显示我们想要的界面。本文将简单介绍这其中经历了什么过程。 注意：以下分析基于HTTP请求，并且Web容器使用Tomcat，后端框架使用SSM 一、URL解析1、地址解析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tomcat-从输入URL到浏览器显示界面的流程">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="从输入URL到浏览器显示页面的流程当在浏览器中输入域名，敲下回车后，不一会儿浏览器就会显示我们想要的界面。本文将简单介绍这其中经历了什么过程。 注意：以下分析基于HTTP请求，并且Web容器使用Tomcat，后端框架使用SSM 一、URL解析1、地址解析">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/80.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/81.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209141851.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201208164319.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20210127161838.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201208172930.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209144349.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209163352.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209203752.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209200950.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209213925.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201210125922.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209213603.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201210105723.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201210113745.png">
+<meta property="article:published_time" content="2022-10-25T09:14:02.000Z">
+<meta property="article:modified_time" content="2022-10-25T09:19:09.540Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="tomcat">
+<meta property="article:tag" content="架构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/80.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/","path":"2022/10/25/Tomcat-从输入URL到浏览器显示界面的流程/","title":"Tomcat-从输入URL到浏览器显示界面的流程"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Tomcat-从输入URL到浏览器显示界面的流程 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E9%A1%B5%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">从输入URL到浏览器显示页面的流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81URL%E8%A7%A3%E6%9E%90"><span class="nav-number">1.1.</span> <span class="nav-text">一、URL解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E5%9C%B0%E5%9D%80%E8%A7%A3%E6%9E%90"><span class="nav-number">1.1.1.</span> <span class="nav-text">1、地址解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E5%85%B6%E4%BB%96%E6%93%8D%E4%BD%9C"><span class="nav-number">1.1.2.</span> <span class="nav-text">2、其他操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E7%BC%93%E5%AD%98%E6%A3%80%E6%9F%A5"><span class="nav-number">1.1.3.</span> <span class="nav-text">3、缓存检查</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81DNS%E8%A7%A3%E6%9E%90"><span class="nav-number">1.2.</span> <span class="nav-text">二、DNS解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E6%9F%A5%E8%AF%A2%E7%BC%93%E5%AD%98"><span class="nav-number">1.2.1.</span> <span class="nav-text">1、查询缓存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E9%80%92%E5%BD%92%E8%A7%A3%E6%9E%90"><span class="nav-number">1.2.2.</span> <span class="nav-text">2、递归解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81DNS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">1.2.3.</span> <span class="nav-text">3、DNS负载均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%BB%BA%E7%AB%8BTCP%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.3.</span> <span class="nav-text">三、建立TCP连接</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81TCP%E7%9A%84%E9%A6%96%E9%83%A8"><span class="nav-number">1.3.1.</span> <span class="nav-text">1、TCP的首部</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">1.3.2.</span> <span class="nav-text">2、三次握手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E6%98%AF%E4%B8%A4%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">为什么不是两次握手</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E6%98%AF%E5%9B%9B%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">为什么不是四次握手</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B"><span class="nav-number">1.3.3.</span> <span class="nav-text">3、四次挥手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%9C%80%E5%90%8E%E8%BF%98%E8%A6%81%E7%AD%89%E5%BE%852MSL"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">为什么客户端最后还要等待2MSL</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5%E6%98%AF%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%EF%BC%8C%E5%85%B3%E9%97%AD%E8%BF%9E%E6%8E%A5%E7%A1%AE%E6%98%AF%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">为什么建立连接是三次握手，关闭连接确是四次挥手</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%8F%91%E9%80%81HTTPS%E8%AF%B7%E6%B1%82"><span class="nav-number">1.4.</span> <span class="nav-text">四、发送HTTPS请求</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81HTTP%E7%AE%80%E4%BB%8B"><span class="nav-number">1.4.1.</span> <span class="nav-text">1、HTTP简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81HTTPS%E7%AE%80%E4%BB%8B"><span class="nav-number">1.4.2.</span> <span class="nav-text">2、HTTPS简介</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HTTPS%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81%E5%8F%AF%E9%9D%A0%E6%80%A7"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">HTTPS如何保证可靠性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81HTTPS%E4%BC%A0%E8%BE%93%E8%BF%87%E7%A8%8B"><span class="nav-number">1.4.3.</span> <span class="nav-text">3、HTTPS传输过程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%9F%A5%E8%AF%A2MAC%E5%9C%B0%E5%9D%80"><span class="nav-number">1.5.</span> <span class="nav-text">五、查询MAC地址</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81ARP%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.5.1.</span> <span class="nav-text">1、ARP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81ARP%E5%A6%82%E4%BD%95%E4%BA%A4%E4%BA%92"><span class="nav-number">1.5.2.</span> <span class="nav-text">2、ARP如何交互</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E8%AF%B7%E6%B1%82%E5%9C%A8Tomcat%E4%B8%AD%E7%9A%84%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-number">1.6.</span> <span class="nav-text">六、请求在Tomcat中的处理流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Tomcat%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="nav-number">1.6.1.</span> <span class="nav-text">1、Tomcat的核心组件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Server"><span class="nav-number">1.6.1.1.</span> <span class="nav-text">Server</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Service"><span class="nav-number">1.6.1.2.</span> <span class="nav-text">Service</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Connector"><span class="nav-number">1.6.1.3.</span> <span class="nav-text">Connector</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Engine"><span class="nav-number">1.6.1.4.</span> <span class="nav-text">Engine</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Host"><span class="nav-number">1.6.1.5.</span> <span class="nav-text">Host</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Context"><span class="nav-number">1.6.1.6.</span> <span class="nav-text">Context</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Tomcat%E5%A4%84%E7%90%86HTTP%E8%AF%B7%E6%B1%82"><span class="nav-number">1.6.2.</span> <span class="nav-text">2、Tomcat处理HTTP请求</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E8%AF%B7%E6%B1%82%E5%9C%A8Web%E5%BA%94%E7%94%A8%E4%B8%AD%E7%9A%84%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-number">1.7.</span> <span class="nav-text">七、请求在Web应用中的处理流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Web%E5%BA%94%E7%94%A8%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="nav-number">1.7.1.</span> <span class="nav-text">1、Web应用核心组件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Listener"><span class="nav-number">1.7.1.1.</span> <span class="nav-text">Listener</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Filter"><span class="nav-number">1.7.1.2.</span> <span class="nav-text">Filter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Servlet"><span class="nav-number">1.7.1.3.</span> <span class="nav-text">Servlet</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Web%E5%BA%94%E7%94%A8%E5%A4%84%E7%90%86HTTP%E8%AF%B7%E6%B1%82%E6%B5%81%E7%A8%8B"><span class="nav-number">1.7.2.</span> <span class="nav-text">2、Web应用处理HTTP请求流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AB%E3%80%81%E8%AF%B7%E6%B1%82%E5%9C%A8Spring-Web%E5%BA%94%E7%94%A8%E4%B8%AD%E7%9A%84%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-number">1.8.</span> <span class="nav-text">八、请求在Spring Web应用中的处理流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Spring-MVC%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="nav-number">1.8.1.</span> <span class="nav-text">1、Spring MVC的核心组件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DispatcherServlet"><span class="nav-number">1.8.1.1.</span> <span class="nav-text">DispatcherServlet</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HandlerMapping"><span class="nav-number">1.8.1.2.</span> <span class="nav-text">HandlerMapping</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HandlerAdapter"><span class="nav-number">1.8.1.3.</span> <span class="nav-text">HandlerAdapter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HandlerInterceptor"><span class="nav-number">1.8.1.4.</span> <span class="nav-text">HandlerInterceptor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Handler"><span class="nav-number">1.8.1.5.</span> <span class="nav-text">Handler</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Spring-MVC%E5%A4%84%E7%90%86%E8%AF%B7%E6%B1%82%E6%B5%81%E7%A8%8B"><span class="nav-number">1.8.2.</span> <span class="nav-text">2、Spring MVC处理请求流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%9D%E3%80%81%E8%BF%94%E5%9B%9E%E8%BF%87%E7%A8%8B"><span class="nav-number">1.9.</span> <span class="nav-text">九、返回过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E3%80%81%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="nav-number">1.10.</span> <span class="nav-text">十、整体流程图</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Tomcat-从输入URL到浏览器显示界面的流程 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Tomcat-从输入URL到浏览器显示界面的流程
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:14:02 / 修改时间：17:19:09" itemprop="dateCreated datePublished" datetime="2022-10-25T17:14:02+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/tomcat/" itemprop="url" rel="index"><span itemprop="name">tomcat</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>10k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>9 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="从输入URL到浏览器显示页面的流程"><a href="#从输入URL到浏览器显示页面的流程" class="headerlink" title="从输入URL到浏览器显示页面的流程"></a>从输入URL到浏览器显示页面的流程</h1><p>当在浏览器中输入域名，敲下回车后，不一会儿浏览器就会显示我们想要的界面。本文将简单介绍这其中经历了什么过程。</p>
+<p>注意：以下分析基于<strong>HTTP</strong>请求，并且Web容器使用<strong>Tomcat</strong>，后端框架使用<strong>SSM</strong></p>
+<h2 id="一、URL解析"><a href="#一、URL解析" class="headerlink" title="一、URL解析"></a>一、URL解析</h2><h3 id="1、地址解析"><a href="#1、地址解析" class="headerlink" title="1、地址解析"></a><strong>1、地址解析</strong></h3><p>浏览器会根据你的输入来判断该输入是一条合法的URL，还是需要被搜索的关键词。并且根据你输入的内容进行自动完成、字符编码等操作。</p>
+<h3 id="2、其他操作"><a href="#2、其他操作" class="headerlink" title="2、其他操作"></a>2、其他操作</h3><p>目前大部分浏览器都会<strong>强制客户端使用HTTPS协议</strong>以保证信息传输的安全性。同时还会进行一些额外的操作，比如安全检查、访问限制等。</p>
+<h3 id="3、缓存检查"><a href="#3、缓存检查" class="headerlink" title="3、缓存检查"></a>3、缓存检查</h3><p>有时候博客在gitee上进行了更新，但是通过谷歌浏览器查看博客时，仍是更新前的博客，这是因为浏览器中缓存了之前的博客界面。</p>
+<p>浏览器会先检测是否缓存了目标URL的页面，如果有且缓存未过期，则直接展示缓存页面，无需再向服务器进行请求。</p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201208150315.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/80.png" alt="img"></a></p>
+<h2 id="二、DNS解析"><a href="#二、DNS解析" class="headerlink" title="二、DNS解析"></a>二、DNS解析</h2><p><strong>DNS解析是寻找所需要的资源的IP地址的过程</strong>。因为互联网中每一台连网的机器都有<strong>唯一IP作为标识</strong>，但是它是一串数字，记忆太过困难。所以就需要将网址和IP地址进行转换，也就是DNS解析。其具体步骤如下。</p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209141644.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/81.png" alt="img"></a></p>
+<h3 id="1、查询缓存"><a href="#1、查询缓存" class="headerlink" title="1、查询缓存"></a>1、查询缓存</h3><p>我们的浏览器、操作系统、路由器都会缓存一些URL对应的IP地址，统称为<strong>DNS高速缓存</strong>。这是为了加快DNS解析速度，使得不必每次都到根域名服务器中去查询。</p>
+<h3 id="2、递归解析"><a href="#2、递归解析" class="headerlink" title="2、递归解析"></a>2、递归解析</h3><p>输入<code>www.baidu.com</code>网址后，首先在高速缓存中查找，没找到去根域名服务器查找，没有再去<code>com</code>顶级域名服务器查找，依次类推，直到找到IP地址，然后把它记录在本地告诉缓存中，供下次使用。</p>
+<p>大致过程就是<code>.</code>-&gt; <code>.com</code> -&gt;<code>baidu.com.</code> -&gt; <code>www.baidu.com.</code></p>
+<p>其中<code>.</code>代表根域名服务器。</p>
+<h3 id="3、DNS负载均衡"><a href="#3、DNS负载均衡" class="headerlink" title="3、DNS负载均衡"></a>3、DNS负载均衡</h3><p>访问<code>baidu.com</code>的时候，每次响应的可能并非是同一个服务器（IP地址不同），一般大公司都有成百上千台服务器来支撑访问，DNS可以返回一个<strong>合适的机器的IP</strong>给用户，例如可以<strong>根据每台机器的负载量，该机器离用户地理位置的距离</strong>等等，这种过程就是DNS负载均衡。</p>
+<h2 id="三、建立TCP连接"><a href="#三、建立TCP连接" class="headerlink" title="三、建立TCP连接"></a>三、建立TCP连接</h2><p>TCP&#x2F;IP 分为四层，在发送数据时，<strong>每层都要对数据进行封装</strong></p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209141851.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209141851.png" alt="img"></a></p>
+<p>TCP提供一种<strong>面向连接的，可靠的字节流</strong>服务，是一种可靠传输。接下来将会讲解TCP的<strong>首部、三次握手与四次挥手</strong>。</p>
+<h3 id="1、TCP的首部"><a href="#1、TCP的首部" class="headerlink" title="1、TCP的首部"></a>1、TCP的首部</h3><p>TCP首部的格式如下</p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201208164319.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201208164319.png" alt="img"></a></p>
+<ul>
+<li><p><strong>源端口</strong>：源端口和IP地址的作用是标识<strong>报文的发送地址和返回地址</strong></p>
+</li>
+<li><p><strong>目的端口</strong>：端口指明<strong>接收方</strong>计算机上的应用程序接口</p>
+<ul>
+<li>TCP报头中的源端口号和目的端口号同IP数据报中的源IP与目的IP<strong>唯一确定</strong>一条TCP连接</li>
+</ul>
+</li>
+<li><p><strong>序号</strong>：是TCP可靠传输的<strong>关键部分</strong></p>
+<ul>
+<li><p>序号是该报文段发送的数据组的</p>
+<p>第一个字节的序号</p>
+<p>。在TCP传送的流中，每</p>
+<p>一个字节都有一个序号</p>
+<ul>
+<li>比如一个报文段的序号为300，报文段数据部分共有100字节，则<strong>下一个报文段</strong>的序号为400。所以序号确保了TCP传输的有序性</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>确认号：ack，用于指明下一个期待收到的字节序号</strong>，表明该序号之前的所有数据已经正确无误的收到</p>
+<ul>
+<li><strong>确认号只有当ACK标志为1时才有效</strong>。比如建立连接时，SYN报文的ACK标志位为0</li>
+</ul>
+</li>
+<li><p><strong>首部长度&#x2F;数据偏移</strong>：占4位，它指出<strong>TCP报文的数据距离TCP报文段的起始处有多远</strong></p>
+</li>
+<li><p><strong>保留</strong>：占6位，保留今后使用，但<strong>目前应都位0</strong></p>
+</li>
+<li><p><strong>控制位：URG ACK PSH RST SYN FIN</strong>，共6个，每一个标志位表示一个控制功能</p>
+<ul>
+<li>URG：紧急。当URG&#x3D;1时，表明紧急指针字段有效。告诉系统<strong>此报文段中有紧急数据</strong></li>
+<li>ACK：确认。<strong>当ACK&#x3D;1时，确认号字段才有效</strong>。TCP规定，在连接建立后所有报文的传输都必须把ACK置1</li>
+<li>PSH：推送。当两个应用进程进行交互式通信时，有时在一端的应用进程希望在键入一个命令后立即就能收到对方的响应，这时候就将PSH&#x3D;1</li>
+<li>RST：复位。当RST&#x3D;1，表明TCP连接中出现严重差错，<strong>必须释放连接，然后再重新建立连接</strong></li>
+<li>SYN：同步，在连接建立时用来同步序号。当SYN&#x3D;1，ACK&#x3D;0，表明是连接请求报文，若同意连接，则响应报文中应该使SYN&#x3D;1，ACK&#x3D;1</li>
+<li>FIN：终止，用来释放连接。当FIN&#x3D;1，表明此报文的发送方的数据已经发送完毕，并且要求释放</li>
+</ul>
+</li>
+<li><p><strong>窗口</strong>：<strong>滑动窗口</strong>大小，用来告知发送端<strong>接受端的缓存大小</strong>，以此控制发送端发送数据的速率，从而达到流量控制。窗口大小时一个16bits字段，因而窗口大小最大为65535</p>
+</li>
+<li><p><strong>校验和</strong>：奇偶校验，此校验和是对整个的 TCP 报文段，包括 TCP 头部和 TCP 数据，以 16 位字进行计算所得。由发送端计算和存储，并由接收端进行验证</p>
+</li>
+<li><p><strong>紧急指针</strong>：只有当 <strong>URG 标志置 1 时紧急指针才有效</strong>。紧急指针是一个正的偏移量，和顺序号字段中的值相加表示紧急数据最后一个字节的序号。 TCP 的紧急方式是发送端向另一端发送紧急数据的一种方式</p>
+</li>
+<li><p><strong>选项和填充</strong>：最常见的可选字段是最长报文大小，又称为MSS（Maximum Segment Size），每个连接方通常都在通信的第一个报文段（为建立连接而设置SYN标志为1的那个段）中指明这个选项，它表示本端所能接受的最大报文段的长度。选项长度不一定是32位的整数倍，所以要加填充位，即在这个字段中加入额外的零，以保证TCP头是32的整数倍</p>
+</li>
+<li><p><strong>数据部分</strong>： TCP 报文段中的数据部分是可选的。<strong>在一个连接建立和一个连接终止时，双方交换的报文段仅有 TCP 首部</strong>。如果一方没有数据要发送，也使用没有任何数据的首部来确认收到的数据。在处理超时的许多情况中，也会发送不带任何数据的报文段。</p>
+</li>
+</ul>
+<h3 id="2、三次握手"><a href="#2、三次握手" class="headerlink" title="2、三次握手"></a>2、三次握手</h3><p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20210127161838.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20210127161838.png" alt="img"></a></p>
+<p><strong>握手过程中传送的包里不包含数据</strong>，三次握手完毕后，客户端与服务器才正式开始传送数据。理想状态下，TCP连接一旦建立，在通信双方中的任何一方主动关闭连接之前，TCP 连接都将被一直保持下去。</p>
+<p><strong>为什么是三次握手？两次不行吗？四次不行吗？</strong></p>
+<h4 id="为什么不是两次握手"><a href="#为什么不是两次握手" class="headerlink" title="为什么不是两次握手"></a>为什么不是两次握手</h4><p>这是为了<strong>避免服务器建立无用连接</strong>（客户端服务器建立连接后，却不传输数据）</p>
+<p>如果只进行两次握手，如果客户端向服务器第一次发送的建立连接的请求因为某原因，<strong>兜兜转转绕了一大圈才到达服务器</strong>。这期间客户端因为未收到服务器的响应，就会再次发送连接请求，这时服务器收到了，向客户端发送连接请求后，连接便建立了。然后数据传输完毕后，释放连接。<strong>这时刚刚兜兜转转一大圈的建立连接的请求到了服务器</strong>，服务器收到后再次向客户端发送请求，发送后又建立了连接，但是建立连接后客户端没有再理会服务器，客户端与服务器之间没有传输数据，此时服务器的资源就会被浪费</p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201208172930.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201208172930.png" alt="img"></a></p>
+<h4 id="为什么不是四次握手"><a href="#为什么不是四次握手" class="headerlink" title="为什么不是四次握手"></a>为什么不是四次握手</h4><p><strong>因为通信不可能100%可靠</strong>（红军蓝军约定）， 而上面的三次握手已经做好了通信的准备工作， <strong>再增加握手， 并不能显著提高可靠性</strong>，所以只需要三次握手就足够了</p>
+<p>这里简单介绍一下<strong>红军蓝军约定</strong></p>
+<blockquote>
+<p>红军和蓝军都想消灭一波敌人，但是单凭他们一个军队的力量都不足以消灭这波敌人，因此他们想到了一起合作，于是红军向蓝军发了一封电报，内容是约定好早上8点一起向敌军进攻，由于他们不确定蓝军是否一定能收到电报, 所以只有收到蓝军的回复之后才会进行进攻，而蓝军也是同样的想法，因为他们不确定红军一定能收到自己的回复而在约定好的时间发动进攻，所以他们只有收到红军的回复后才发动进攻….</p>
+<p>问怎样才能保证这次战役一定胜利呢？答案是不可能的，因为<strong>双方都对于自己发出的消息对方是否一定接收得到存在质疑</strong>，所以，这样的通信将一直进行下去，结果将是使胜利的几率一直接近100%，但是却永远达不到100%。</p>
+</blockquote>
+<h3 id="3、四次挥手"><a href="#3、四次挥手" class="headerlink" title="3、四次挥手"></a>3、四次挥手</h3><p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209144349.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209144349.png" alt="img"></a></p>
+<ul>
+<li>第一次挥手<ul>
+<li>客户端发送一个<strong>FIN&#x3D;1</strong>，用来关闭客户端到服务器的数据传送，此后客户端不会再向服务器发送数据(当然，在fin包之前发送出去的数据，如果没有收到对应的ack确认报文，客户端依然会重发这些数据)，但是，此时客户端还可以接受数据。 FIN&#x3D;1，其序列号为seq&#x3D;u（等于前面已经传送过来的数据的最后一个字节的序号加1），此时，<strong>客户端进入FIN-WAIT-1</strong>（终止等待1）状态。 TCP规定，FIN报文段即使不携带数据，也要消耗一个序号</li>
+</ul>
+</li>
+<li>第二次挥手<ul>
+<li>服务器收到FIN包后，发送一个ACK给对方并且带上自己的序列号seq，确认序号为收到序号+1（与SYN相同，一个FIN占用一个序号）。此时，<strong>服务端就进入了CLOSE-WAIT</strong>（关闭等待）状态。TCP服务器通知高层的应用进程，客户端向服务器的方向就释放了，这时候处于半关闭状态，即客户端已经没有数据要发送了，<strong>但是服务器若发送数据，客户端依然要接受</strong>。这个状态还要持续一段时间，也就是整个CLOSE-WAIT状态持续的时间</li>
+<li>此时，<strong>客户端就进入FIN-WAIT-2</strong>（终止等待2）状态，等待服务器发送连接释放报文（在这之前还需要接受服务器发送的最后的数据）</li>
+</ul>
+</li>
+<li>第三次挥手<ul>
+<li>服务器发送一个FIN&#x3D;1，用来关闭服务器到客户端的数据传送，也就是通知客户端，可以真正地释放连接了。由于在半关闭状态，服务器很可能又发送了一些数据，假定此时的序列号为seq&#x3D;w，此时，<strong>服务器就进入了LAST-ACK</strong>（最后确认）状态，等待客户端的确认</li>
+</ul>
+</li>
+<li>第四次挥手<ul>
+<li>客户端收到FIN后，发送一个ACK&#x3D;1给服务器，确认序号为收到序号+1，此时，<strong>客户端就进入了TIME-WAIT</strong>（时间等待）状态。注意此时TCP连接还没有释放，<strong>必须经过2MSL（最长报文段寿命）的时间后</strong>，当客户端撤销相应的TCB后，才进入CLOSED状态</li>
+<li><strong>服务器只要收到了客户端发出的确认，立即进入CLOSED状态</strong>。同样，撤销TCB后，就结束了这次的TCP连接。可以看到，服务器结束TCP连接的时间要比客户端早一些</li>
+</ul>
+</li>
+</ul>
+<h4 id="为什么客户端最后还要等待2MSL"><a href="#为什么客户端最后还要等待2MSL" class="headerlink" title="为什么客户端最后还要等待2MSL"></a>为什么客户端最后还要等待2MSL</h4><p><strong>确保第四次挥手服务器能够收到，同时使失效的连接请求从网络中消失</strong></p>
+<p><strong>MSL</strong>是Maximum Segment Lifetime英文的缩写，中文可以译为<strong>报文最大生存时间</strong>，他是任何报文在网络上存在的最长时间，超过这个时间报文将被丢弃。</p>
+<ul>
+<li><strong>保证客户端发送的最后一个ACK报文能够到达服务器</strong>，因为这个ACK报文可能丢失。站在服务器的角度看来，我已经发送了FIN+ACK报文请求断开了，客户端还没有给我回应，应该是我发送的请求断开报文它没有收到，<strong>于是服务器又会重新发送一次</strong>，而客户端就能在这个2MSL时间段内收到这个重传的报文，接着给出回应报文，并且会<strong>重启2MSL计时器</strong></li>
+<li>防止类似与三次握手中提到了的<strong>已经失效的连接请求报文段</strong>出现在本连接中。客户端发送完最后一个确认报文后，在这个2MSL时间中，就可以<strong>使本连接持续的时间内所产生的所有报文段都从网络中消失</strong>（最长生存MSL）。<strong>这样新的连接中不会出现旧连接的请求报文</strong></li>
+</ul>
+<h4 id="为什么建立连接是三次握手，关闭连接确是四次挥手"><a href="#为什么建立连接是三次握手，关闭连接确是四次挥手" class="headerlink" title="为什么建立连接是三次握手，关闭连接确是四次挥手"></a>为什么建立连接是三次握手，关闭连接确是四次挥手</h4><ul>
+<li>建立连接的时候， 服务器在LISTEN状态下，收到建立连接请求的SYN报文后，<strong>把ACK和SYN放在一个报文里发送给客户端</strong></li>
+<li>关闭连接时，服务器收到对方的FIN报文时，仅仅表示对方不再发送数据了但是还能接收数据，而自己也未必全部数据都发送给对方了，所以己方可以立即关闭，也可以发送一些数据给对方后，再发送FIN报文给对方来表示同意现在关闭连接，因此，<strong>己方ACK和FIN一般都会分开发送，从而导致多了一次</strong></li>
+</ul>
+<h2 id="四、发送HTTPS请求"><a href="#四、发送HTTPS请求" class="headerlink" title="四、发送HTTPS请求"></a>四、发送HTTPS请求</h2><h3 id="1、HTTP简介"><a href="#1、HTTP简介" class="headerlink" title="1、HTTP简介"></a>1、HTTP简介</h3><p>参考<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/AK1Pb9rx0q5Hf8dq6HNOhw"><strong>你每天都在使用的HTTP协议，到底是什么鬼？</strong></a></p>
+<h3 id="2、HTTPS简介"><a href="#2、HTTPS简介" class="headerlink" title="2、HTTPS简介"></a>2、HTTPS简介</h3><p>在HTTP的基础上再加一层TLS（传输层安全性协议）或者SSL（安全套接层），就构成了HTTPS协议。</p>
+<p>HTTPS详细介绍可以参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/158593966"><strong>一文带你了解HTTPS</strong></a></p>
+<h4 id="HTTPS如何保证可靠性"><a href="#HTTPS如何保证可靠性" class="headerlink" title="HTTPS如何保证可靠性"></a>HTTPS如何保证可靠性</h4><ul>
+<li>对称加密以及非对称加密<ul>
+<li>通过非对称加密生成密钥，后面通过这个密钥进行对称加密进行传输</li>
+</ul>
+</li>
+<li>数字签名<ul>
+<li>保证非对称加密时发送的公钥是被认证过的，是安全可靠的</li>
+</ul>
+</li>
+<li>单向Hash算法</li>
+</ul>
+<p><strong>大致过程如下</strong></p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209163352.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209163352.png" alt="img"></a></p>
+<h3 id="3、HTTPS传输过程"><a href="#3、HTTPS传输过程" class="headerlink" title="3、HTTPS传输过程"></a>3、HTTPS传输过程</h3><ul>
+<li><strong>建立TCP连接</strong>（HTTP）</li>
+<li><strong>将HTTP请求转换为HTTPS请求，转到HTTPS网站</strong><ul>
+<li>因为一般人输入网址时，都是输入如<code>www.baidu.com</code>，而不会输入<code>https://www.baidu.com</code>。这时默认使用的是HTTP协议，<strong>浏览器会帮我们自动转换为HTTPS协议</strong></li>
+</ul>
+</li>
+<li><strong>建立新的TCP连接</strong>(HTTPS)<ul>
+<li>因为HTTP与HTTPS的端口不同。HTTP使用80端口，HTTPS使用443端口</li>
+</ul>
+</li>
+<li><strong>完成一系列的协商工作</strong><ul>
+<li>完成加密套件的协商和证书的身份确认，这次交互客户端和服务端会协商出相同的密钥交换算法、对称加密算法、内容一致性校验算法、证书签名算法等等。浏览器获取到证书之后，也要验证证书的有效性，是否过期是否撤销</li>
+</ul>
+</li>
+<li><strong>浏览器获取CA域名</strong><ul>
+<li>如果没有CA域名的缓存，还需要进行<strong>DNS解析</strong></li>
+</ul>
+</li>
+<li><strong>再次建立新的TCP连接</strong>（CA域名）</li>
+<li><strong>发送OCSP请求</strong><ul>
+<li>OCSP全称是Online Certificate Status Protocol，在线证书状态协议，顾名思义用来获取证书状态的请求，这里的状态包括有效、过期、未知。并且可以宽限一段客户端访问证书的时间</li>
+</ul>
+</li>
+<li><strong>进行密钥协商</strong></li>
+</ul>
+<p>经过以上过程后，便可以进行数据的对称加密传输了。</p>
+<h2 id="五、查询MAC地址"><a href="#五、查询MAC地址" class="headerlink" title="五、查询MAC地址"></a>五、查询MAC地址</h2><p>这一步主要负责为打包好的<code>数据+TCP首部+IP首部</code>寻找传输路线，<strong>找到IP对应的物理机</strong>，这里会用到ARP协议。</p>
+<h3 id="1、ARP协议"><a href="#1、ARP协议" class="headerlink" title="1、ARP协议"></a>1、ARP协议</h3><p>ARP（Address Resolution Protocol）即地址解析协议， 用于<strong>实现从 IP 地址到 MAC 地址的映射</strong>，即询问目标IP对应的MAC地址。</p>
+<h3 id="2、ARP如何交互"><a href="#2、ARP如何交互" class="headerlink" title="2、ARP如何交互"></a>2、ARP如何交互</h3><p>ARP协议通过<strong>一问一答</strong>实现交互，但是问和答都有讲究，<strong>问是通过广播形式实现，答是通过单播形式。</strong></p>
+<hr>
+<p><strong>以上都是计算机网络的部分，接下来将介绍服务器如何接收与处理请求</strong></p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209203752.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209203752.png" alt="img"></a></p>
+<h2 id="六、请求在Tomcat中的处理流程"><a href="#六、请求在Tomcat中的处理流程" class="headerlink" title="六、请求在Tomcat中的处理流程"></a>六、请求在Tomcat中的处理流程</h2><p>Web 容器以<strong>进程</strong>的方式在计算机上运行，<strong>它主要负责接收请求，并将其投送至特定的应用</strong>，但Web容器并不属于计算机网络的组成部分。接下来将以Tomcat为例介绍Web容器的核心组件。</p>
+<h3 id="1、Tomcat的核心组件"><a href="#1、Tomcat的核心组件" class="headerlink" title="1、Tomcat的核心组件"></a>1、Tomcat的核心组件</h3><p>Tomcat的核心组件主要有：<strong>Server、Service、Connector、Engine、Host和Context</strong>。</p>
+<p><strong>一个Server可以包含多个Service，一个Service可以包含多个Connector，但只能包含一个Engine，一个Engine可以包含多个Host，一个Host可以包含多个Context</strong>。</p>
+<p><strong>它们之间的关系如下图所示</strong></p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209200950.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209200950.png" alt="img"></a></p>
+<p><strong>配置文件的结构如下</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;Server&gt;                              </span><br><span class="line">    &lt;Service&gt;</span><br><span class="line">        &lt;Engine&gt;</span><br><span class="line">            &lt;Host&gt;</span><br><span class="line">                &lt;Context /&gt;</span><br><span class="line">            &lt;/Host&gt;</span><br><span class="line">            &lt;Host&gt;</span><br><span class="line">                &lt;Context /&gt;</span><br><span class="line">            &lt;/Host&gt;</span><br><span class="line">        &lt;/Engine&gt;  </span><br><span class="line">        &lt;Connector /&gt;</span><br><span class="line">        &lt;Connector /&gt;</span><br><span class="line">    &lt;/Service&gt;</span><br><span class="line">&lt;/Server&gt;Copy</span><br></pre></td></tr></table></figure>
+
+<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><p>Server 是整个配置文件的<strong>唯一根元素</strong>，代表整个 Tomcat 容器。Server 内部可以包含多个 Service，其主要职责就是管理多个 Service，对外提供给客户端访问，同时维护所有 Service 的生命周期，包括初始化服务、结束服务、定位客户端要访问的 Service 等等。</p>
+<h4 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h4><p>Service 的主要职责就是将 Engine 与 Connector 装配在一起对外提供服务。一个 Service 可以包含多个 Connector，但只能包含一个 Engine，<strong>其中 Connector 负责从客户端接收请求，Engine 负责处理 Connector 接收进来的请求。</strong></p>
+<h4 id="Connector"><a href="#Connector" class="headerlink" title="Connector"></a>Connector</h4><p><strong>Connector是主要负责接收请求的组件</strong>。</p>
+<p><strong>Tomcat有以下两种工作模式</strong></p>
+<ul>
+<li>作为Web服务器，直接接收客户端的请求</li>
+<li>作为Java Web服务器，接收前置Web服务器的请求</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209213925.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209213925.png" alt="img"></a></p>
+<p>每个 Service 可以有一个或多个 Connector，不同工作模式下，Tomcat 需要为各种类型的请求分别定义相应的 Connector，这样才能正确接收客户端对应协议的请求。定义 Connector 可以使用多种属性，某些属性只适用于某种特定的 Connector 类型。</p>
+<p>一般说来，常见的 Connector 有 4 种类型</p>
+<ul>
+<li><strong>HTTP</strong></li>
+<li><strong>HTTPS</strong></li>
+<li><strong>AJP</strong></li>
+<li><strong>Proxy</strong></li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201210125922.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201210125922.png" alt="img"></a></p>
+<p>Connector作为通信接口，<strong>它为其所属特定的 Service 接收外部客户端请求，以及回送应答至外部客户端</strong>。具体职责包括创建 Request、Response 对象用于跟外部客户端交换数据，并<strong>将 Request 交给配套的 Engine 来处理</strong>。</p>
+<h4 id="Engine"><a href="#Engine" class="headerlink" title="Engine"></a>Engine</h4><p>Engine 是 Service 组件中<strong>负责请求处理的组件</strong>，其内部可以包含多个 Host。Engine 从一个或多个 Connector 中接收请求并处理，并将处理结果封装成应答交给 Connector，最终回传给外部客户端。</p>
+<h4 id="Host"><a href="#Host" class="headerlink" title="Host"></a>Host</h4><p><strong>Host 代表一个虚拟主机，它对应计算机网络上的一个实体</strong>。即某个在 DNS 服务器上注册过的域名或者 IP 地址，例如：<code>www.baidu.com</code>或 201.187.10.21。Host 内部可以包含多个 Context，<strong>每个 Context 表示一个 Web 应用</strong>。Host 负责安装、展开、启动和结束每个 Web 应用。</p>
+<p>客户端在填写目标地址时会通过主机名来标识它希望访问的服务器，Tomcat 将从 HTTP 请求头的 Host 字段提取主机名，然后再匹配对应的虚拟主机。如果没有找到匹配的，HTTP 请求将被发送至默认主机 defaultHost。</p>
+<h4 id="Context"><a href="#Context" class="headerlink" title="Context"></a>Context</h4><p>Context 代表在特定虚拟主机上运行的一个 Web 应用，<strong>负责处理某个特定 Web 应用的所有请求</strong>。</p>
+<h3 id="2、Tomcat处理HTTP请求"><a href="#2、Tomcat处理HTTP请求" class="headerlink" title="2、Tomcat处理HTTP请求"></a>2、Tomcat处理HTTP请求</h3><p>当以 HTTP 请求到达Tomcat服务器（Server）以后，Tomcat会进行以下几个步骤，将请求交给对应的Web应用进行处理</p>
+<ul>
+<li>根据协议类型和端口号选定 Service 和 Engine<ul>
+<li>Connector 主要负责接收请求。当 Connector 接收到特定协议和特定端口的请求后，<strong>其所属的 Service 和 Service 下的 Engine 也就确定了</strong></li>
+</ul>
+</li>
+<li>根据域名或 IP 地址选定 Host<ul>
+<li>Engine一旦确定了，就会根据 IP 来选择对应的虚拟主机Host来处理请求。如果匹配失败了，则会使用默认虚拟主机来处理请求</li>
+</ul>
+</li>
+<li>根据 URI 选定 Context<ul>
+<li>URI 中的 context-path 指定了 HTTPS 请求将要访问的 Web 应用</li>
+<li>当请求抵达时，Tomcat 将根据 Context 的属性 path 取值与 URI 中的 context-path 的匹配程度来选择 Web 应用处理相应请求</li>
+</ul>
+</li>
+</ul>
+<h2 id="七、请求在Web应用中的处理流程"><a href="#七、请求在Web应用中的处理流程" class="headerlink" title="七、请求在Web应用中的处理流程"></a>七、请求在Web应用中的处理流程</h2><p>请求被 Web 容器中的 Connector 捕获，选取对应的 Server 中的 Engine ，Engine 再根据IP选择对应的虚拟主机，虚拟主机根据URI将请求交给对应的Web应用进行处理。接下来将介绍请求在Web请求中的处理过程。</p>
+<p>介绍处理过程前，先对Web应用的基本组件进行简单介绍。</p>
+<h3 id="1、Web应用核心组件"><a href="#1、Web应用核心组件" class="headerlink" title="1、Web应用核心组件"></a>1、Web应用核心组件</h3><h4 id="Listener"><a href="#Listener" class="headerlink" title="Listener"></a>Listener</h4><p>监听器 Listener 主要用于监听 Application、Session、Request 等对象的变化，每当这些对象发生变化就会回调用对应的监听方法。</p>
+<h4 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h4><p>过滤器 Filter 负责对请求做<strong>预处理</strong>，接着将请求交给 Servlet 进行处理并生成响应，最后 Filter 再对响应进行后处理。</p>
+<p>从请求的处理过程来看，Filter 主要参与以下几个环节</p>
+<ul>
+<li>在 HttpServletRequest <strong>到达 Servlet 之前，拦截客户的 HttpServletRequest</strong></li>
+<li>根据需要检查 HttpServletRequest，也可以修改 HttpServletRequest 报文头和数据</li>
+<li>在 Servlet 生成的 HttpServletResponse <strong>抵达客户端之前，拦截 HttpServletResponse</strong></li>
+<li>根据需要检查 HttpServletResponse，也可以修改 HttpServletResponse 报文头和数据</li>
+</ul>
+<p><strong>简单来说就是在真正处理请求以及返回响应之前，通过过滤器对内容再进行一些修改</strong></p>
+<h4 id="Servlet"><a href="#Servlet" class="headerlink" title="Servlet"></a>Servlet</h4><p><strong>Servlet 负责处理客户端访问动态资源的 HTTP 请求</strong>，接口 javax.servlet.Servlet 定义了所有 Servlet 必须要实现的方法</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public interface Servlet &#123;</span><br><span class="line">    // 由 Servlet 容器调用，完成 Servlet 初始化，启动对外服务</span><br><span class="line">    void init(ServletConfig var1) throws ServletException;</span><br><span class="line"></span><br><span class="line">    // 获取 Servlet 初始化和启动时参数的配置信息对象 ServletConfig</span><br><span class="line">    ServletConfig getServletConfig();</span><br><span class="line"></span><br><span class="line">    // 由 Servlet 容器调用，让 Servlet 处理某个 HTTP 请求</span><br><span class="line">    void service(ServletRequest var1, ServletResponse var2) throws ServletException, IOException;</span><br><span class="line"></span><br><span class="line">    // 获取 Servlet 的说明信息，包括：作者、版本和版权等等</span><br><span class="line">    String getServletInfo();</span><br><span class="line"></span><br><span class="line">    // 由 Servlet 容器调用，用于关闭停止 Servlet 提供的服务</span><br><span class="line">    void destroy();</span><br><span class="line">&#125;Copy</span><br></pre></td></tr></table></figure>
+
+<p>从 HTTP 请求的处理过程来看，Servlet 主要参与以下几个环节</p>
+<ul>
+<li>接收请求<ul>
+<li>客户端请求会被封装成 HttpServletRequest 对象，包含报文头参数和报文体等信息</li>
+</ul>
+</li>
+<li>处理请求<ul>
+<li>通常调用 Servlet 的方法 service、doPost 或 doGet 等方法处理请求，并<strong>进一步调用业务层相应逻辑对其进行处理等</strong></li>
+</ul>
+</li>
+<li>反回响应<ul>
+<li>处理完请求后，可以转发（forward）、重定向（redirect）到某个视图页面或者直接返回结果数据</li>
+</ul>
+</li>
+</ul>
+<h3 id="2、Web应用处理HTTP请求流程"><a href="#2、Web应用处理HTTP请求流程" class="headerlink" title="2、Web应用处理HTTP请求流程"></a>2、Web应用处理HTTP请求流程</h3><p>Web 应用处理 HTTP 请求的流程主要是<strong>穿越 Listener 和多个 Filters，最终抵达 Servlet 的过程</strong>，Servlet再进行下一步的处理。</p>
+<p><strong>具体流程如下图</strong></p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201209213603.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201209213603.png" alt="img"></a></p>
+<h2 id="八、请求在Spring-Web应用中的处理流程"><a href="#八、请求在Spring-Web应用中的处理流程" class="headerlink" title="八、请求在Spring Web应用中的处理流程"></a>八、请求在Spring Web应用中的处理流程</h2><p>因为使用 SSM 框架，所以 Spring MVC 中的 DispatcherServlet 充当了 Web 应用中的 Serlvet，负责将任务分配给对应的Controller，并将最终视图返回给 Web 容器。</p>
+<h3 id="1、Spring-MVC的核心组件"><a href="#1、Spring-MVC的核心组件" class="headerlink" title="1、Spring MVC的核心组件"></a>1、Spring MVC的核心组件</h3><h4 id="DispatcherServlet"><a href="#DispatcherServlet" class="headerlink" title="DispatcherServlet"></a>DispatcherServlet</h4><p>DispatcherServlet 是整个流程<strong>控制的中心</strong>，由它来<strong>接收请求并调用其它组件处理用户的请求</strong>，同时还负责响应结果。DispatcherServlet的存在降低了组件之间的耦合性。</p>
+<h4 id="HandlerMapping"><a href="#HandlerMapping" class="headerlink" title="HandlerMapping"></a>HandlerMapping</h4><p>HandlerMapping 负责<strong>根据用户请求映射获得对应的 Handler和 HandlerInterceptor</strong>。处理方法为从 URL 获得 URI，在通过 URI 从 HandlerMapping 中找到对应的 Handler 和 HandlerInterceptor，即处理器和拦截器。</p>
+<h4 id="HandlerAdapter"><a href="#HandlerAdapter" class="headerlink" title="HandlerAdapter"></a>HandlerAdapter</h4><p>HandlerAdapter 负责按照特定规则去执行 Handler。</p>
+<p>如果 Handler 有对应的 HandlerAdapater，<strong>HandlerAdapater 则会在调用 Handler 之前执行 HandlerInterceptor 的 preHandler() 方法对 Handler 进行拦截</strong>。</p>
+<h4 id="HandlerInterceptor"><a href="#HandlerInterceptor" class="headerlink" title="HandlerInterceptor"></a>HandlerInterceptor</h4><p>HandlerInterceptor 主要负责在执行 Handler 前对其进行拦截。HandlerInterceptor 中的 preHandler() 方法将会提取 HTTP 请求中的数据填充到处理器 Handler 的中。</p>
+<h4 id="Handler"><a href="#Handler" class="headerlink" title="Handler"></a>Handler</h4><p>Handler <strong>即Controller ，是处理业务代码的核心器件</strong>。这部分由程序员自行编写，一般的SSM框架中，其下层还有Service和Dao。</p>
+<h3 id="2、Spring-MVC处理请求流程"><a href="#2、Spring-MVC处理请求流程" class="headerlink" title="2、Spring MVC处理请求流程"></a>2、Spring MVC处理请求流程</h3><p>当 Web 容器中的 Host 会选择对应的 Web应用来处理请求，这里将请求交给了 Spring MVC 中的 DispatcherServlet 来进一步处理请求。</p>
+<ul>
+<li>DispatcherServlet 通过解析 HTTP 请求的 URL 获得 URI，再根据该 URI <strong>从 HandlerMapping 当中获得该请求对应的 Handler 和 HandlerInterceptor</strong></li>
+<li>DispatcherServlet 根据获得的 Handler 选择合适的 HandlerAdapter。如果成功获得 HandlerAdapter，<strong>HandlerAdapater 则会在调用 Handler 之前执行 HandlerInterceptor 的 preHandler() 方法对 Handler 进行拦截</strong></li>
+<li>Handler 即 Controller 会进行请求的处理，并向下调用 Service 和 Dao 来处理请求</li>
+<li>Hander 处理完成请求后会返回模型数据，模型数据由 DispatcherServlet 封装后返回给Web 容器</li>
+</ul>
+<p><strong>处理的流程图如下</strong></p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201210105723.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201210105723.png" alt="img"></a></p>
+<h2 id="九、返回过程"><a href="#九、返回过程" class="headerlink" title="九、返回过程"></a>九、返回过程</h2><p>Web 应用处理完请求并将结果返回给 Web 容器后，容器会将响应结果返回给客户端，这是上面流程的逆过程。浏览器收到响应结果后，会对结果进行解析和渲染。这样我们就能看到浏览器给我们显示的网页了。</p>
+<h2 id="十、整体流程图"><a href="#十、整体流程图" class="headerlink" title="十、整体流程图"></a>十、整体流程图</h2><p>下面给出了输入URL到浏览器显示界面的流程图</p>
+<p><a target="_blank" rel="noopener" href="https://nyimapicture.oss-cn-beijing.aliyuncs.com/img/20201210113745.png"><img src="/2022/10/25/Tomcat-%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E7%9A%84%E6%B5%81%E7%A8%8B/20201210113745.png" alt="img"></a></p>
+<p><strong>以上便是从输入URL到浏览器显示页面的整个流程</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/tomcat/" rel="tag"># tomcat</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84/" rel="tag"># 架构</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Tomcat-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" rel="prev" title="Tomcat-架构解析">
+                  <i class="fa fa-chevron-left"></i> Tomcat-架构解析
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Tomcat-%E4%B8%80%E4%B8%AATomcat%E6%9C%80%E5%A4%9A%E6%94%AF%E6%8C%81%E5%A4%9A%E5%B0%91%E7%94%A8%E6%88%B7%E7%9A%84%E5%B9%B6%E5%8F%91/" rel="next" title="Tomcat-一个Tomcat最多支持多少用户的并发">
+                  Tomcat-一个Tomcat最多支持多少用户的并发 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

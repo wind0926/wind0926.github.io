@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="1.简介本篇文章将向大家介绍 MyBatis 内置数据源的实现逻辑。搞懂这些数据源的实现，可使大家对数据源有更深入的认识。同时在配置这些数据源时，也会更清楚每种属性的意义和用途。因此，如果大家想知其然，也知其所以然。那么接下来就让我们一起去探索 MyBatis 内置数据源的源码吧。 MyBatis 支持三种数据源配置，分别为 UNPOOLED、POOLED 和 JNDI。并提供了两种数据源实现，分">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MyBatis源码分析-内置数据源">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E6%BA%90/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="1.简介本篇文章将向大家介绍 MyBatis 内置数据源的实现逻辑。搞懂这些数据源的实现，可使大家对数据源有更深入的认识。同时在配置这些数据源时，也会更清楚每种属性的意义和用途。因此，如果大家想知其然，也知其所以然。那么接下来就让我们一起去探索 MyBatis 内置数据源的源码吧。 MyBatis 支持三种数据源配置，分别为 UNPOOLED、POOLED 和 JNDI。并提供了两种数据源实现，分">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15346642047612.jpg">
+<meta property="article:published_time" content="2022-10-25T07:38:08.000Z">
+<meta property="article:modified_time" content="2022-10-25T07:40:45.448Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="Mybatis">
+<meta property="article:tag" content="ORM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15346642047612.jpg">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E6%BA%90/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E6%BA%90/","path":"2022/10/25/MyBatis源码分析-内置数据源/","title":"MyBatis源码分析-内置数据源"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MyBatis源码分析-内置数据源 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">1.简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E6%BA%90%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">2.内置数据源初始化过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-UnpooledDataSource"><span class="nav-number">3.</span> <span class="nav-text">3.UnpooledDataSource</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%88%9D%E5%A7%8B%E5%8C%96%E6%95%B0%E6%8D%AE%E5%BA%93%E9%A9%B1%E5%8A%A8"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 初始化数据库驱动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E8%8E%B7%E5%8F%96%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 获取数据库连接</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-PooledDataSource"><span class="nav-number">4.</span> <span class="nav-text">4.PooledDataSource</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E8%BE%85%E5%8A%A9%E7%B1%BB%E4%BB%8B%E7%BB%8D"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 辅助类介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E8%8E%B7%E5%8F%96%E8%BF%9E%E6%8E%A5"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 获取连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-%E5%9B%9E%E6%94%B6%E8%BF%9E%E6%8E%A5"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 回收连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-%E5%B0%8F%E8%8A%82"><span class="nav-number">4.4.</span> <span class="nav-text">4.4 小节</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">5.总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E5%86%85%E7%BD%AE%E6%95%B0%E6%8D%AE%E6%BA%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MyBatis源码分析-内置数据源 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MyBatis源码分析-内置数据源
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 15:38:08 / 修改时间：15:40:45" itemprop="dateCreated datePublished" datetime="2022-10-25T15:38:08+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Mybatis/" itemprop="url" rel="index"><span itemprop="name">Mybatis</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>16k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>15 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h2><p>本篇文章将向大家介绍 MyBatis 内置数据源的实现逻辑。搞懂这些数据源的实现，可使大家对数据源有更深入的认识。同时在配置这些数据源时，也会更清楚每种属性的意义和用途。因此，如果大家想知其然，也知其所以然。那么接下来就让我们一起去探索 MyBatis 内置数据源的源码吧。</p>
+<p>MyBatis 支持三种数据源配置，分别为 UNPOOLED、POOLED 和 JNDI。并提供了两种数据源实现，分别是 UnpooledDataSource 和 PooledDataSource。在三种数据源配置中，UNPOOLED 和 POOLED 是我们最常用的两种配置。至于 JNDI，MyBatis 提供这种数据源的目的是为了让其能够运行在 EJB 或应用服务器等容器中，这一点官方文档中有所说明。由于 JNDI 数据源在日常开发中使用甚少，因此，本篇文章不打算分析 JNDI 数据源相关实现。大家若有兴趣，可自行分析。接下来，本文将重点分析 UNPOOLED 和 POOLED 两种数据源。其他的就不多说了，进入正题吧。</p>
+<h2 id="2-内置数据源初始化过程"><a href="#2-内置数据源初始化过程" class="headerlink" title="2.内置数据源初始化过程"></a>2.内置数据源初始化过程</h2><p>在详细分析 UnpooledDataSource 和 PooledDataSource 两种数据源实现之前，我们先来了解一下数据源的配置与初始化过程。现在看数据源是如何配置的，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;dataSource type=&quot;UNPOOLED|POOLED&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;driver&quot; value=&quot;com.mysql.cj.jdbc.Driver&quot;/&gt;</span><br><span class="line">    &lt;property name=&quot;url&quot; value=&quot;jdbc:mysql...&quot;/&gt;</span><br><span class="line">    &lt;property name=&quot;username&quot; value=&quot;root&quot;/&gt;</span><br><span class="line">    &lt;property name=&quot;password&quot; value=&quot;1234&quot;/&gt;</span><br><span class="line">&lt;/dataSource&gt;</span><br></pre></td></tr></table></figure>
+
+<p>数据源的配置是内嵌在 <environment> 节点中的，MyBatis 在解析 <environment> 节点时，会一并解析数据源的配置。MyBatis 会根据具体的配置信息，为不同的数据源创建相应工厂类，通过工厂类即可创建数据源实例。关于数据源配置的解析以及数据源工厂类的创建过程，我在 <a target="_blank" rel="noopener" href="http://www.coolblog.xyz/2018/07/20/MyBatis-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B/">MyBatis 配置文件解析过程</a>一文中分析过，这里就不赘述了。下面我们来看一下数据源工厂类的实现逻辑。</environment></environment></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">public class UnpooledDataSourceFactory implements DataSourceFactory &#123;</span><br><span class="line">    </span><br><span class="line">    private static final String DRIVER_PROPERTY_PREFIX = &quot;driver.&quot;;</span><br><span class="line">    private static final int DRIVER_PROPERTY_PREFIX_LENGTH = DRIVER_PROPERTY_PREFIX.length();</span><br><span class="line"></span><br><span class="line">    protected DataSource dataSource;</span><br><span class="line"></span><br><span class="line">    public UnpooledDataSourceFactory() &#123;</span><br><span class="line">        // 创建 UnpooledDataSource 对象</span><br><span class="line">        this.dataSource = new UnpooledDataSource();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void setProperties(Properties properties) &#123;</span><br><span class="line">        Properties driverProperties = new Properties();</span><br><span class="line">        // 为 dataSource 创建元信息对象</span><br><span class="line">        MetaObject metaDataSource = SystemMetaObject.forObject(dataSource);</span><br><span class="line">        // 遍历 properties 键列表，properties 由配置文件解析器传入</span><br><span class="line">        for (Object key : properties.keySet()) &#123;</span><br><span class="line">            String propertyName = (String) key;</span><br><span class="line">            // 检测 propertyName 是否以 &quot;driver.&quot; 开头</span><br><span class="line">            if (propertyName.startsWith(DRIVER_PROPERTY_PREFIX)) &#123;</span><br><span class="line">                String value = properties.getProperty(propertyName);</span><br><span class="line">                // 存储配置信息到 driverProperties 中</span><br><span class="line">                driverProperties.setProperty(propertyName.substring(DRIVER_PROPERTY_PREFIX_LENGTH), value);</span><br><span class="line">            &#125; else if (metaDataSource.hasSetter(propertyName)) &#123;</span><br><span class="line">                String value = (String) properties.get(propertyName);</span><br><span class="line">                // 按需转换 value 类型</span><br><span class="line">                Object convertedValue = convertValue(metaDataSource, propertyName, value);</span><br><span class="line">                // 设置转换后的值到 UnpooledDataSourceFactory 指定属性中</span><br><span class="line">                metaDataSource.setValue(propertyName, convertedValue);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                throw new DataSourceException(&quot;Unknown DataSource property: &quot; + propertyName);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (driverProperties.size() &gt; 0) &#123;</span><br><span class="line">            // 设置 driverProperties 到 UnpooledDataSourceFactory 的 driverProperties 属性中</span><br><span class="line">            metaDataSource.setValue(&quot;driverProperties&quot;, driverProperties);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    private Object convertValue(MetaObject metaDataSource, String propertyName, String value) &#123;</span><br><span class="line">        Object convertedValue = value;</span><br><span class="line">        // 获取属性对应的 setter 方法的参数类型</span><br><span class="line">        Class&lt;?&gt; targetType = metaDataSource.getSetterType(propertyName);</span><br><span class="line">        // 按照 setter 方法的参数类型进行类型转换</span><br><span class="line">        if (targetType == Integer.class || targetType == int.class) &#123;</span><br><span class="line">            convertedValue = Integer.valueOf(value);</span><br><span class="line">        &#125; else if (targetType == Long.class || targetType == long.class) &#123;</span><br><span class="line">            convertedValue = Long.valueOf(value);</span><br><span class="line">        &#125; else if (targetType == Boolean.class || targetType == boolean.class) &#123;</span><br><span class="line">            convertedValue = Boolean.valueOf(value);</span><br><span class="line">        &#125;</span><br><span class="line">        return convertedValue;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public DataSource getDataSource() &#123;</span><br><span class="line">        return dataSource;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上是 UnpooledDataSourceFactory 的源码分析，除了 setProperties 方法稍复杂一点，其他的都比较简单，就不多说了。下面看看 PooledDataSourceFactory 的源码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public class PooledDataSourceFactory extends UnpooledDataSourceFactory &#123;</span><br><span class="line"></span><br><span class="line">    public PooledDataSourceFactory() &#123;</span><br><span class="line">        // 创建 PooledDataSource</span><br><span class="line">        this.dataSource = new PooledDataSource();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上就是 PooledDataSource 类的所有源码，PooledDataSourceFactory 继承自 UnpooledDataSourceFactory，复用了父类的逻辑，因此它的实现很简单。</p>
+<p>关于两种数据源的创建过程就先分析到这，接下来，我们去探究一下两种数据源是怎样实现的。</p>
+<h2 id="3-UnpooledDataSource"><a href="#3-UnpooledDataSource" class="headerlink" title="3.UnpooledDataSource"></a>3.UnpooledDataSource</h2><p>UnpooledDataSource，从名称上即可知道，该种数据源不具有池化特性。该种数据源每次会返回一个新的数据库连接，而非复用旧的连接。由于 UnpooledDataSource 无需提供连接池功能，因此它的实现非常简单。核心的方法有三个，分别如下：</p>
+<ol>
+<li>initializeDriver - 初始化数据库驱动</li>
+<li>doGetConnection - 获取数据连接</li>
+<li>configureConnection - 配置数据库连接</li>
+</ol>
+<p>下面我将按照顺序分节对相关方法进行分析，由于 configureConnection 方法比较简单，因此我把它和 doGetConnection 放在一节中进行分析。下面先来分析 initializeDriver 方法。</p>
+<h3 id="3-1-初始化数据库驱动"><a href="#3-1-初始化数据库驱动" class="headerlink" title="3.1 初始化数据库驱动"></a>3.1 初始化数据库驱动</h3><p>回顾我们一开始学习使用 JDBC 访问数据库时的情景，在执行 SQL 之前，通常都是先获取数据库连接。一般步骤都是加载数据库驱动，然后通过 DriverManager 获取数据库连接。UnpooledDataSource 也是使用 JDBC 访问数据库的，因此它获取数据库连接的过程也大致如此，只不过会稍有不同。下面我们一起来看一下。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">// -☆- UnpooledDataSource</span><br><span class="line">private synchronized void initializeDriver() throws SQLException &#123;</span><br><span class="line">    // 检测缓存中是否包含了与 driver 对应的驱动实例</span><br><span class="line">    if (!registeredDrivers.containsKey(driver)) &#123;</span><br><span class="line">        Class&lt;?&gt; driverType;</span><br><span class="line">        try &#123;</span><br><span class="line">            // 加载驱动类型</span><br><span class="line">            if (driverClassLoader != null) &#123;</span><br><span class="line">                // 使用 driverClassLoader 加载驱动</span><br><span class="line">                driverType = Class.forName(driver, true, driverClassLoader);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                // 通过其他 ClassLoader 加载驱动</span><br><span class="line">                driverType = Resources.classForName(driver);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            // 通过反射创建驱动实例</span><br><span class="line">            Driver driverInstance = (Driver) driverType.newInstance();</span><br><span class="line">            /*</span><br><span class="line">             * 注册驱动，注意这里是将 Driver 代理类 DriverProxy 对象注册到 DriverManager 中的，</span><br><span class="line">             * 而非 Driver 对象本身。DriverProxy 中并没什么特别的逻辑，就不分析。</span><br><span class="line">             */</span><br><span class="line">            DriverManager.registerDriver(new DriverProxy(driverInstance));</span><br><span class="line">            // 缓存驱动类名和实例</span><br><span class="line">            registeredDrivers.put(driver, driverInstance);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            throw new SQLException(&quot;Error setting driver on UnpooledDataSource. Cause: &quot; + e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上，initializeDriver 方法主要包含三步操作，分别如下：</p>
+<ol>
+<li>加载驱动</li>
+<li>通过反射创建驱动实例</li>
+<li>注册驱动实例</li>
+</ol>
+<p>这三步都是都是常规操作，比较容易理解。上面代码中出现了缓存相关的逻辑，这个是用于避免重复注册驱动。因为 initializeDriver 放阿飞并不是在 UnpooledDataSource 初始化时被调用的，而是在获取数据库连接时被调用的。因此这里需要做个检测，避免每次获取数据库连接时都重新注册驱动。这个是一个比较小的点，大家看代码时注意一下即可。下面看一下获取数据库连接的逻辑。</p>
+<h3 id="3-2-获取数据库连接"><a href="#3-2-获取数据库连接" class="headerlink" title="3.2 获取数据库连接"></a>3.2 获取数据库连接</h3><p>在使用 JDBC 时，我们都是通过 DriverManager 的接口方法获取数据库连接。本节所要分析的源码也不例外，一起看一下吧。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">// -☆- UnpooledDataSource</span><br><span class="line">public Connection getConnection() throws SQLException &#123;</span><br><span class="line">	return doGetConnection(username, password);</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line">private Connection doGetConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">    Properties props = new Properties();</span><br><span class="line">    if (driverProperties != null) &#123;</span><br><span class="line">        props.putAll(driverProperties);</span><br><span class="line">    &#125;</span><br><span class="line">    if (username != null) &#123;</span><br><span class="line">        // 存储 user 配置</span><br><span class="line">        props.setProperty(&quot;user&quot;, username);</span><br><span class="line">    &#125;</span><br><span class="line">    if (password != null) &#123;</span><br><span class="line">        // 存储 password 配置</span><br><span class="line">        props.setProperty(&quot;password&quot;, password);</span><br><span class="line">    &#125;</span><br><span class="line">    // 调用重载方法</span><br><span class="line">    return doGetConnection(props);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private Connection doGetConnection(Properties properties) throws SQLException &#123;</span><br><span class="line">    // 初始化驱动</span><br><span class="line">    initializeDriver();</span><br><span class="line">    // 获取连接</span><br><span class="line">    Connection connection = DriverManager.getConnection(url, properties);</span><br><span class="line">    // 配置连接，包括自动提交以及事务等级</span><br><span class="line">    configureConnection(connection);</span><br><span class="line">    return connection;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void configureConnection(Connection conn) throws SQLException &#123;</span><br><span class="line">    if (autoCommit != null &amp;&amp; autoCommit != conn.getAutoCommit()) &#123;</span><br><span class="line">        // 设置自动提交</span><br><span class="line">        conn.setAutoCommit(autoCommit);</span><br><span class="line">    &#125;</span><br><span class="line">    if (defaultTransactionIsolationLevel != null) &#123;</span><br><span class="line">        // 设置事务隔离级别</span><br><span class="line">        conn.setTransactionIsolation(defaultTransactionIsolationLevel);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上，上面方法将一些配置信息放入到 Properties 对象中，然后将数据库连接和 Properties 对象传给 DriverManager 的 getConnection 方法即可获取到数据库连接。</p>
+<p>好了，关于 UnpooledDataSource 就先说到这。下面分析一下 PooledDataSource，它的实现要复杂一些。</p>
+<h2 id="4-PooledDataSource"><a href="#4-PooledDataSource" class="headerlink" title="4.PooledDataSource"></a>4.PooledDataSource</h2><p>PooledDataSource 内部实现了连接池功能，用于复用数据库连接。因此，从效率上来说，PooledDataSource 要高于 UnpooledDataSource。PooledDataSource 需要借助一些辅助类帮助它完成连接池的功能，所以接下来，我们先来认识一下相关的辅助类。</p>
+<h3 id="4-1-辅助类介绍"><a href="#4-1-辅助类介绍" class="headerlink" title="4.1 辅助类介绍"></a>4.1 辅助类介绍</h3><p>PooledDataSource 需要借助两个辅助类帮其完成功能，这两个辅助类分别是 PoolState 和 PooledConnection。PoolState 用于记录连接池运行时的状态，比如连接获取次数，无效连接数量等。同时 PoolState 内部定义了两个 PooledConnection 集合，用于存储空闲连接和活跃连接。PooledConnection 内部定义了一个 Connection 类型的变量，用于指向真实的数据库连接。以及一个 Connection 的代理类，用于对部分方法调用进行拦截。至于为什么要拦截，随后将进行分析。除此之外，PooledConnection 内部也定义了一些字段，用于记录数据库连接的一些运行时状态。接下来，我们来看一下 PooledConnection 的定义。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">class PooledConnection implements InvocationHandler &#123;</span><br><span class="line"></span><br><span class="line">    private static final String CLOSE = &quot;close&quot;;</span><br><span class="line">    private static final Class&lt;?&gt;[] IFACES = new Class&lt;?&gt;[]&#123;Connection.class&#125;;</span><br><span class="line"></span><br><span class="line">    private final int hashCode;</span><br><span class="line">    private final PooledDataSource dataSource;</span><br><span class="line">    // 真实的数据库连接</span><br><span class="line">    private final Connection realConnection;</span><br><span class="line">    // 数据库连接代理</span><br><span class="line">    private final Connection proxyConnection;</span><br><span class="line">    </span><br><span class="line">    // 从连接池中取出连接时的时间戳</span><br><span class="line">    private long checkoutTimestamp;</span><br><span class="line">    // 数据库连接创建时间</span><br><span class="line">    private long createdTimestamp;</span><br><span class="line">    // 数据库连接最后使用时间</span><br><span class="line">    private long lastUsedTimestamp;</span><br><span class="line">    // connectionTypeCode = (url + username + password).hashCode()</span><br><span class="line">    private int connectionTypeCode;</span><br><span class="line">    // 表示连接是否有效</span><br><span class="line">    private boolean valid;</span><br><span class="line"></span><br><span class="line">    public PooledConnection(Connection connection, PooledDataSource dataSource) &#123;</span><br><span class="line">        this.hashCode = connection.hashCode();</span><br><span class="line">        this.realConnection = connection;</span><br><span class="line">        this.dataSource = dataSource;</span><br><span class="line">        this.createdTimestamp = System.currentTimeMillis();</span><br><span class="line">        this.lastUsedTimestamp = System.currentTimeMillis();</span><br><span class="line">        this.valid = true;</span><br><span class="line">        // 创建 Connection 的代理类对象</span><br><span class="line">        this.proxyConnection = (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), IFACES, this);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    @Override</span><br><span class="line">    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;...&#125;</span><br><span class="line">    </span><br><span class="line">    // 省略部分代码</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面再来看看 PoolState 的定义。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">public class PoolState &#123;</span><br><span class="line"></span><br><span class="line">    protected PooledDataSource dataSource;</span><br><span class="line"></span><br><span class="line">    // 空闲连接列表</span><br><span class="line">    protected final List&lt;PooledConnection&gt; idleConnections = new ArrayList&lt;PooledConnection&gt;();</span><br><span class="line">    // 活跃连接列表</span><br><span class="line">    protected final List&lt;PooledConnection&gt; activeConnections = new ArrayList&lt;PooledConnection&gt;();</span><br><span class="line">    // 从连接池中获取连接的次数</span><br><span class="line">    protected long requestCount = 0;</span><br><span class="line">    // 请求连接总耗时（单位：毫秒）</span><br><span class="line">    protected long accumulatedRequestTime = 0;</span><br><span class="line">    // 连接执行时间总耗时</span><br><span class="line">    protected long accumulatedCheckoutTime = 0;</span><br><span class="line">    // 执行时间超时的连接数</span><br><span class="line">    protected long claimedOverdueConnectionCount = 0;</span><br><span class="line">    // 超时时间累加值</span><br><span class="line">    protected long accumulatedCheckoutTimeOfOverdueConnections = 0;</span><br><span class="line">    // 等待时间累加值</span><br><span class="line">    protected long accumulatedWaitTime = 0;</span><br><span class="line">    // 等待次数</span><br><span class="line">    protected long hadToWaitCount = 0;</span><br><span class="line">    // 无效连接数</span><br><span class="line">    protected long badConnectionCount = 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面对 PooledConnection 和 PoolState 的定义进行了一些注释，这两个类中有很多字段用来记录运行时状态。但在这些字段并非核心，因此大家知道每个字段的用途就行了。关于这两个辅助类的介绍就先到这</p>
+<h3 id="4-2-获取连接"><a href="#4-2-获取连接" class="headerlink" title="4.2 获取连接"></a>4.2 获取连接</h3><p>前面已经说过，PooledDataSource 会将用过的连接进行回收，以便可以复用连接。因此从 PooledDataSource 获取连接时，如果空闲链接列表里有连接时，可直接取用。那如果没有空闲连接怎么办呢？此时有两种解决办法，要么创建新连接，要么等待其他连接完成任务。具体怎么做，需视情况而定。下面我们深入到源码中一探究竟。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br></pre></td><td class="code"><pre><span class="line">public Connection getConnection() throws SQLException &#123;</span><br><span class="line">    // 返回 Connection 的代理对象</span><br><span class="line">    return popConnection(dataSource.getUsername(), dataSource.getPassword()).getProxyConnection();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private PooledConnection popConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">    boolean countedWait = false;</span><br><span class="line">    PooledConnection conn = null;</span><br><span class="line">    long t = System.currentTimeMillis();</span><br><span class="line">    int localBadConnectionCount = 0;</span><br><span class="line"></span><br><span class="line">    while (conn == null) &#123;</span><br><span class="line">        synchronized (state) &#123;</span><br><span class="line">            // 检测空闲连接集合（idleConnections）是否为空</span><br><span class="line">            if (!state.idleConnections.isEmpty()) &#123;</span><br><span class="line">                // idleConnections 不为空，表示有空闲连接可以使用</span><br><span class="line">                conn = state.idleConnections.remove(0);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                /*</span><br><span class="line">                 * 暂无空闲连接可用，但如果活跃连接数还未超出限制</span><br><span class="line">                 *（poolMaximumActiveConnections），则可创建新的连接</span><br><span class="line">                 */</span><br><span class="line">                if (state.activeConnections.size() &lt; poolMaximumActiveConnections) &#123;</span><br><span class="line">                    // 创建新连接</span><br><span class="line">                    conn = new PooledConnection(dataSource.getConnection(), this);</span><br><span class="line">                    </span><br><span class="line">                &#125; else &#123;    // 连接池已满，不能创建新连接</span><br><span class="line">                    // 取出运行时间最长的连接</span><br><span class="line">                    PooledConnection oldestActiveConnection = state.activeConnections.get(0);</span><br><span class="line">                    // 获取运行时长</span><br><span class="line">                    long longestCheckoutTime = oldestActiveConnection.getCheckoutTime();</span><br><span class="line">                    // 检测运行时长是否超出限制，即超时</span><br><span class="line">                    if (longestCheckoutTime &gt; poolMaximumCheckoutTime) &#123;</span><br><span class="line">                        // 累加超时相关的统计字段</span><br><span class="line">                        state.claimedOverdueConnectionCount++;</span><br><span class="line">                        state.accumulatedCheckoutTimeOfOverdueConnections += longestCheckoutTime;</span><br><span class="line">                        state.accumulatedCheckoutTime += longestCheckoutTime;</span><br><span class="line"></span><br><span class="line">                        // 从活跃连接集合中移除超时连接</span><br><span class="line">                        state.activeConnections.remove(oldestActiveConnection);</span><br><span class="line">                        // 若连接未设置自动提交，此处进行回滚操作</span><br><span class="line">                        if (!oldestActiveConnection.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">                            try &#123;</span><br><span class="line">                                oldestActiveConnection.getRealConnection().rollback();</span><br><span class="line">                            &#125; catch (SQLException e) &#123;...&#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                        /*</span><br><span class="line">                         * 创建一个新的 PooledConnection，注意，</span><br><span class="line">                         * 此处复用 oldestActiveConnection 的 realConnection 变量</span><br><span class="line">                         */</span><br><span class="line">                        conn = new PooledConnection(oldestActiveConnection.getRealConnection(), this);</span><br><span class="line">                        /*</span><br><span class="line">                         * 复用 oldestActiveConnection 的一些信息，注意 PooledConnection 中的 </span><br><span class="line">                         * createdTimestamp 用于记录 Connection 的创建时间，而非 PooledConnection </span><br><span class="line">                         * 的创建时间。所以这里要复用原连接的时间信息。</span><br><span class="line">                         */</span><br><span class="line">                        conn.setCreatedTimestamp(oldestActiveConnection.getCreatedTimestamp());</span><br><span class="line">                        conn.setLastUsedTimestamp(oldestActiveConnection.getLastUsedTimestamp());</span><br><span class="line"></span><br><span class="line">                        // 设置连接为无效状态</span><br><span class="line">                        oldestActiveConnection.invalidate();</span><br><span class="line">                        </span><br><span class="line">                    &#125; else &#123;    // 运行时间最长的连接并未超时</span><br><span class="line">                        try &#123;</span><br><span class="line">                            if (!countedWait) &#123;</span><br><span class="line">                                state.hadToWaitCount++;</span><br><span class="line">                                countedWait = true;</span><br><span class="line">                            &#125;</span><br><span class="line">                            long wt = System.currentTimeMillis();</span><br><span class="line">                            // 当前线程进入等待状态</span><br><span class="line">                            state.wait(poolTimeToWait);</span><br><span class="line">                            state.accumulatedWaitTime += System.currentTimeMillis() - wt;</span><br><span class="line">                        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                            break;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            if (conn != null) &#123;</span><br><span class="line">                /*</span><br><span class="line">                 * 检测连接是否有效，isValid 方法除了会检测 valid 是否为 true，</span><br><span class="line">                 * 还会通过 PooledConnection 的 pingConnection 方法执行 SQL 语句，</span><br><span class="line">                 * 检测连接是否可用。pingConnection 方法的逻辑不复杂，大家可以自行分析。</span><br><span class="line">                 * 另外，官方文档在介绍 POOLED 类型数据源时，也介绍了连接有效性检测方面的</span><br><span class="line">                 * 属性，有三个：poolPingQuery，poolPingEnabled 和 </span><br><span class="line">                 * poolPingConnectionsNotUsedFor。关于这三个属性，大家可以查阅官方文档</span><br><span class="line">                 */</span><br><span class="line">                if (conn.isValid()) &#123;</span><br><span class="line">                    if (!conn.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">                        // 进行回滚操作</span><br><span class="line">                        conn.getRealConnection().rollback();</span><br><span class="line">                    &#125;</span><br><span class="line">                    conn.setConnectionTypeCode(assembleConnectionTypeCode(dataSource.getUrl(), username, password));</span><br><span class="line">                    // 设置统计字段</span><br><span class="line">                    conn.setCheckoutTimestamp(System.currentTimeMillis());</span><br><span class="line">                    conn.setLastUsedTimestamp(System.currentTimeMillis());</span><br><span class="line">                    state.activeConnections.add(conn);</span><br><span class="line">                    state.requestCount++;</span><br><span class="line">                    state.accumulatedRequestTime += System.currentTimeMillis() - t;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    // 连接无效，此时累加无效连接相关的统计字段</span><br><span class="line">                    state.badConnectionCount++;</span><br><span class="line">                    localBadConnectionCount++;</span><br><span class="line">                    conn = null;</span><br><span class="line">                    if (localBadConnectionCount &gt; (poolMaximumIdleConnections</span><br><span class="line">                        + poolMaximumLocalBadConnectionTolerance)) &#123;</span><br><span class="line">                        throw new SQLException(...);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (conn == null) &#123;</span><br><span class="line">        throw new SQLException(...);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return conn;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面代码冗长，过程比较复杂，下面把代码逻辑梳理一下。从连接池中获取连接首先会遇到两种情况：</p>
+<ol>
+<li>连接池中有空闲连接</li>
+<li>连接池中无空闲连接</li>
+</ol>
+<p>对于第一种情况，处理措施就很简单了，把连接取出返回即可。对于第二种情况，则要进行细分，会有如下的情况。</p>
+<ol>
+<li>活跃连接数没有超出最大活跃连接数</li>
+<li>活跃连接数超出最大活跃连接数</li>
+</ol>
+<p>对于上面两种情况，第一种情况比较好处理，直接创建新的连接即可。至于第二种情况，需要再次进行细分。</p>
+<ol>
+<li>活跃连接的运行时间超出限制，即超时了</li>
+<li>活跃连接未超时</li>
+</ol>
+<p>对于第一种情况，我们直接将超时连接强行中断，并进行回滚，然后复用部分字段重新创建 PooledConnection 即可。对于第二种情况，目前没有更好的处理方式了，只能等待了。下面用一段伪代码演示各种情况及相应的处理措施，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">if (连接池中有空闲连接) &#123;</span><br><span class="line">    1. 将连接从空闲连接集合中移除</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    if (活跃连接数未超出限制) &#123;</span><br><span class="line">        1. 创建新连接</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        1. 从活跃连接集合中取出第一个元素</span><br><span class="line">        2. 获取连接运行时长</span><br><span class="line">        </span><br><span class="line">        if (连接超时) &#123;</span><br><span class="line">            1. 将连接从活跃集合中移除</span><br><span class="line">            2. 复用原连接的成员变量，并创建新的 PooledConnection 对象</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            1. 线程进入等待状态</span><br><span class="line">            2. 线程被唤醒后，重新执行以上逻辑</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">1. 将连接添加到活跃连接集合中</span><br><span class="line">2. 返回连接</span><br></pre></td></tr></table></figure>
+
+<p>最后用一个流程图大致描绘 popConnection 的逻辑，如下：</p>
+<p><img src="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15346642047612.jpg" alt="img"></p>
+<h3 id="4-3-回收连接"><a href="#4-3-回收连接" class="headerlink" title="4.3 回收连接"></a>4.3 回收连接</h3><p>相比于获取连接，回收连接的逻辑要简单的多。回收连接成功与否只取决于空闲连接集合的状态，所需处理情况很少，因此比较简单。下面看一下相关的逻辑。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">protected void pushConnection(PooledConnection conn) throws SQLException &#123;</span><br><span class="line">    synchronized (state) &#123;</span><br><span class="line">        // 从活跃连接池中移除连接</span><br><span class="line">        state.activeConnections.remove(conn);</span><br><span class="line">        if (conn.isValid()) &#123;</span><br><span class="line">            // 空闲连接集合未满</span><br><span class="line">            if (state.idleConnections.size() &lt; poolMaximumIdleConnections</span><br><span class="line">                &amp;&amp; conn.getConnectionTypeCode() == expectedConnectionTypeCode) &#123;</span><br><span class="line">                state.accumulatedCheckoutTime += conn.getCheckoutTime();</span><br><span class="line"></span><br><span class="line">                // 回滚未提交的事务</span><br><span class="line">                if (!conn.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">                    conn.getRealConnection().rollback();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                // 创建新的 PooledConnection</span><br><span class="line">                PooledConnection newConn = new PooledConnection(conn.getRealConnection(), this);</span><br><span class="line">                state.idleConnections.add(newConn);</span><br><span class="line">                // 复用时间信息</span><br><span class="line">                newConn.setCreatedTimestamp(conn.getCreatedTimestamp());</span><br><span class="line">                newConn.setLastUsedTimestamp(conn.getLastUsedTimestamp());</span><br><span class="line"></span><br><span class="line">                // 将原连接置为无效状态</span><br><span class="line">                conn.invalidate();</span><br><span class="line"></span><br><span class="line">                // 通知等待的线程</span><br><span class="line">                state.notifyAll();</span><br><span class="line">                </span><br><span class="line">            &#125; else &#123;    // 空闲连接集合已满</span><br><span class="line">                state.accumulatedCheckoutTime += conn.getCheckoutTime();</span><br><span class="line">                // 回滚未提交的事务</span><br><span class="line">                if (!conn.getRealConnection().getAutoCommit()) &#123;</span><br><span class="line">                    conn.getRealConnection().rollback();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                // 关闭数据库连接</span><br><span class="line">                conn.getRealConnection().close();</span><br><span class="line">                conn.invalidate();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            state.badConnectionCount++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面代码首先将连接从活跃连接集合中移除，然后再根据空闲集合是否有空闲空间进行后续处理。如果空闲集合未满，此时复用原连接的字段信息创建新的连接，并将其放入空闲集合中即可。若空闲集合已满，此时无需回收连接，直接关闭即可。pushConnection 方法的逻辑并不复杂，就不多说了。</p>
+<p>我们知道获取连接的方法 popConnection 是由 getConnection 方法调用的，那回收连接的方法 pushConnection 是由谁调用的呢？答案是 PooledConnection 中的代理逻辑。相关代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">// -☆- PooledConnection</span><br><span class="line">public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">    String methodName = method.getName();</span><br><span class="line">    // 检测 close 方法是否被调用，若被调用则拦截之</span><br><span class="line">    if (CLOSE.hashCode() == methodName.hashCode() &amp;&amp; CLOSE.equals(methodName)) &#123;</span><br><span class="line">        // 将回收连接中，而不是直接将连接关闭</span><br><span class="line">        dataSource.pushConnection(this);</span><br><span class="line">        return null;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (!Object.class.equals(method.getDeclaringClass())) &#123;</span><br><span class="line">                checkConnection();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            // 调用真实连接的目标方法</span><br><span class="line">            return method.invoke(realConnection, args);</span><br><span class="line">        &#125; catch (Throwable t) &#123;</span><br><span class="line">            throw ExceptionUtil.unwrapThrowable(t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在上一节中，getConnection 方法返回的是 Connection 代理对象，不知道大家有没有注意到。代理对象中的方法被调用时，会被上面的代理逻辑所拦截。如果代理对象的 close 方法被调用，MyBatis 并不会直接调用真实连接的 close 方法关闭连接，而是调用 pushConnection 方法回收连接。同时会唤醒处于睡眠中的线程，使其恢复运行。整个过程并不复杂，就不多说了。</p>
+<h3 id="4-4-小节"><a href="#4-4-小节" class="headerlink" title="4.4 小节"></a>4.4 小节</h3><p>本章分析了 PooledDataSource 的部分源码及一些辅助类的源码，除此之外，PooledDataSource 中还有部分源码没有分析，大家若有兴趣，可自行分析。好了，关于 PooledDataSource 的分析就先到这。</p>
+<h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5.总结"></a>5.总结</h2><p>本篇文章对 MyBatis 两种内置数据源进行了较为详细的分析，总的来说，这两种数据源的源码都不是很难理解。大家在阅读源码的过程中，首先应搞懂源码的主要逻辑，然后再去分析一些边边角角的逻辑。不要一开始就陷入各种细节中，容易迷失方向。</p>
+<p>好了，到此本文就结束了。若文章有错误不妥之处，希望大家指明。最后，感谢大家阅读我的文章。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Mybatis/" rel="tag"># Mybatis</a>
+              <a href="/tags/ORM/" rel="tag"># ORM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E7%BC%93%E5%AD%98%E5%8E%9F%E7%90%86/" rel="prev" title="MyBatis源码分析-缓存原理">
+                  <i class="fa fa-chevron-left"></i> MyBatis源码分析-缓存原理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B/" rel="next" title="MyBatis源码分析-配置文件解析过程">
+                  MyBatis源码分析-配置文件解析过程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

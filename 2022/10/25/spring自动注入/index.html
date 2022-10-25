@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="比如提到spring的自动注入作为一个java程序员肯定自信无比了解；但是笔者要说的自动注入可能会和你理解有很大出入。首先搞明白什么是自动注入，自动注入也可以叫做自动装配（springboot也有一个自动装配但是我认为翻译的不够准确，springboot的应该叫做自动配置和这里说的自动注入是两回事，笔者不是什么大牛或者权威；所以读者如果你坚持认为springboot也叫自动装配那也无可厚非，只是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spring自动注入">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="比如提到spring的自动注入作为一个java程序员肯定自信无比了解；但是笔者要说的自动注入可能会和你理解有很大出入。首先搞明白什么是自动注入，自动注入也可以叫做自动装配（springboot也有一个自动装配但是我认为翻译的不够准确，springboot的应该叫做自动配置和这里说的自动注入是两回事，笔者不是什么大牛或者权威；所以读者如果你坚持认为springboot也叫自动装配那也无可厚非，只是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/8.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/9.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/10.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/11.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/12.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/13.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/14.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/15.gif">
+<meta property="article:published_time" content="2022-10-25T08:48:20.000Z">
+<meta property="article:modified_time" content="2022-10-25T09:04:46.451Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="Spring">
+<meta property="article:tag" content="框架源码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/","path":"2022/10/25/spring自动注入/","title":"spring自动注入"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>spring自动注入 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="spring自动注入 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          spring自动注入
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 16:48:20 / 修改时间：17:04:46" itemprop="dateCreated datePublished" datetime="2022-10-25T16:48:20+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>比如提到spring的自动注入作为一个java程序员肯定自信无比了解；但是笔者要说的自动注入可能会和你理解有很大出入。<br>首先搞明白什么是自动注入，自动注入也可以叫做自动装配（springboot也有一个自动装配但是我认为翻译的不够准确，springboot的应该叫做自动配置和这里说的自动注入是两回事，笔者不是什么大牛或者权威；所以读者如果你坚持认为springboot也叫自动装配那也无可厚非，只是在这篇文章里面所谓的自动注入就是自动装配，关于springboot的自动配置我以后更新文章再来说）；<br>自动注入需要相对于手动装配来说；在spring应用程序当中假设你的A类依赖了B类，需要在A类当中提供一个B类的属性，再加上setter，继而在xml当中配置、描述一下这两个类之间的依赖关系。如果做完当容器初始化过程中会实例化A，在实例化A的过程中会填充属性，由于在xml中已经配置、描述好两者的关系，故而spring会把B给A装配上；这种由程序员自己配置、描述好依赖关系的写法叫做手动装配；看个例子吧；</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.luban.app;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	B b;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setB</span><span class="params">(B b)</span> &#123;</span><br><span class="line">		<span class="built_in">this</span>.b = b;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> com.luban.app;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span><br><span class="line">&lt;beans xmlns=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span><br><span class="line">       xmlns:xsi=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span><br><span class="line">       xsi:schemaLocation=<span class="string">&quot;http://www.springframework.org/schema/beans</span></span><br><span class="line"><span class="string">       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span>&gt;</span><br><span class="line">&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span> &gt;</span><br><span class="line">		&lt;!-- 由程序员手动指定的依赖关系 称为手动装配--&gt;</span><br><span class="line">		&lt;property name=<span class="string">&quot;b&quot;</span>&gt;</span><br><span class="line">			&lt;ref bean=<span class="string">&quot;b&quot;</span> /&gt;</span><br><span class="line">		&lt;/property&gt;</span><br><span class="line">	&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">	&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">	&lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;	</span><br></pre></td></tr></table></figure>
+
+
+<blockquote>
+<p>但是实际开发中手动装配的场景比较少(比如在缺少源码的情况下可能会使用这种手动装配情况)；<br>关于依赖注入的资料可以参考官网<br><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-dependencies">https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-dependencies</a><br>这一章节提到了一个非常重要的知识点，也是一个常见的spring面试题目。spring有几种依赖注入方式？那么这个问题应该怎么回答呢？</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/1.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>官网的意思是DI(依赖注入)一共有两种主要的变体（注意会考），分别是基于构造方法的依赖注入和基于setter（setXxxx(…)）的依赖注入，不管是手动装配还是自动装配都是基于这两种方式或者变体方式来的；但是这里一定要回答到主要和变体两个名词，因为有的注入方式就不是这两种，而是这两种其中一种的变体方式；比如在一个类的属性上面加@Autowired，这种方式注入属性的方式就是利用了java的反射知识，field.set(value,targetObject);关于这个我在后面的文章中对spring源码解析的时候会说明@Autowired的原理；所以@Autowired这种注入的方式是setter注入方式的一种变体<br>但是这里需要说明的是所谓的setter其实和属性无关，什么意思呢？一般的setter方法会对应一个属性，但是spring的基于setter的注入方式是不需要属性的，仅仅只需要一个setter方法，下面这个例子来说明这个问题</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">B.java</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">A.java</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setXxx</span><span class="params">(B b)</span> &#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;spring 找到符合的setter&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;和属性无关，甚至可以不要属性&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;可以直接调用，这个A里面就没有任何属性&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">xml配置文件</span><br><span class="line"></span><br><span class="line">&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span> &gt;</span><br><span class="line">	&lt;!-- 由程序员手动指定的依赖关系 称为手动装配--&gt;</span><br><span class="line">	&lt;property name=<span class="string">&quot;xxx&quot;</span>&gt;</span><br><span class="line">		&lt;ref bean=<span class="string">&quot;b&quot;</span> /&gt;</span><br><span class="line">	&lt;/property&gt;</span><br><span class="line">&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">&lt;/bean&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>运行上面的代码可以看到spring也会调用这个setXxx方法，如果仔细观察调用栈可以看到这个方法是在spring容器初始化的时候实例化A，完成A的注入功能时候调用过来的，下图是笔者运行结果的截图</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/2.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>可能有的读者会认为上面的xml配置文件中已经手动装配了B给A，肯定会调用setXxx方法，其实不然，即是我使用自动装配也还是会调用的（关于什么是自动装配，下文会详细介绍），因为前文说过，注入方式与手动注入、自动注入无关。笔者改一下代码，把A的注入模型改成自动注入来看看结果</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 程序员不指定装配的具体参数，容器自动查询后装配--&gt;</span><br><span class="line">&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span> autowire=<span class="string">&quot;byType&quot;</span>&gt;</span><br><span class="line">	</span><br><span class="line">&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">&lt;/bean&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>把代码改成上面这样自动装配结果是一样的，A类当中的setXxx方法还是会调用，不需要提供任何属性，至于原理笔者后面更新到spring源码的时候再来详细说道；可能有读者会说如果使用注解呢？比如如下代码</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">A.java</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	<span class="meta">@Autowired</span></span><br><span class="line">	B b;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setB</span><span class="params">(B b)</span> &#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;如果你使用注解，这个setter变得毫无意义&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;这个方法甚至都不会调用&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;因为前文说过这种方法用的是field.set&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">B.java</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>上面代码同样会注入b，但是是调用field.set去完成注入的，不是通过setter，当然再次说明一下这是setter的一种变体；上面代码直到A完成注入B后setter方法也不会调用；</p>
+<p>重点来了，要考。笔者看过很多资料说@Autowired也算自动装配，关于这点笔者不敢苟同，在一个属性上面加@Autowired注解应该属于手动装配，我会通过大量源码和例子来证明笔者的这个理论。<br>之所以会有人把@Autowired也理解为自动装配的原因是因为bytype引起的，因为spring官网有说明自动装配有四种模型分表是no、bytype、byname、constructor；参考官网资料，而现在流行着这么一种说法：**@Autowired就是通过bytype来完成注入的**。如果你也认为这种说法成立，那么就是默认了@Autowired是自动装配且装配模型是bytype。笔者见过很多程序员和很多资料都支持这种说法，其实严格意义上来讲这句话大错特错，甚至有误人子弟的嫌疑。因为bytype仅仅是一种自动注入模型而已，这种模型有其固有的技术手段，而@Autowired是一个注解，这个注解会被spring的后置处理器解析，和处理bytype不是同一回事。如果需要讲清楚他们的区别和证明@Autowired不是自动装配则首先要搞明白什么自动装配。笔者接下来会花一定篇幅来解释自动装配的知识，然后回过头来讲他们的区别和证明@Autowired属性手动装配。</p>
+</blockquote>
+<blockquote>
+<p>如果现在已经理解了手动装配也叫手动注入，也已经理解了注入方式(setter和构造方法)，那么接下来讨论自动注入或者叫自动装配；自动注入的出现是因为手动装配过于麻烦，比如某个类X当中依赖了10个其他类那么配置文件将会变的特别冗余和臃肿，spring的做法是可以为这个X类提供一种叫做自动装配的模型，无需程序员去手动配置X类的依赖关系。有读者会疑问，用注解不也是可以解决这个xml臃肿的问题？确实用注解可以解决，但是我们现在讨论的是自动装配的问题，就不能用注解；为什么不能用注解来讨论自动装配的问题呢？因为在不配置BeanFactoryPostProcessor和修改beanDefinition的情况下注解的类是不支持自动装配的（关于BeanFactoryPostProcessor和beanDefinition的知识笔者以后有时间更新）；这也是证明@Autowired默认不是自动装配的一个证据，那又如何证明注解类是默认不支持自动装配呢？下文我会解释一个注解类默认是不支持自动装配的。也就是说如果讨论自动装配最好是用xml形式来配置spring容器才会有意义；当然读者如果对spring比较精通其实通过修改注解类的beanDefinition来说明自动装配的问题，鉴于大部分读者对spring不精通故而笔者还是用xml来讨论吧；比如下面这个例子</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span><br><span class="line">&lt;beans xmlns=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span><br><span class="line">       xmlns:xsi=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span><br><span class="line">       xsi:schemaLocation=<span class="string">&quot;http://www.springframework.org/schema/beans</span></span><br><span class="line"><span class="string">       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span></span><br><span class="line">		<span class="keyword">default</span>-autowire=<span class="string">&quot;byType&quot;</span>&gt;</span><br><span class="line">		&lt;!--<span class="keyword">default</span>-autowire=<span class="string">&quot;byType&quot;</span>--&gt;</span><br><span class="line">		&lt;!-- 程序员不指定装配的具体参数，容器自动查询后装配--&gt;</span><br><span class="line">		&lt;!--当然除了这种写法还可以直接在bean标签上为特定类指定自动装配模型--&gt;</span><br><span class="line">		&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span>&gt;</span><br><span class="line"></span><br><span class="line">		&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">		&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">		&lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">A.java</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	B b;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setB</span><span class="params">(B b)</span> &#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;在不考虑注解的情况下&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;如果配置了自动装配则不需要手动配置&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">B.java</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>上面代码运行起来，A能注入B，但是在xml配置文件中并没有去手动维护、描述他们之间的依赖关系，而是在xml的根标签上面写了一行default-autowire&#x3D;“byType”，其实关于自动注入的歧义或者被人误解的地方就是这个default-autowire&#x3D;”byType”引起的；那么这行代码表示什么意思呢？表示所在配置在当前xml当中的bean都以bytype这种模式自动装配(如果没有特殊指定，因为bean还可以单独配置装配模式的)；这需要注意笔者的措辞，笔者说的bytype这自动装配模式，是一种模式，这个不是笔者信口开河，因为在官网文档里面spring也是这么定义的<br>首先官网介绍beanDefinition这一章节的时候有提到bean的Autowiring mode</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/3.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>再就是spring官网在介绍spring自动注入知识的章节也提到过这个名词</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/4.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>Autowiring mode 笔者姑且翻译为自动注入模型吧，如果有211、雅思读者可以给读者留言更合适的翻译<br>那为什么要锱铢在这个名词上呢？笔者觉得真的非常重要，很多初学spring的程序员都是粗学spring，忽略甚至混淆了很多关键的名词定义，导致很多观念根深蒂固后面想深入学习spring源码的时候就比较困难<br>这个名字叫做自动注入模型和前面提到的依赖注入方式(setter和构造方法)是两回事，简而言之：<strong>依赖注入是一个过程，主要通过setter和构造方法以及一些变体的方式完成把对象依赖、或者填充上的这个过程叫做依赖注入，不管手动装配还是自动装配都有这个过程</strong>；而自动装配模型是一种完成自动装配依赖的手段体现，每一种模型都使用了不同的技术去查找和填充bean；而从spring官网上面可以看到spring只提出了4中自动装配模型（严格意义上是三种、因为第一种是no，表示不使用自动装配、使用），这四个模型分别用一个整形来表示，存在spring的beanDefinition当中，任何一个类默认是no这个装配模型，也就是一个被注解的类默认的装配模型是no也就是手动装配；其中no用0来表示；bytype用2来表示；如果某个类X，假设X的bean对应的beanDefinition当中的autowireMode&#x3D;2则表示这个类X的自动装配模型为bytype；如果autowireMode&#x3D;1则表示为byname装配模型；需要注意的是官网上面说的四种注入模型其中并没有我们熟悉的@Autowired，这也再一次说明@Autowired不是自动装配；可能有读者会提出假设我在A类的某个属性上面加上@Autowired之后这个A类就会不会成了自动装配呢？@Autowired是不是会改变这个类A当中的autowireMode呢？我们可以写一个例子来证明一下</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span><br><span class="line">&lt;beans xmlns=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span><br><span class="line">       xmlns:xsi=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span><br><span class="line">       xsi:schemaLocation=<span class="string">&quot;http://www.springframework.org/schema/beans</span></span><br><span class="line"><span class="string">       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span></span><br><span class="line">	   <span class="keyword">default</span>-autowire=<span class="string">&quot;byType&quot;</span>&gt;</span><br><span class="line"></span><br><span class="line">		&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span>&gt;</span><br><span class="line">		&lt;/bean&gt;</span><br><span class="line">		&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">		&lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br><span class="line"></span><br><span class="line">xml配置了A 和B 都是自动装配模型为bytype讲道理要实现autowireMode=<span class="number">2</span></span><br><span class="line"></span><br><span class="line">A.java</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">B.java</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">提供一个后置处理器来获取A的自动装配模型</span><br><span class="line">ZiluBeanFactoryPostprocessor.java</span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ZiluBeanFactoryPostprocessor</span> <span class="keyword">implements</span> <span class="title class_">BeanFactoryPostProcessor</span> &#123;</span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">postProcessBeanFactory</span><span class="params">(ConfigurableListableBeanFactory beanFactory)</span> <span class="keyword">throws</span> BeansException &#123;</span><br><span class="line">		<span class="type">GenericBeanDefinition</span> <span class="variable">a</span> <span class="operator">=</span> (GenericBeanDefinition)</span><br><span class="line">				beanFactory.getBeanDefinition(<span class="string">&quot;a&quot;</span>);</span><br><span class="line">		<span class="comment">//打印A 的注入模型</span></span><br><span class="line">		System.out.println(<span class="string">&quot;a mode=&quot;</span>+a.getAutowireMode());</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>讲道理由于是bytype所以应该打印出来2； 结果如图</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/5.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>如果笔者把注入模型改成byname则结果应该会改变</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/6.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>接下来笔者验证一个通过注解配置的类加上@Autowried后的注入模型的值</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/7.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>可以看到结果为0，说明这个A类不是自动装配，其实这已经能证明@Autowried不是自动装配了，但是还有更直接的证据证明他不是自动装配，就是通过spring源码当中处理@Autowried的代码可以看出，首先我们写一个bytype的例子看看spring如何处理的</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span><br><span class="line">&lt;beans xmlns=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span><br><span class="line">       xmlns:xsi=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span><br><span class="line">       xsi:schemaLocation=<span class="string">&quot;http://www.springframework.org/schema/beans</span></span><br><span class="line"><span class="string">       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span></span><br><span class="line">	   <span class="keyword">default</span>-autowire=<span class="string">&quot;byType&quot;</span>&gt;</span><br><span class="line">		&lt;!--自动装配--&gt;</span><br><span class="line">		&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span>&gt;</span><br><span class="line">		&lt;/bean&gt;</span><br><span class="line">		&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">		&lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">A.java</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"></span><br><span class="line">	B b;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * 如果是自动装配需要提供setter</span></span><br><span class="line"><span class="comment">	 * 或者提供构造方法</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setB</span><span class="params">(B b)</span> &#123;</span><br><span class="line">		<span class="built_in">this</span>.b = b;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">B.java</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>上面代码运行起来，调试spring源码当中的org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean方法，这个方法主要就是完成属性填充的，也就是大家说的注入</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/8.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>可以看上图1399行有一个判断，判断当前类的注入模式是否bynane或者bytype如果是其中一种则会进入1401行代码执行自动装配的逻辑；因为当前代码我在xml当中配置了自动注入模型为bytype所以这里一定会进入，从上图debug的结果我们可以得知确实也进入了1401行，那我们再看看@Autowried到底是否是一样的呢？好吧作为良心笔者特意录了一个gif</p>
+</blockquote>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/9.gif" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>从上面那个笔者良心录制的gif可以看到当我们使用@Autowired注解去注入一个属性的时候spring在完成属性注入的过程中和自动注入（byname、bytype）的过程不同，spring注解跳过了那个判断，因为不成立，而是用后面的代码去完成属性注入；这也是能说明@Autowired不是自动装配的证据、更是直接打脸@Autowired是先bytype的这种说法；当然除了这个证据还有更加直接的证据，先看代码</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	B b;</span><br><span class="line">	<span class="keyword">public</span>  <span class="title function_">A</span><span class="params">(B b)</span>&#123;</span><br><span class="line">		<span class="built_in">this</span>.b=b;</span><br><span class="line">		System.out.println(b);</span><br><span class="line">		System.out.println(<span class="string">&quot;这个b能正常打印，那这算不算自动装配呢？&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;看起来像是constructor这种自动装配模型&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;但是实际呢？我们通过源码来说明&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;这个构造方法没有加任何注解&quot;</span>);</span><br><span class="line">		System.out.println(<span class="string">&quot;这里主要来说明，一个注解类是不是自动装配&quot;</span>);</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>说明一下这个A类的构造方法注入的B是可以注入的，这样算不算注解类的自动注入呢？看起来像，其实本质上他用的也是自动注入的代码实现的，但是笔者还是认为他不是；为什么呢？我们先来分析一下这个b能被注入的原因是什么，同样给一个gif来说明<br><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/10.gif" alt="在这里插入图片描述"></p>
+</blockquote>
+<blockquote>
+<p>其实最关键的就是这行代码<br>if (ctors !&#x3D; null || mbd.getResolvedAutowireMode() &#x3D;&#x3D;<br>AUTOWIRE_CONSTRUCTOR ||<br>mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) { return autowireConstructor(beanName, mbd, ctors, args);<br>}<br>这里有个判断 首先判断 ctors !&#x3D; null 然后判断类的自动注入模型是不是等于AUTOWIRE_CONSTRUCTOR也是3；分两种情况来分析；</p>
+</blockquote>
+<blockquote>
+<p>第一种情况：假设你指定了类的自动注入模型为constructor那么这个if一定成立因为他是||判断只要一个成立整个if成立；很显然我们这里不是这种情况，笔者并没有指定A类的自动注入模型为3，上面的那个gif里面我给读者展示了，后面那个判断不成立，因为mbd.getResolvedAutowireMode()&#x3D;0；再一次说明了一个注解类默认的自动注入模型为no也就是autowireMode&#x3D;0;</p>
+</blockquote>
+<blockquote>
+<p>第二种情况：没有指定类的自动注入模型，笔者代码例子就是这种情况，那么spring会首先推断出构造方法，笔者A里面一个带参数的构造方法，所以再进行第一个判断ctors<br>!&#x3D; null的时候就已经成立了，于是也会进入</p>
+</blockquote>
+<blockquote>
+<p>结论：在一个注解类里面提供了一个构造方法之所以能达到和自动注入的效果一样并不是因为这种方式就是自动装配，而是因为spring源码当中做了判断；使这种情况下调用的代码和自动装配调用的逻辑一下。但是有的读者会说那这样也能算自动装配啊，当然如果读者一定这么认为那么也无可厚非；仁者见仁智者见智</p>
+</blockquote>
+<blockquote>
+<p>那哔哩哔哩说了这么多@Autowried到底和bytype有什么关系呢？为什么有资料会把他们联系在一起呢？<br>首先bytype是一种自动注入模型，spring会更加类型去查找一个符合条件的bean如果没找到则不注入，程序也不会报错；如果找到多个spring也不报错，但是也不完成注入，让这个属性等于null，比如你有个接口I，提供两个实现I1和I2都存在容器当中，然后在A类当中去注入I，并且指定自动注入模型为bytype那么这个时候会找到两个符合条件的bean，spring就迷茫了，注入哪个呢？spring哪个都不注入直接让这个属性为null而且也不出异常；但是如果找到了一个那么注入的时候会调用setter，如果没有提供setter就不会注入；</p>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/11.gif" alt="在这里插入图片描述"></p>
+<p>其次@Autowried是一个注解，加在属性上面spring，</p>
+</blockquote>
+<p><strong>spring会首先根据属性的类型去容器中找，如果没有找到在根据属性的名字找，找到了则注入，没有找到则异常，下图结果就是容器当中没有一个符合的类型和名字都不符合的则异常；</strong></p>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/12.gif" alt="在这里插入图片描述"></p>
+<p><strong>如果先根据类型找到了一个，那么直接注入，下图就是只有一个符合要求的类型能够完美注入；</strong></p>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/13.gif" alt="在这里插入图片描述"></p>
+<p>如果先根据类型找到了多个，那么spring不会立马异常，而是根据名字再找去找，如果根据名字找到一个合理的则注入这个合理的，下图就是I1和I2都符合，但是spring最后却没有异常，是因为属性名字叫i1故而先类型在名字找到了合理的；</p>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/14.gif" alt="在这里插入图片描述"></p>
+<p>如果先根据类型找到了多个，那么spring不会立马异常，而是根据名字再找去找，如果根据名字还是没有找到那么时候spring会异常，下图就是两个i1和i2都符合，于是spring通过名字找i3也找不到，故而出异常；</p>
+<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/15.gif" alt="在这里插入图片描述"></p>
+<p>以后如果再听到@Autowried是bytype请你纠正他，bytype是一种自动注入模型；@Autowried是一个注解，两个人没有关系，一点关系都没有；@Autowried讲道理算是手动装配；那么一个注解的类到底能不能开启自动装配呢？答案是可以的，但是需要你对spring比较精通，以后笔者再更新；</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Spring/" rel="tag"># Spring</a>
+              <a href="/tags/%E6%A1%86%E6%9E%B6%E6%BA%90%E7%A0%81/" rel="tag"># 框架源码</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/" rel="prev" title="Spring循环依赖">
+                  <i class="fa fa-chevron-left"></i> Spring循环依赖
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/SpringCloud-%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E5%8E%9F%E7%90%86%E5%92%8C%E9%80%89%E5%9E%8B/" rel="next" title="SpringCloud-注册中心原理和选型">
+                  SpringCloud-注册中心原理和选型 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

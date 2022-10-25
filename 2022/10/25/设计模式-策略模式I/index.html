@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="策略模式大纲 定义什么是策略模式？它的原理实现是怎么样的？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="设计模式-策略模式I">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="策略模式大纲 定义什么是策略模式？它的原理实现是怎么样的？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/8.png">
+<meta property="article:published_time" content="2022-10-25T11:10:20.000Z">
+<meta property="article:modified_time" content="2022-10-25T11:15:13.681Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/","path":"2022/10/25/设计模式-策略模式I/","title":"设计模式-策略模式I"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>设计模式-策略模式I | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">策略模式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E7%BA%B2"><span class="nav-number">1.1.</span> <span class="nav-text">大纲</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">1.2.</span> <span class="nav-text">定义</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%86%E6%9E%B6%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">1.2.1.</span> <span class="nav-text">框架的应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E6%94%B9%E9%80%A0%E4%B8%BE%E4%BE%8B"><span class="nav-number">1.2.2.</span> <span class="nav-text">业务改造举例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Spring-Autowired-%E6%B3%A8%E5%85%A5%E5%88%B0List%E5%92%8CMap"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">Spring @Autowired 注入到List和Map</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E4%BE%8B"><span class="nav-number">1.3.</span> <span class="nav-text">实例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%8B%E4%B8%8B%E6%BA%90%E7%A0%81"><span class="nav-number">1.4.</span> <span class="nav-text">看下源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="设计模式-策略模式I | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          设计模式-策略模式I
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 19:10:20 / 修改时间：19:15:13" itemprop="dateCreated datePublished" datetime="2022-10-25T19:10:20+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>10k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="策略模式"><a href="#策略模式" class="headerlink" title="策略模式"></a>策略模式</h1><h2 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h2><p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/1.png" alt="图片"></p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>什么是策略模式？它的原理实现是怎么样的？</p>
+<blockquote>
+<p>定义一系列算法，封装每个算法，并使他们可以互换，不同的策略可以让算法独立于使用它们的客户而变化。以上定义来自设计模式之美</p>
+</blockquote>
+<p>感觉有点抽象？那就来看一张结构图吧</p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/2.png" alt="图片"></p>
+<blockquote>
+<ul>
+<li>Strategy（抽象策略）：抽象策略类，并且定义策略执行入口</li>
+<li>ConcreteStrategy（具体策略）：实现抽象策略，实现algorithm方法</li>
+<li>Context（环境）：运行特定的策略类。</li>
+</ul>
+</blockquote>
+<p>这么看结构其实还是不复杂的，而且跟状态模式类似。</p>
+<p>那么这个代码怎么实现？</p>
+<p>举个例子，汽车大家肯定都不陌生，愿大家早日完成汽车梦，汽车的不同档(concreteStrategy）就好比不同的策略，驾驶者选择几档则汽车按几档的速度前进，整个选择权在驾驶者（context）手中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">GearStrategy</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 定义策略执行方法</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">algorithm</span><span class="params">(String param)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先还是先定义抽象策略</p>
+<blockquote>
+<p>这里是用接口的形式，还有一种方式可以用抽象方法<strong>abstract</strong>来写也是一样的。具体就看大家自己选择了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">GearStrategyAbstract</span> &#123;</span><br><span class="line"><span class="comment">// 定义策略执行方法</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title function_">algorithm</span><span class="params">(String param)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">GearStrategyOne</span> <span class="keyword">implements</span> <span class="title class_">GearStrategy</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">algorithm</span><span class="params">(String param)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;当前档位&quot;</span> + param);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其次定义具体档位策略，实现algorithm方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Context</span> &#123;</span><br><span class="line">  <span class="comment">// 缓存所有的策略，当前是无状态的，可以共享策略类对象</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Map&lt;String, GearStrategy&gt; strategies = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第一种写法</span></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        strategies.put(<span class="string">&quot;one&quot;</span>, <span class="keyword">new</span> <span class="title class_">GearStrategyOne</span>());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> GearStrategy <span class="title function_">getStrategy</span><span class="params">(String type)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (type == <span class="literal">null</span> || type.isEmpty()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;type should not be empty.&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> strategies.get(type);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第二种写法</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> GearStrategy <span class="title function_">getStrategySecond</span><span class="params">(String type)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (type == <span class="literal">null</span> || type.isEmpty()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;type should not be empty.&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (type.equals(<span class="string">&quot;one&quot;</span>)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">GearStrategyOne</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 测试结果</span></span><br><span class="line">        <span class="type">GearStrategy</span> <span class="variable">strategyOne</span> <span class="operator">=</span> Context.getStrategy(<span class="string">&quot;one&quot;</span>);</span><br><span class="line">        strategyOne.algorithm(<span class="string">&quot;1档&quot;</span>);</span><br><span class="line">         <span class="comment">// 结果：当前档位1档</span></span><br><span class="line">        <span class="type">GearStrategy</span> <span class="variable">strategyTwo</span> <span class="operator">=</span> Context.getStrategySecond(<span class="string">&quot;one&quot;</span>);</span><br><span class="line">        strategyTwo.algorithm(<span class="string">&quot;1档&quot;</span>);</span><br><span class="line">        <span class="comment">// 结果：当前档位1档</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后就是实现运行时环境（Context），你可以定义成StrategyFactory，但都是一个意思。</p>
+<p>在main方法里面的测试demo，可以看到通过不同的type类型，可以实现不同的策略，这就是策略模式主要思想。</p>
+<p>在Context里面定义了两种写法：</p>
+<blockquote>
+<ul>
+<li>第一种是维护了一个strategies的Map容器。用这种方式就需要判断每种策略是否可以共享使用，它只是作为算法的实现。</li>
+<li>第二种是直接通过有状态的类，每次根据类型new一个新的策略类对象。这个就需要根据实际业务场景去做的判断。</li>
+</ul>
+</blockquote>
+<h3 id="框架的应用"><a href="#框架的应用" class="headerlink" title="框架的应用"></a>框架的应用</h3><p>策略模式在框架中也在一个很常见的地方体现出来了，而且大家肯定都有使用过。</p>
+<p>那就是JDK中的线程池<strong>ThreadPoolExecutor</strong></p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/3.png" alt="图片"></p>
+<p>首先都是类似于这样定义一个线程池，里面实现线程池的异常策略。</p>
+<p>这个线程池的异常策略就是用的策略模式的思想。</p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/4.png" alt="图片"></p>
+<p>在源码中有RejectedExecutionHandler这个抽象异常策略接口，同时它也有四种拒绝策略。关系图如下：</p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/5.png" alt="图片"></p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/6.png" alt="图片"></p>
+<p>这就是在框架中的体现了，根据自己的业务场景，合理的选择线程池的异常策略。</p>
+<h3 id="业务改造举例"><a href="#业务改造举例" class="headerlink" title="业务改造举例"></a>业务改造举例</h3><p>在真实的业务场景中策略模式也还是应用很多的。</p>
+<p>在社交电商中分享商品是一个很重要的环节，假设现在要我们实现一个分享图片功能，比如当前有 单商品、多商品、下单、会场、邀请、小程序链接等等多种分享场景。</p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/7.png" alt="图片"></p>
+<p>针对上线这个流程图先用if else语句做一个普通业务代码判断，就像下面的这中方式：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SingleItemShare</span> &#123;</span><br><span class="line">    <span class="comment">// 单商品</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">algorithm</span><span class="params">(String param)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;当前分享图片是&quot;</span> + param);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MultiItemShare</span> &#123;</span><br><span class="line">    <span class="comment">// 多商品</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">algorithm</span><span class="params">(String param)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;当前分享图片是&quot;</span> + param);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">OrderItemShare</span> &#123;</span><br><span class="line">    <span class="comment">// 下单</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">algorithm</span><span class="params">(String param)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;当前分享图片是&quot;</span> + param);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ShareFactory</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">Integer</span> <span class="variable">shareType</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">       <span class="comment">// 测试业务逻辑</span></span><br><span class="line">        <span class="keyword">if</span> (shareType.equals(ShareType.SINGLE.getCode())) &#123;</span><br><span class="line">            <span class="type">SingleItemShare</span> <span class="variable">singleItemShare</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SingleItemShare</span>();</span><br><span class="line">            singleItemShare.algorithm(<span class="string">&quot;单商品&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (shareType.equals(ShareType.MULTI.getCode())) &#123;</span><br><span class="line">            <span class="type">MultiItemShare</span> <span class="variable">multiItemShare</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MultiItemShare</span>();</span><br><span class="line">            multiItemShare.algorithm(<span class="string">&quot;多商品&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (shareType.equals(ShareType.ORDER.getCode())) &#123;</span><br><span class="line">            <span class="type">OrderItemShare</span> <span class="variable">orderItemShare</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OrderItemShare</span>();</span><br><span class="line">            orderItemShare.algorithm(<span class="string">&quot;下单&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(<span class="string">&quot;未知分享类型&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// .....省略更多分享场景</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">enum</span> <span class="title class_">ShareType</span> &#123;</span><br><span class="line">        SINGLE(<span class="number">1</span>, <span class="string">&quot;单商品&quot;</span>),</span><br><span class="line">        MULTI(<span class="number">2</span>, <span class="string">&quot;多商品&quot;</span>),</span><br><span class="line">        ORDER(<span class="number">3</span>, <span class="string">&quot;下单&quot;</span>);</span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * 场景对应的编码</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">private</span> Integer code;</span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * 业务场景描述</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">private</span> String desc;</span><br><span class="line">        ShareType(Integer code, String desc) &#123;</span><br><span class="line">            <span class="built_in">this</span>.code = code;</span><br><span class="line">            <span class="built_in">this</span>.desc = desc;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">public</span> Integer <span class="title function_">getCode</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> code;</span><br><span class="line">        &#125;</span><br><span class="line">       <span class="comment">// 省略 get set 方法</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里大家可以看到每新加一种分享类型，就需要加一次if else 判断，当如果有十几种场景的时候那代码整体就会非常的长，看起来给人的感觉也不是很舒服。</p>
+<p>接下来就看看如何用策略模式进行重构：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">ShareStrategy</span> &#123;</span><br><span class="line">    <span class="comment">// 定义分享策略执行方法</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">shareAlgorithm</span><span class="params">(String param)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">OrderItemShare</span> <span class="keyword">implements</span> <span class="title class_">ShareStrategy</span> &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">shareAlgorithm</span><span class="params">(String param)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;当前分享图片是&quot;</span> + param);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 省略 MultiItemShare以及SingleItemShare策略</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 分享工厂</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ShareFactory</span> &#123;</span><br><span class="line">  <span class="comment">// 定义策略枚举</span></span><br><span class="line">    <span class="keyword">enum</span> <span class="title class_">ShareType</span> &#123;</span><br><span class="line">        SINGLE(<span class="string">&quot;single&quot;</span>, <span class="string">&quot;单商品&quot;</span>),</span><br><span class="line">        MULTI(<span class="string">&quot;multi&quot;</span>, <span class="string">&quot;多商品&quot;</span>),</span><br><span class="line">        ORDER(<span class="string">&quot;order&quot;</span>, <span class="string">&quot;下单&quot;</span>);</span><br><span class="line">        <span class="comment">// 场景对应的编码</span></span><br><span class="line">        <span class="keyword">private</span> String code;</span><br><span class="line">       </span><br><span class="line">        <span class="comment">// 业务场景描述</span></span><br><span class="line">        <span class="keyword">private</span> String desc;</span><br><span class="line">        ShareType(String code, String desc) &#123;</span><br><span class="line">            <span class="built_in">this</span>.code = code;</span><br><span class="line">            <span class="built_in">this</span>.desc = desc;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">public</span> String <span class="title function_">getCode</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> code;</span><br><span class="line">        &#125;</span><br><span class="line">       <span class="comment">// 省略 get set 方法</span></span><br><span class="line">    &#125;</span><br><span class="line">  <span class="comment">// 定义策略map缓存</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Map&lt;String, ShareStrategy&gt; shareStrategies = <span class="keyword">new</span>       <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        shareStrategies.put(<span class="string">&quot;order&quot;</span>, <span class="keyword">new</span> <span class="title class_">OrderItemShare</span>());</span><br><span class="line">        shareStrategies.put(<span class="string">&quot;single&quot;</span>, <span class="keyword">new</span> <span class="title class_">SingleItemShare</span>());</span><br><span class="line">        shareStrategies.put(<span class="string">&quot;multi&quot;</span>, <span class="keyword">new</span> <span class="title class_">MultiItemShare</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 获取指定策略</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> ShareStrategy <span class="title function_">getShareStrategy</span><span class="params">(String type)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (type == <span class="literal">null</span> || type.isEmpty()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;type should not be empty.&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> shareStrategies.get(type);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 测试demo</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">shareType</span> <span class="operator">=</span> <span class="string">&quot;order&quot;</span>;</span><br><span class="line">        <span class="type">ShareStrategy</span> <span class="variable">shareStrategy</span> <span class="operator">=</span> ShareFactory.getShareStrategy(shareType);</span><br><span class="line">        shareStrategy.shareAlgorithm(<span class="string">&quot;order&quot;</span>);</span><br><span class="line">        <span class="comment">// 输出结果：当前分享图片是order</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里策略模式就已经改造完了。在client请求端，根本看不到那么多的if else判断，只需要传入对应的策略方式即可，这里我们维护了一个策略缓存map，在直接调用的ShareFactory获取策略的时候就直接是从换种获取策略类对象。</p>
+<p>这就已经达到了行为解偶的思想。同时也避免了长串的if else 判断。</p>
+<p>优点：</p>
+<blockquote>
+<ul>
+<li>算法策略可以自由实现切换</li>
+<li>扩展性好，加一个策略，只需要增加一个类</li>
+</ul>
+</blockquote>
+<p>缺点：</p>
+<blockquote>
+<ul>
+<li>策略类数量多</li>
+<li>需要维护一个策略枚举，让别人知道你当前具有哪些策略</li>
+</ul>
+</blockquote>
+<p><strong>以上策略模式可以优化点：不需要枚举类，通过Spring IOC容器自动注入到map中：</strong></p>
+<h4 id="Spring-Autowired-注入到List和Map"><a href="#Spring-Autowired-注入到List和Map" class="headerlink" title="Spring @Autowired 注入到List和Map"></a>Spring @Autowired 注入到List和Map</h4><h2 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h2><p>BeanInterface只是一个接口无方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.Autowired.ListMap;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> org.springframework.core.annotation.Order;  </span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;  </span><br><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment"> * order：把实现类排序输出 只适合List </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> liu </span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> */</span>  </span><br><span class="line"><span class="meta">@Order(2)</span>  </span><br><span class="line"><span class="meta">@Component</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BeanImplOne</span> <span class="keyword">implements</span> <span class="title class_">BeanInterface</span> &#123;  </span><br><span class="line">  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> com.Autowired.ListMap;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> org.springframework.core.annotation.Order;  </span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;  </span><br><span class="line">  </span><br><span class="line"><span class="meta">@Order(1)</span>  </span><br><span class="line"><span class="meta">@Component</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BeanImplTwo</span> <span class="keyword">implements</span> <span class="title class_">BeanInterface</span> &#123;  </span><br><span class="line">  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+
+<p>测试：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.Autowired.ListMap;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> java.util.List;  </span><br><span class="line"><span class="keyword">import</span> java.util.Map;  </span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;  </span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Qualifier;  </span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;  </span><br><span class="line">  </span><br><span class="line"><span class="meta">@Component</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BeanInvoke</span> &#123;  </span><br><span class="line">      </span><br><span class="line">    <span class="meta">@Autowired</span>  </span><br><span class="line">    <span class="keyword">private</span> List&lt;BeanInterface&gt; list;  </span><br><span class="line">        </span><br><span class="line">    <span class="meta">@Autowired</span>  </span><br><span class="line">    <span class="keyword">private</span> Map&lt;String,BeanInterface&gt; map;  </span><br><span class="line">      </span><br><span class="line">    <span class="comment">/** <span class="doctag">@Autowired</span>默认为byType的  所以有两个相同类型的bean   </span></span><br><span class="line"><span class="comment">     * 如果不使用 <span class="doctag">@Qualifier</span>指定具体的bean就会抛出异常 </span></span><br><span class="line"><span class="comment">     *  private BeanInterface beaninterface; </span></span><br><span class="line"><span class="comment">     */</span>  </span><br><span class="line">     </span><br><span class="line">    <span class="meta">@Autowired</span>  </span><br><span class="line">    <span class="meta">@Qualifier(&quot;beanImplOne&quot;)</span>  </span><br><span class="line">    <span class="keyword">private</span> BeanInterface beaninterface;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">say</span><span class="params">()</span>&#123;  </span><br><span class="line">        System.out.println(<span class="string">&quot;list...&quot;</span>);  </span><br><span class="line">        <span class="keyword">if</span>(<span class="literal">null</span> !=list &amp;&amp;<span class="number">0</span>!=list.size())&#123;  </span><br><span class="line">            <span class="keyword">for</span>(BeanInterface bean :list)&#123;  </span><br><span class="line">                System.out.println(bean.getClass().getName());  </span><br><span class="line">            &#125;  </span><br><span class="line">              </span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;  </span><br><span class="line">            System.out.println(<span class="string">&quot;List&lt;BeanInterface&gt; list is null !!!!&quot;</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">        System.out.println();  </span><br><span class="line">        System.out.println(<span class="string">&quot;map...&quot;</span>);  </span><br><span class="line">        <span class="keyword">if</span>(<span class="literal">null</span> !=map &amp;&amp;<span class="number">0</span>!=map.size())&#123;  </span><br><span class="line">            <span class="keyword">for</span>(Map.Entry&lt;String, BeanInterface&gt; m:map.entrySet())&#123;  </span><br><span class="line">                  System.out.println(m.getKey()+<span class="string">&quot;    &quot;</span>+m.getValue().getClass().getName());  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;  </span><br><span class="line">            System.out.println(<span class="string">&quot;Map&lt;String,BeanInterface&gt; map is null !!!!&quot;</span>);  </span><br><span class="line">  </span><br><span class="line">        &#125;  </span><br><span class="line">        System.out.println(<span class="string">&quot;-------------------------&quot;</span>);  </span><br><span class="line">        <span class="keyword">if</span>(<span class="literal">null</span> !=beaninterface)&#123;  </span><br><span class="line">            System.out.println(beaninterface.getClass().getName());  </span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;  </span><br><span class="line">            System.out.println(<span class="string">&quot;beaninterface is null !!!&quot;</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">      </span><br><span class="line">      </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> com.Autowired.ListMap;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> org.junit.Test;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> com.imooc.test.base.UnitTestBase;  </span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TestListMap</span>  <span class="keyword">extends</span> <span class="title class_">UnitTestBase</span>&#123;  </span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TestListMap</span><span class="params">()</span>&#123;  </span><br><span class="line">        <span class="built_in">super</span>(<span class="string">&quot;classpath*:spring-beanannotation3.xml&quot;</span>);  </span><br><span class="line">    &#125;  </span><br><span class="line">      </span><br><span class="line">    <span class="meta">@Test</span>  </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">test</span><span class="params">()</span>&#123;  </span><br><span class="line">        BeanInvoke  bean=<span class="built_in">super</span>.getBean(<span class="string">&quot;beanInvoke&quot;</span>);  </span><br><span class="line">        bean.say();  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+
+<p>配置文件：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span>  </span><br><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span>  </span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span>  </span></span><br><span class="line"><span class="tag">    <span class="attr">xmlns:context</span>=<span class="string">&quot;http://www.springframework.org/schema/context&quot;</span>  </span></span><br><span class="line"><span class="tag">    <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://www.springframework.org/schema/beans  </span></span></span><br><span class="line"><span class="string"><span class="tag">        http://www.springframework.org/schema/beans/spring-beans.xsd  </span></span></span><br><span class="line"><span class="string"><span class="tag">        http://www.springframework.org/schema/context  </span></span></span><br><span class="line"><span class="string"><span class="tag">        http://www.springframework.org/schema/context/spring-context.xsd&quot;</span> &gt;</span>  </span><br><span class="line">          </span><br><span class="line">        <span class="tag">&lt;<span class="name">context:component-scan</span> <span class="attr">base-package</span>=<span class="string">&quot;package com.Autowired.ListMap;&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">context:component-scan</span>&gt;</span>  </span><br><span class="line">          </span><br><span class="line"> <span class="tag">&lt;/<span class="name">beans</span>&gt;</span>  </span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">2017</span>-<span class="number">6</span>-<span class="number">4</span> <span class="number">15</span>:<span class="number">38</span>:<span class="number">26</span> org.springframework.context.support.AbstractApplicationContext prepareRefresh  </span><br><span class="line">信息: Refreshing org.springframework.context.support.ClassPathXmlApplicationContext@58a17083: startup date [Sun Jun <span class="number">04</span> <span class="number">15</span>:<span class="number">38</span>:<span class="number">26</span> CST <span class="number">2017</span>]; root of context hierarchy  </span><br><span class="line"><span class="number">2017</span>-<span class="number">6</span>-<span class="number">4</span> <span class="number">15</span>:<span class="number">38</span>:<span class="number">26</span> org.springframework.beans.factory.xml.XmlBeanDefinitionReader loadBeanDefinitions  </span><br><span class="line">信息: Loading XML bean definitions from URL [file:/E:/myeclipse/workspace/Spring2/bin/spring-beanannotation3.xml]  </span><br><span class="line"><span class="number">2017</span>-<span class="number">6</span>-<span class="number">4</span> <span class="number">15</span>:<span class="number">38</span>:<span class="number">27</span> org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor &lt;init&gt;  </span><br><span class="line">信息: JSR-<span class="number">330</span> <span class="string">&#x27;javax.inject.Inject&#x27;</span> annotation found and supported <span class="keyword">for</span> autowiring  </span><br><span class="line">list...  </span><br><span class="line"><span class="number">2017</span>-<span class="number">6</span>-<span class="number">4</span> <span class="number">15</span>:<span class="number">38</span>:<span class="number">27</span> org.springframework.context.support.AbstractApplicationContext doClose  </span><br><span class="line">信息: Closing org.springframework.context.support.ClassPathXmlApplicationContext@58a17083: startup date [Sun Jun <span class="number">04</span> <span class="number">15</span>:<span class="number">38</span>:<span class="number">26</span> CST <span class="number">2017</span>]; root of context hierarchy  </span><br><span class="line">com.Autowired.ListMap.BeanImplTwo  </span><br><span class="line">com.Autowired.ListMap.BeanImplOne  </span><br><span class="line">  </span><br><span class="line">map...  </span><br><span class="line">beanImplOne    com.Autowired.ListMap.BeanImplOne  </span><br><span class="line">beanImplTwo    com.Autowired.ListMap.BeanImplTwo  </span><br><span class="line">-------------------------  </span><br><span class="line">com.Autowired.ListMap.BeanImplOne  </span><br></pre></td></tr></table></figure>
+
+<p>Spring吧bean放入了List中 那个这个顺序怎么控制呢</p>
+<p>在实现类中加入@Order(value) 注解即可 ，值越小越先被初始化越先被放入List</p>
+<h2 id="看下源码"><a href="#看下源码" class="headerlink" title="看下源码"></a>看下源码</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DependencyDescriptor, String, Set&lt;String&gt;,TypeConverter)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/8.png" alt="img"> <strong>对于@Autowired声明的数组、集合类型，spring并不是根据beanName去找容器中对应的bean，而是把容器中所有类型与集合（数组)中元素类型相同的bean构造出一个对应集合，注入到目标bean中。对应到上问配置文件中，就是把容器中所有类型为java.lang.String的bean放到新建的Set中，然后注入到Managerbean中。也就是把resourcePackage和resourceLoaction这两个String注入了，导致上面的输出结果</strong></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上就讲完了策略模式，整体看上去其实还是比较简单的，还是那句话学习设计模式我们还是要学习每种设计模式的思想，任何一种设计模式存在即合理。当然也不要因为设计模式而设计代码，那样反而得不偿失。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag"># 设计模式</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E9%AB%98%E5%B9%B6%E5%8F%91%E5%AE%9E%E8%B7%B5%E6%96%87%E7%AB%A0-%E6%90%BA%E7%A8%8B1%E5%88%86%E9%92%9F%E5%94%AE%E7%A5%A88%E4%B8%87%E5%BC%A0/" rel="prev" title="高并发实践文章-携程1分钟售票8万张">
+                  <i class="fa fa-chevron-left"></i> 高并发实践文章-携程1分钟售票8万张
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FII/" rel="next" title="设计模式-策略模式II">
+                  设计模式-策略模式II <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

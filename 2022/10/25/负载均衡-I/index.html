@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="序言  LB,SLB,ALB，GSLB,CDN，傻傻分不清楚，听风看雨。。。毒鸡汤看多了，我快掩饰不住我的悲伤了。。。  负载均衡，碰到的太多，使用的场景也很多，无论你是传统行业，还是互联网行业，魂牵梦绕的技术，所以谈谈其发展。 前世今生  当业务量小的时候，每天访问的人数就那么几个的时候，我们用一台服务器就够了，上面部署上开发写的应用，部署上数据库服务，再加一个前端程序。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="负载均衡-I">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="序言  LB,SLB,ALB，GSLB,CDN，傻傻分不清楚，听风看雨。。。毒鸡汤看多了，我快掩饰不住我的悲伤了。。。  负载均衡，碰到的太多，使用的场景也很多，无论你是传统行业，还是互联网行业，魂牵梦绕的技术，所以谈谈其发展。 前世今生  当业务量小的时候，每天访问的人数就那么几个的时候，我们用一台服务器就够了，上面部署上开发写的应用，部署上数据库服务，再加一个前端程序。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/5.png">
+<meta property="article:published_time" content="2022-10-25T10:53:52.000Z">
+<meta property="article:modified_time" content="2022-10-25T10:56:53.090Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="负载均衡">
+<meta property="article:tag" content="Load Balance">
+<meta property="article:tag" content="LB">
+<meta property="article:tag" content="SLB">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/","path":"2022/10/25/负载均衡-I/","title":"负载均衡-I"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>负载均衡-I | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="负载均衡-I | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          负载均衡-I
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 18:53:52 / 修改时间：18:56:53" itemprop="dateCreated datePublished" datetime="2022-10-25T18:53:52+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" itemprop="url" rel="index"><span itemprop="name">负载均衡</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><strong>序言</strong></p>
+<p> LB,SLB,ALB，GSLB,CDN，傻傻分不清楚，听风看雨。。。毒鸡汤看多了，我快掩饰不住我的悲伤了。。。</p>
+<p> <a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/clb?from=10680">负载均衡</a>，碰到的太多，使用的场景也很多，无论你是传统行业，还是互联网行业，魂牵梦绕的技术，所以谈谈其发展。</p>
+<p><strong>前世今生</strong></p>
+<p> 当业务量小的时候，每天访问的人数就那么几个的时候，我们用一台服务器就够了，上面部署上开发写的应用，部署上<a target="_blank" rel="noopener" href="https://cloud.tencent.com/solution/database?from=10680">数据库</a>服务，再加一个前端程序。</p>
+<p>  随着业务量的增多，访问的并发越来越高，服务器的负载加大，可能首先进行垂直增加服务器的性能，也就是原来是4C8G，现在增加到32C156G。</p>
+<p> 随着业务量的进一步增多，服务器的响应时间越来越长，垂直增加性能，一个是成本太高，另外一个是可用性不高，从而需要拆分，并使用集群的方式，也就是应用程序划分多个服务器，进行水平扩容，那么在用户访问的时候，访问那个应用服务器呢？从而就有了负载均衡。</p>
+<p>​    负载均衡，load balance，简称为LB，也可以写成service load balance，从而称之为SLB，也可以写成Application load balance，从而称之为ALB，进一步的负载均衡就是全局负载均衡，就可以写成Global service load balance，当发现性能还是不够的时候，就是CDN，也就是<a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/cdn?from=10680">内容分发网络</a>，称之为content delivery network。</p>
+<p>​    可能我们在平时不知不觉中已经接触到了负载均衡，例如常见的LVS四层负载均衡，nginx&#x2F;httpd&#x2F;haproxy七层负载均衡，四层和七层有啥区别，区别在于协议不同，七层是应用层协议，一般指的是http和https协议，四层指的是网络层协议，一般指的是tcp&#x2F;udp协议，当然也可以代理mysql协议</p>
+<p>​    负载均衡根据类型划分，主要划分为三种类型：第一种类型为DNS负载均衡（软硬结合的方式），主要是使用DNS解析出IP的方式，来进行业务流量的分发，并发无上限；第二种类型为硬件负载均衡，例如那些贵的离谱的硬件设备，F5，A10，并发百万级别；第三种类型为软件负载均衡，就是我们常见的负载均衡软件，例如nginx，lvs，并发几万到百万级别</p>
+<p>​    权衡？是不是这三种我们只能选一种，是不是选择最好的哪种？不是的，这三种的使用范围和场景不一样，从而我们可以使用组合的方式来使用。</p>
+<p>​    DNS负载均衡主要适用于的场景是多地集群的方式，也就是可能北京有一个数据中心，在其中部署了一整套的集群提供服务，在上海有一个数据中心，也部署了同样的一套的集群来提供服务，用于预防地震，水灾，整个机房断电的故障，这种可以将请求发送给不同的数据中心，从而可以使用户更加快速的访问到服务，异地恋了解一下。。。数据中心级别的负载均衡</p>
+<p>​    硬件负载均衡，硬件厂商一般能提供强力的服务，稳定性较高，性能较好，能支持百万级别的并发量，缺点就是太贵了，在一个数据中心，一般买俩就够了，做成主备的形式，提供高可靠，高可用。。。集群之间的负载均衡</p>
+<p>​    软件负载均衡，一般就是在前端创建一个SLB，然后在后端挂上真正的物理服务器，成为多个应用服务器的控制器，可以用各种调度算法来进行调度。。。服务器之间的负载均衡</p>
+<p>​    三种的选择，可以是随着业务的发展递增式的使用，先是使用SLB，然后扛不住，上硬件，再扛不住上DNS，再扛不住用GSLB，还不行，上CDN。</p>
+<p>​    权衡，那么在软件负载均衡之中怎么选？建议的类型就是四层SLB使用LVS，性能高，可靠性强，能做健康检查，能做会话同步；七层使用nginx，模块多，扩展性好，当然没有最好，选择你熟悉的，根据业务定制也不错。</p>
+<p><img src="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/1.png" alt="img"></p>
+<p><strong>分配算法</strong></p>
+<p>   在SLB选择后端的rs也就是real server真正的服务器处理请求的时候，有多种类型的算法可以选择。</p>
+<p>​    最常用的方式就是RR（round robin）轮询的方式，不管你后端的服务器是什么样的，不管你后端服务器的压力如何都会发送请求过去，这种的优点是简单，但是不能感知到服务器的状态。</p>
+<p>​    改进的方式就是使用WRR（weight round robin）加权轮询的方式，这种会考虑后端的服务器的性能，例如一台服务器的配置是2C4G，一台服务器的配置是4C8G，那么在设置权重的时候，就可以将第一台配置为1，第二台配置为2，从而如果客户端发送了6个请求过来，第一台会处理2个请求，而第二台会处理4个请求， 这种方式只是考虑到了服务器本身的物理配置，而没有考虑到服务器本身的性能。。。这种方式是最常见的使用方式，及时所有的服务器配置一样，也要使用WRR的方式，也就是权重一样，这种便于切流，也就是可以动态的将一台服务器的权重设置为0，从而不会影响业务，而使用RR的方式的时候，有服务器下线会报错，当然，在其中也可以配置相关的如果发现一个请求不通，跳转到另外的机器，但是增加了配置配置文件的复杂度，相对来说WRR更加简单。</p>
+<p> 再使用的方式就是使用WLC（weighted least connection）最少连接数的方式，在此种情况下，判断服务器的性能主要靠检测后端服务器的连接数量，如果连接过多，就认为你的负载很大，如果连接很少，那么可以理解为分配给这台服务器处理，性能会更高。这种方式主要是从服务器端来考虑，也就是考虑服务器的性能，在此处可以定义不同的检测方式，例如如果是CPU密集型，那么可以使用CPU的负载来进行衡量，如果是IO密集型，那么可以使用IO的负载来进行衡量。在LVS中就是通过连接数来进行衡量，而在nginx中，可以使用http连接数来进行衡量。</p>
+<p>​    还有使用的方式就是站在客户端角度来考虑服务器的性能，主要就是统计和分析客户端到服务端的请求响应时间来判断性能好坏，如果一台服务器的RTT（round trip time） 往返时间很短，可以理解为性能很好，从而可以将请求发送给这台服务器进行处理。</p>
+<p>​    在以上的分配算法当中，没有考虑会话的情况，在很多的应用场景下都需要考虑会话需要保持在同一台服务器中，最简单的例子就是你登录一个网站的时候，刷新一下不需要重新登录，说明你的请求发送给了同一台服务器进行处理，在保持会话的时候，可以根据源ip进行hash，也可以对目标ip进行hash，或者是通过session id或者user id进行hash分配到同一台服务器进行处理，在LVS中是通过IP hash进行会话同步，在nginx中可以通过session id进行会话同步。</p>
+<p> 分配算法，站在不同的角度考虑问题，站在服务端，你需要考虑服务器的cpu负载，io负载，网卡的吞吐，网络连接数；站在客户端，我主要关注的是请求和响应的时间。。。</p>
+<p>​    一个人的压力大小和负载其实是一样的，负载来源于哪里，让你去做事，你不做，你说你压力大。。。团队中分配任务也是一样的，你是采用轮询？还是采用加权轮询？还是采用任务数量？还是采用做任务的速度？。。种种策略和工作一样一样的</p>
+<p> 站在不同的角度，其实就是第一个指你本身解决问题的能力；第二个客户需要你的什么能力。。。合理的运用你的能力，这个本身也是一种能力。。。珍珑棋局了解一下。。。</p>
+<p><strong>GSLB和CDN了解一下</strong></p>
+<p> GSLB其实是DNS轮询方式的一种改进，因为DNS轮询的时候比较傻，它不能对后端的服务进行健康检查，没准有一个机房挂了，但是。。。。它依旧把请求发送给那个机房，从而就有了GSLB。</p>
+<p> DNS还有一个缺点就是在DNS解析的时候，一般会先向本地的DNS服务器进行解析，但是这并不是客户端的真实的IP地址，从而有可能分配的时候，并不是距离上最近的或者是性能最好的，从而也就有GSLB。</p>
+<p> DNS的轮询其实是GSLB的一种实现方式，所以这种也能称之为GSLB，而DNS轮询这种说法比较少，而GSLB的实现方式中，还有一种方式就是HTTP 302跳转，将GSLB的IP地址作为域名的A记录，然后访问GSLB的时候，会将请求返回给客户端，然后给一个302响应，让客户端跳转到真正的地址（此种方式GSLB能看到客户端的真实的IP地址，从而给出距离跟进的服务器ip地址）。</p>
+<p><img src="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/2.png" alt="img"></p>
+<p> 在上面一种实现中，只能代理http的请求，而其他的请求不能代理，从而就有了ip欺骗的方式，我不怕你骗我，我就怕。。。你骗不到我。。如下：</p>
+<p><img src="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/3.png" alt="img"></p>
+<p> 在这种时候，zone1的位置的服务器会修改源ip地址，修改为GSLB的ip，从而直接发送给客户端。但是这种本身上会有部分性能和响应的损耗。</p>
+<p>​    当使用GSLB的时候，性能不能满足怎么办。。。欲求不满啊。。。</p>
+<p>  CDN，内容分发网络，其实好像也没啥神奇的，就是使用缓存，你请求web页面慢，我缓存你，你请求图片慢，我缓存你，你请求视频慢，我缓存你。。。没有缓存不能解决的事。。。cpu的L1 cache和L2 cache，还有L3 cache了解一下</p>
+<p><img src="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/4.png" alt="img"></p>
+<p> 在CDN中，GSLB变成了其中的一部分，指向的地址修改为各大缓存的地址，可以是squid，或者是varnish，或者是nginx的缓存，缓存。。。缓存热点数据，有就直接返回，没有就到源里面去取，然后再缓存，再返回给客户端。</p>
+<p><img src="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/5.png" alt="img"></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag"># 负载均衡</a>
+              <a href="/tags/Load-Balance/" rel="tag"># Load Balance</a>
+              <a href="/tags/LB/" rel="tag"># LB</a>
+              <a href="/tags/SLB/" rel="tag"># SLB</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Redis-%E6%90%BA%E7%A8%8B%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E5%92%8C%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E7%BC%93%E5%AD%98%E5%AE%9E%E8%B7%B5/" rel="prev" title="Redis-携程最终一致和强一致性缓存实践">
+                  <i class="fa fa-chevron-left"></i> Redis-携程最终一致和强一致性缓存实践
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-II/" rel="next" title="负载均衡-II">
+                  负载均衡-II <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

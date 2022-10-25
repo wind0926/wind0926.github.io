@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="存储系统中的算法：LSM 树设计原理我在上篇文章 Apache Pulsar 的架构设计 中介绍了 Pulsar 存算分离的架构，其中 broker 只负责计算，由 BookKeeper 负责底层的存储，我还画了这样一张图说明 BookKeeper 读写分离的设计：  但是再深究下去，memtable具体是以怎样的格式持久化到磁盘上的呢？又是用什么算法高效查找一条消息的呢？ 通过学习相关资料，我发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL-LSM树介绍2">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="存储系统中的算法：LSM 树设计原理我在上篇文章 Apache Pulsar 的架构设计 中介绍了 Pulsar 存算分离的架构，其中 broker 只负责计算，由 BookKeeper 负责底层的存储，我还画了这样一张图说明 BookKeeper 读写分离的设计：  但是再深究下去，memtable具体是以怎样的格式持久化到磁盘上的呢？又是用什么算法高效查找一条消息的呢？ 通过学习相关资料，我发">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/5.png">
+<meta property="article:published_time" content="2022-10-25T07:48:32.000Z">
+<meta property="article:modified_time" content="2022-10-25T11:34:56.836Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="OLTP">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="分库分表">
+<meta property="article:tag" content="db">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/","path":"2022/10/25/MySQL-LSM树介绍2/","title":"MySQL-LSM树介绍2"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MySQL-LSM树介绍2 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E7%AE%97%E6%B3%95%EF%BC%9ALSM-%E6%A0%91%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">存储系统中的算法：LSM 树设计原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84-vs-%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.0.1.</span> <span class="nav-text">内存数据结构 vs 磁盘数据结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8F%AF%E5%8F%98-vs-%E6%95%B0%E6%8D%AE%E4%B8%8D%E5%8F%AF%E5%8F%98"><span class="nav-number">1.0.2.</span> <span class="nav-text">数据可变 vs 数据不可变</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E5%BA%8F-vs-%E6%97%A0%E5%BA%8F"><span class="nav-number">1.0.3.</span> <span class="nav-text">有序 vs 无序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LSM-%E6%A0%91%E7%9A%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.0.4.</span> <span class="nav-text">LSM 树的设计</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MySQL-LSM树介绍2 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MySQL-LSM树介绍2
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 15:48:32 / 修改时间：19:34:56" itemprop="dateCreated datePublished" datetime="2022-10-25T15:48:32+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/MySQL/" itemprop="url" rel="index"><span itemprop="name">MySQL</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="存储系统中的算法：LSM-树设计原理"><a href="#存储系统中的算法：LSM-树设计原理" class="headerlink" title="存储系统中的算法：LSM 树设计原理"></a>存储系统中的算法：LSM 树设计原理</h1><p>我在上篇文章 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxODQxMDM0Mw==&mid=2247498023&idx=1&sn=b3ca224a1e1e2bd0fdb733547a6dd6d5&scene=21#wechat_redirect">Apache Pulsar 的架构设计</a> 中介绍了 Pulsar 存算分离的架构，其中 broker 只负责计算，由 BookKeeper 负责底层的存储，我还画了这样一张图说明 BookKeeper 读写分离的设计：</p>
+<p><img src="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/1.png" alt="图片"></p>
+<p>但是再深究下去，<code>memtable</code>具体是以怎样的格式持久化到磁盘上的呢？又是用什么算法高效查找一条消息的呢？</p>
+<p>通过学习相关资料，我发现 Apache BookKeeper 底层存储引擎用的是 Facebook 开源的 RocksDB，而 RocksDB 又是基于 Google 开源的 LevelDB 改造的，而 LevelDB 的核心是一个叫做 LSM 树（Log Structured Merge Tree）的结构。</p>
+<p>LevelDB 整个库的代码只有几百 KB，所以我去研究了 LSM 树的代码实现，总结了这篇文章，带你了解 LSM 树的设计原理。</p>
+<p>什么是 LSM 树呢？如果说到 B+ 树大家应该不陌生，像 MySQL 这样的关系型数据库底层一般用 B+ 树结构来存储数据。LSM 树其实就是另一种存储数据的结构，常见于日志存储系统中。</p>
+<p>首先，我们先来聊聊存储系统。</p>
+<h3 id="内存数据结构-vs-磁盘数据结构"><a href="#内存数据结构-vs-磁盘数据结构" class="headerlink" title="内存数据结构 vs 磁盘数据结构"></a>内存数据结构 vs 磁盘数据结构</h3><p>正如前文 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxODQxMDM0Mw==&mid=2247484852&idx=1&sn=85b50b8b0470bb4897e517955f4e5002&scene=21#wechat_redirect">学习数据结构和算法的框架思维</a> 所说，一切数据结构从根本上讲都是增删查改，但在具体实现上，磁盘数据结构和内存数据结构会有比较大的差异。</p>
+<p>内存数据结构你直接 new 一个出来就行了，不用关心这个结构在内存中是如何布局的，这些都由操作系统和编程语言代劳了。</p>
+<p>但磁盘就不一样，考虑到磁盘读取的操作效率相对比较低，且每次只能读取固定大小的磁盘数据，你要自己设计数据的存储布局，规定每个字节存什么信息，然后基于你设计的存储布局实现增删查改的 API，比较枯燥琐碎。</p>
+<p>比如说，学过 MySQL 的话应该比较熟悉 B+ 树结构，但你肯定不容易看懂 B+ 树的代码。因为 B+ 树是磁盘数据结构，虽然原理上可以理解为 BST 的加强版，但考虑到数据文件格式的设计，真正的代码实现非常复杂。</p>
+<p>所以一般来说，我们了解磁盘数据结构的原理，了解各个操作的时间复杂度就可以了，没必要特别纠结它的具体实现。</p>
+<h3 id="数据可变-vs-数据不可变"><a href="#数据可变-vs-数据不可变" class="headerlink" title="数据可变 vs 数据不可变"></a>数据可变 vs 数据不可变</h3><p><strong>存储结构可以粗略分为两类：数据可变的和数据不可变的</strong>。所谓可变，就是说已经插入的数据还可以原地进行修改，不可变就是说已经插入的数据就不能再修改了。</p>
+<p><strong>B 树是数据可变的代表结构</strong>（B+ 树等衍生结构都归为 B 树一族）。你就想想 BST 吧，数据存在节点上，我们可以随意插入、删除、修改 BST 中的节点。</p>
+<p>B 树的理论增删查改性能和 BST 一样都是 logN，但 B 树的实际写入效率并不是特别高：</p>
+<p>一方面是因为 B 树需要分裂合并等操作保证整棵树的平衡性，这里面涉及很多磁盘随机读写的操作，性能会比较差；另一方面考虑到并发场景，修改 B 树结构时需要比较复杂的锁机制保证并发安全，也会一定程度影响效率。</p>
+<p><strong>综上，B 树的难点在于平衡性维护和并发控制，一般用在读多写少的场景</strong>。</p>
+<p><strong>LSM 树是数据不可变的代表结构</strong>。你只能在尾部追加新数据，不能修改之前已经插入的数据。</p>
+<p>如果不能修改以前的数据，是不是就不能提供删、查、改的操作 API 呢？其实是可以的。</p>
+<p>我们只需要提供<code>set(key, val)</code>和<code>get(key)</code>两个 API 即可。查询操作靠<code>get(key)</code>，增删改操作都可以由<code>set(key, val)</code>实现：</p>
+<p>如果<code>set</code>的<code>key</code>不存在就是新增键值对，如果已经存在，就是更新键值对；如果把<code>val</code>设置为一个特殊值（比如 null）就可以代表<code>key</code>被删掉了（墓碑机制）。</p>
+<p>那么我对某个键<code>key</code>做了一系列操作后，我只要找到最近一次的操作，就能知道这个键当前的值是多少了。</p>
+<p>从磁盘的角度来说，在尾部追加的写入效率非常高，因为不需要像 B 树那样维护复杂的树形结构嘛。但代价就是，查找效率肯定比较低，因为只能通过线性遍历去查找操作记录。</p>
+<p>后面我会讲讲真正的 LSM 树如何针对读场景进行优化，但再怎么优化，肯定也达不到 B 树的读取效率。</p>
+<p>同时，LSM 树还有一个明显弊端就是存在空间放大。在 B 树中一个键值对就占用一个节点，我更新这个键 100 次，它还是只占用一个节点。但在 LSM 树中，如果我更新一个键 100 次，就相当于写入了 100 条数据，会消耗更多空间。</p>
+<p>后面会讲到，这个问题的解决方案是压实（compact），把操作序列中失效的历史操作消除掉，只保留最近的操作记录。</p>
+<p><strong>综上，LSM 树的难点在于 compact 操作和读取数据时的效率优化，一般用在写多读少的场景</strong>。</p>
+<h3 id="有序-vs-无序"><a href="#有序-vs-无序" class="headerlink" title="有序 vs 无序"></a>有序 vs 无序</h3><p>可以说，存储结构的有序程度直接决定了该类结构的读写性能上限。<strong>有序度越高，读性能越强，但相应的，维护有序性的成本也越高，写入性能也就会越差</strong>。</p>
+<p>你看 B 树，作为 BST 的加强版，实际上是维护了所有数据的有序性，读取性能必然起飞，但写入性能你也别抱太大希望。</p>
+<p>LSM 树不可能向 B 树那样维护所有数据的有序性，但可以维护局部数据的有序性，从而一定程度提升读性能。</p>
+<h3 id="LSM-树的设计"><a href="#LSM-树的设计" class="headerlink" title="LSM 树的设计"></a>LSM 树的设计</h3><p>就我的理解，LSM 树其实不是一种数据结构，而是一种存储方案。这里面涉及三个重要的数据组件：<code>memtable</code>，<code>log</code>，<code>SSTable</code>，正如我在 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxODQxMDM0Mw==&mid=2247498023&idx=1&sn=b3ca224a1e1e2bd0fdb733547a6dd6d5&scene=21#wechat_redirect">Apache Pulsar 的架构设计</a> 中画的这幅图：</p>
+<p><img src="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/2.png" alt="图片"></p>
+<p>其中<code>Journal</code>就是<code>log</code>，<code>Entry Log</code>就是若干<code>SSTable</code>的集合，叫法不同罢了。</p>
+<p><code>memtable</code>是红黑树或者跳表这样的有序内存数据结构，起到缓存和排序的作用，把新写入的数据按照键的大小进行排序。当<code>memtable</code>到达一定大小之后，会被转化成<code>SSTable</code>格式刷入磁盘持久化存储。</p>
+<p><code>SSTable</code>（Sorted String Table）说白了就是一个特殊格式的文件，其中的数据按照键的大小排列，你可以把它类比成一个有序数组。而 LSM 树，说白了就是若干<code>SSTable</code>的集合。</p>
+<p><code>log</code>文件记录操作日志，在数据写入<code>memtable</code>的同时也会刷盘写入到<code>log</code>文件，作用是数据恢复。比如在<code>memtable</code>中的数据还没转化成<code>SSTable</code>持久化到磁盘时，如果突然断电，那么<code>memtable</code>里面的数据都会丢失，但有<code>log</code>文件在，就可以恢复这些数据。当然，等<code>memtable</code>中的数据成功转化成<code>SSTable</code>落盘之后，<code>log</code>文件中对应的操作日志就没必要存在了，可以被删除。</p>
+<p>LSM 树的<code>set</code>写入过程并不复杂：写入<code>log</code>和<code>memtable</code>，最后转化成一个<code>SSTable</code>持久化到磁盘就行了。</p>
+<p>最关键的应该是读取和 compact 的过程：<code>SSTable</code>要如何组织，才能快速<code>get</code>到一个<code>key</code>对应的<code>val</code>呢？如何定期对所有 SSTable 做 compact 瘦身呢？</p>
+<p>其实有多种方案，其中比较常用的方案是按照层级组织<code>SSTable</code>：</p>
+<p><img src="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/3.png" alt="图片"><a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Leveled-Compaction">https://github.com/facebook/rocksdb/wiki/Leveled-Compaction</a></p>
+<p>图中每个绿色方块代表一个<code>SSTable</code>，若干个<code>SSTable</code>构成一层，总共有若干层，每层能够容纳的<code>SSTable</code>数量上限依次递增。</p>
+<p>新刷入的<code>SSTable</code>在第 0 层，如果某一层的<code>SSTable</code>个数超过上限，则会触发 compact 操作，从该层选出若干<code>SSTable</code>合并成一个更大的<code>SSTable</code>，移动下一层：</p>
+<p><img src="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/4.png" alt="图片"><a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Leveled-Compaction">https://github.com/facebook/rocksdb/wiki/Leveled-Compaction</a></p>
+<p>每个<code>SSTable</code>就好比一个有序数组&#x2F;链表，多个<code>SSTable</code>的合并就是前文 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxODQxMDM0Mw==&mid=2247492022&idx=1&sn=35f6cb8ab60794f8f52338fab3e5cda5&scene=21#wechat_redirect">链表双指针技巧汇总</a> 中合并多个有序链表的逻辑。</p>
+<p>这样，越靠上层的数据越新，越靠下层的数据越旧，且算法保证同一层的若干<code>SSTable</code>的<code>key</code>不存在重叠：</p>
+<p><img src="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/5.png" alt="图片"><a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Leveled-Compaction">https://github.com/facebook/rocksdb/wiki/Leveled-Compaction</a></p>
+<p>那么假设给一个目标键<code>key27</code>，我们只需要从上到下遍历层，并在每一层中使用 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxODQxMDM0Mw==&mid=2247485044&idx=1&sn=e6b95782141c17abe206bfe2323a4226&scene=21#wechat_redirect">二分查找算法</a> 找到键区间包含<code>key27</code>的<code>SSTable</code>，然后用布隆过滤器快速判断一下<code>key27</code>是否不存在这个<code>SSTable</code>中。如果可能存在，由于<code>SSTable</code>中的键也是有序的，可以再次运用 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxODQxMDM0Mw==&mid=2247485044&idx=1&sn=e6b95782141c17abe206bfe2323a4226&scene=21#wechat_redirect">二分查找算法</a> 在<code>SSTable</code>中找到键对应的值。</p>
+<p>这样，借助 LSM 树的层级结构和<code>SSTable</code>的有序性，就能利用二分搜索提升查找效率，避免线性查找键值对。</p>
+<p>以上就是本文的全部内容，LSM 树的设计思路比较易于理解，但实现起来还有不少细节，如果你对具体实现感兴趣，我可以推荐一些学习资料：</p>
+<p>LevelDB 的代码仓库：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/google/leveldb/issues">https://github.com/google/leveldb/issues</a></p>
+<p>RocksDB 的 wiki：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki">https://github.com/facebook/rocksdb/wiki</a></p>
+<p>《数据库系统内幕》和《精通 LevelDB》这两本书也不错：</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+              <a href="/tags/OLTP/" rel="tag"># OLTP</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+              <a href="/tags/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" rel="tag"># 分库分表</a>
+              <a href="/tags/db/" rel="tag"># db</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D1/" rel="prev" title="MySQL-LSM树介绍1">
+                  <i class="fa fa-chevron-left"></i> MySQL-LSM树介绍1
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/" rel="next" title="MySQL-架构介绍简介">
+                  MySQL-架构介绍简介 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

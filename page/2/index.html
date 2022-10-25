@@ -167,18 +167,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-count">88</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-count">66</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -224,7 +224,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/JVM%E5%86%85%E9%83%A8%E9%94%81%E5%8D%87%E7%BA%A7%E8%BF%87%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -242,7 +242,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/JVM%E5%86%85%E9%83%A8%E9%94%81%E5%8D%87%E7%BA%A7%E8%BF%87%E7%A8%8B/" class="post-title-link" itemprop="url">JVM内部锁升级过程</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-装饰者模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -254,7 +254,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 15:38:58 / 修改时间：15:42:31" itemprop="dateCreated datePublished" datetime="2022-10-24T15:38:58+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:12:08 / 修改时间：19:31:31" itemprop="dateCreated datePublished" datetime="2022-10-25T19:12:08+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -262,7 +262,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Java并发编程</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -273,14 +273,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>7.1k</span>
+      <span>2.5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>6 分钟</span>
+      <span>2 分钟</span>
     </span>
 </div>
 
@@ -291,23 +291,12 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="谈谈JVM内部锁升级过程"><a href="#谈谈JVM内部锁升级过程" class="headerlink" title="谈谈JVM内部锁升级过程"></a>谈谈JVM内部锁升级过程</h2><p><strong>一 为什么讲这个？</strong></p>
-<p>总结AQS之后，对这方面顺带的复习一下。本文从以下几个高频问题出发：</p>
-<ul>
-<li>对象在内存中的内存布局是什么样的？</li>
-<li>描述synchronized和ReentrantLock的底层实现和重入的底层原理。</li>
-<li>谈谈AQS，为什么AQS底层是CAS+volatile？</li>
-<li>描述下锁的四种状态和锁升级过程？</li>
-<li>Object  o &#x3D; new Object() 在内存中占用多少字节？</li>
-<li>自旋锁是不是一定比重量级锁效率高？</li>
-<li>打开偏向锁是否效率一定会提升？</li>
-<li>重量级锁到底重在哪里？</li>
-<li>重量级锁什么时候比轻量级锁效率高，同样反之呢？</li>
-</ul>
-<p><strong>二 加锁发生了什么？</strong></p>
+          <h3 id="一、定义"><a href="#一、定义" class="headerlink" title="一、定义"></a>一、定义</h3><p>装饰模式的设计理念主要是以对客户端透明的方式动态扩展对象的功能，是继承关系的一个替代（继承会产生大量的子类，而且代码有冗余）。装饰模式可以在不创造更多子类的情况下，将对象的功能加以扩展。装饰模式把客户端的调用委派到被装饰类。装饰模式的关键在于这种扩展完全是透明的（装饰模式的透明性要求客户端程序不应该将对象声明为具体构件类型或具体装饰类型，而应该全部声明为抽象构件类型），装饰模式的应用在java的I&#x2F;O流中最为显著。</p>
+<h3 id="二、角色"><a href="#二、角色" class="headerlink" title="二、角色"></a>二、角色</h3><p><strong>抽象构件角色（Component）</strong>：通常是一个抽象类或者一个接口，定义了一系列方法，方法的实现可以由子类实现或者自己实现。通常不会直接使用该类，而是通过继承该类或者实现该接口来实现特定的功能。（例如，对于动物类，有一个抽象方法输出所有的功能，基本功能包括：呼吸，觅食，睡觉等等）<br><strong>具体构件角色（Concrete Component）</strong>：是Component的子类，实现了对应的方法，它就是那个被装饰的类。（具体构建角色可以建立很多个，例如狗，猫，鸟等等，如果是狗，我们可以装饰一些吼叫的功能，吃肉的功能；鸟可以装饰一些飞行的功能，带有翅膀的功能等等。当然这些需要在具体装饰角色中去具体定义）<br><strong>装饰角色（Decorator）</strong>：是Component的子类，它是具体装饰角色共同实现的抽象类（也可以是接口），并且持有一个Component类型的对象引用，它的主要作用就是把客户端的调用委派到被装饰类。<br><strong>具体装饰角色（Concrete Decorator）</strong>：它是具体的装饰类，是Decorator的子类，当然也是Component的子类。它主要就是定义具体的装饰功能，例如上面说的，对于鸟这个具体构建角色而言，除了具备抽象构件角色基本的功能，它还具有一些飞行的功能，带翅膀的功能。那么我们可以把这两个功能定义成一个具体装饰角色1，对于狗这个具体构件角色而言，我们可以把吼叫，吃肉这两个功能定义成一个具体装饰角色2，这样，如果我们再定义一个狼这样的具体构件角色的时候，就可以直接用具体装饰角色2来进行装饰。</p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F/70.png" alt="img"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/JVM%E5%86%85%E9%83%A8%E9%94%81%E5%8D%87%E7%BA%A7%E8%BF%87%E7%A8%8B/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -338,7 +327,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Java%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%8F%8A%E4%B8%9A%E5%8A%A1%E5%AE%9E%E8%B7%B5/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -356,7 +345,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Java%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%8F%8A%E4%B8%9A%E5%8A%A1%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">Java线程池实现原理及业务实践</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-责任链模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -368,7 +357,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 15:20:59 / 修改时间：15:37:40" itemprop="dateCreated datePublished" datetime="2022-10-24T15:20:59+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:11:54 / 修改时间：19:30:45" itemprop="dateCreated datePublished" datetime="2022-10-25T19:11:54+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -376,7 +365,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Java并发编程</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -387,14 +376,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>32k</span>
+      <span>5.3k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>29 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -405,15 +394,124 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="线程池讲解"><a href="#线程池讲解" class="headerlink" title="线程池讲解"></a>线程池讲解</h2><p><img src="/2022/10/24/Java%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%8F%8A%E4%B8%9A%E5%8A%A1%E5%AE%9E%E8%B7%B5/1.png" alt="图片"></p>
-<p>我们知道，线程需要的时候要进行创建，不需要的时候需要进行销毁，但是线程的创建和销毁都是一个开销比较大的操作。</p>
+          <p><strong>前言</strong></p>
+<p>面试经历大家肯定都有过，但是面试的流程其实跟一种设计模式很像，每一轮的面试官都有自己的职责，一个求职者面试经历的过程就好比一次客户端的请求过程。</p>
+<p>在设计模式系列的文章中之前已经为大家分享了创建型设计模式，感兴趣的小伙伴们可以再去翻看之前的分享。接下来开始分享设计模式三大类型中的<strong>行为型模式</strong>了，今天要分享的是<strong>责任链模式</strong></p>
+<h2 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h2><p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/40.png" alt="图片"></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-原型模式</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 19:11:45 / 修改时间：19:29:12" itemprop="dateCreated datePublished" datetime="2022-10-25T19:11:45+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><strong>前言</strong></p>
+<p>在设计模式的系列文章中，我们前面已经写了<strong>工厂模式</strong>、<strong>单列模式</strong>、<strong>建造者模式</strong>，在针对创建型模式中，今天想跟大家分享的是<strong>原型模式</strong></p>
+<p>其实原型模式在我们的代码中是很常见的，但是又容易被我们所忽视的一种模式，那么什么是原型模式呢？</p>
 <blockquote>
-<p>为什么开销大呢？</p>
+<p>原型模式其实就是一种克隆对象的方法，在我们的编码时候是很常见的，比如我们常用的的BeanUtils.copyProperties就是一种对象的<strong>浅copy</strong>，其实现在我们实例化对象操作并不是特别耗费性能，所以在针对一些特殊场景我们还是需要克隆那些已经实例化的对象的：</p>
+<ul>
+<li>依赖外部资源或硬件密集型操作，比如数据库查询，或者一些存在IO操作的场景</li>
+<li>获取相同对象在相同状态的拷贝从而不需要重复创建获取状态的操作的情况</li>
+</ul>
 </blockquote>
-<p>虽然我们程序员创建一个线程很容易，直接使用 new Thread() 创建就可以了，但是操作系统做的工作会多很多，它需要发出 <code>系统调用</code>，陷入内核，调用内核 API 创建线程，为线程分配资源等，这一些操作有很大的开销。</p>
+<p>看下我们的类图：</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/Java%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%8F%8A%E4%B8%9A%E5%8A%A1%E5%AE%9E%E8%B7%B5/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -444,7 +542,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -462,7 +560,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Java并发编程总结</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-模板方法模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -474,7 +572,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 15:17:53 / 修改时间：15:18:53" itemprop="dateCreated datePublished" datetime="2022-10-24T15:17:53+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:11:35 / 修改时间：19:27:29" itemprop="dateCreated datePublished" datetime="2022-10-25T19:11:35+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -482,7 +580,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Java并发编程</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -493,14 +591,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>111k</span>
+      <span>4.7k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1:41</span>
+      <span>4 分钟</span>
     </span>
 </div>
 
@@ -511,16 +609,12 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h3 id="1进程-x2F-线程是什么？"><a href="#1进程-x2F-线程是什么？" class="headerlink" title="1进程&#x2F;线程是什么？"></a>1进程&#x2F;线程是什么？</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">进程是“执行中的程序”，进行资源分配和调度的独立单位，线程是进程的实体，一个进程可以拥有多个线程，线程的上下文切换比进程要快，线程之间共享地址空间和其他资源。</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="2线程状态？"><a href="#2线程状态？" class="headerlink" title="2线程状态？"></a>2线程状态？</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread 的源码中定义了6种状态：new（新建）、runnnable（可运行）、blocked（阻塞）、waiting（等待）、time waiting （定时等待）和 terminated（终止）。</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://img-blog.csdnimg.cn/20210411150209579.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM4NjQ0NDk1,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
+          <h2 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h2><p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/1.png" alt="图片"></p>
+<p>还是老规矩从上图五个方面来分别具体和大家聊聊模版方法模式</p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>模版方法模式的定义以及目的？</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E6%A8%A1%E6%9D%BF%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -551,7 +645,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/OIDC%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -569,7 +663,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/OIDC%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83/" class="post-title-link" itemprop="url">OIDC认证授权</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-建造者模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -581,7 +675,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 15:09:35 / 修改时间：15:11:36" itemprop="dateCreated datePublished" datetime="2022-10-24T15:09:35+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:11:19 / 修改时间：19:25:29" itemprop="dateCreated datePublished" datetime="2022-10-25T19:11:19+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -589,7 +683,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">Java基础</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -600,14 +694,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>7.7k</span>
+      <span>1.5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>7 分钟</span>
+      <span>1 分钟</span>
     </span>
 </div>
 
@@ -618,12 +712,17 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="五分钟理解什么是-OIDC-（OpenID-Connect）"><a href="#五分钟理解什么是-OIDC-（OpenID-Connect）" class="headerlink" title="五分钟理解什么是 OIDC （OpenID Connect）"></a>五分钟理解什么是 OIDC （OpenID Connect）</h1><p><img src="/2022/10/24/OIDC%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83/1.png" alt="在这里插入图片描述"></p>
-<h2 id="什么是-OIDC？"><a href="#什么是-OIDC？" class="headerlink" title="什么是 OIDC？"></a>什么是 OIDC？</h2><p>OIDC 的全称是 OpenID Connect，是一套基于 OAuth 2.0 的<strong>认证 + 授权</strong>协议，用于用户身份认证，将用户数据安全地暴露给第三方。</p>
-<h2 id="OIDC-与-OAuth-2-0-有何不同？"><a href="#OIDC-与-OAuth-2-0-有何不同？" class="headerlink" title="OIDC 与 OAuth 2.0 有何不同？"></a>OIDC 与 OAuth 2.0 有何不同？</h2>
+          <h2 id="建造者模式"><a href="#建造者模式" class="headerlink" title="建造者模式"></a>建造者模式</h2><p>什么叫建造者？他的应用场景又是什么呢？</p>
+<blockquote>
+<p>当我们需要实列化一个复杂的类，以得到不同结构类型和不同的内部状态的对象时，我们可以用不同的类对它们的实列化操作逻辑分别进行封装，这些类我们就称之为建造者。</p>
+<p>当我们需要来之同一个类，但是要就有不同结构对象时，就可以通过构造另一个建造者来进行实列化。</p>
+<p>———-以上定义来自《设计模式之美》。</p>
+</blockquote>
+<p>为了加深理解我们再来一个流程图</p>
+<p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/15.png" alt="图片"></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/OIDC%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -654,7 +753,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Java%E9%9B%86%E5%90%88/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -672,7 +771,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Java%E9%9B%86%E5%90%88/" class="post-title-link" itemprop="url">Java集合</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-观察者模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -684,7 +783,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 14:40:51 / 修改时间：15:07:07" itemprop="dateCreated datePublished" datetime="2022-10-24T14:40:51+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:11:09 / 修改时间：19:21:23" itemprop="dateCreated datePublished" datetime="2022-10-25T19:11:09+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -692,7 +791,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">Java基础</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -703,14 +802,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>27k</span>
+      <span>6k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>24 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -721,171 +820,14 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="一、概览"><a href="#一、概览" class="headerlink" title="一、概览"></a>一、概览</h1><table>
-<thead>
-<tr>
-<th>Collection</th>
-<th></th>
-<th>是否有序</th>
-<th>是否允许元素重复</th>
-<th>是否允许null值</th>
-<th>实现</th>
-<th>优点</th>
-<th>缺点</th>
-<th>默认容量</th>
-<th>扩容因子</th>
-<th>扩容</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>List</td>
-<td>ArrayList</td>
-<td>是</td>
-<td>是</td>
-<td>是</td>
-<td>数组实现</td>
-<td>无容量限制，查询快，轻量级</td>
-<td>增删慢，线程不安全</td>
-<td>10</td>
-<td>1</td>
-<td>1.5倍</td>
-</tr>
-<tr>
-<td></td>
-<td>LinkedList</td>
-<td>是</td>
-<td>是</td>
-<td>是</td>
-<td>链表实现</td>
-<td>增删快</td>
-<td>查询慢，双向链表，线程不安全</td>
-<td>10</td>
-<td>1</td>
-<td>1.5倍</td>
-</tr>
-<tr>
-<td></td>
-<td>Vector</td>
-<td>是</td>
-<td>是</td>
-<td>否</td>
-<td>数组实现</td>
-<td>线程安全，查询快</td>
-<td>重量级，存在性能问题，增删慢</td>
-<td>10</td>
-<td>1</td>
-<td>2倍</td>
-</tr>
-<tr>
-<td>Set</td>
-<td>HashSet</td>
-<td>否</td>
-<td>否</td>
-<td>是</td>
-<td>基于HashMap实现</td>
-<td>效率高</td>
-<td>非线程安全</td>
-<td>16</td>
-<td>0.75</td>
-<td>2倍</td>
-</tr>
-<tr>
-<td></td>
-<td>TreeSet</td>
-<td>是（用二叉树实现排序）</td>
-<td>否</td>
-<td>否</td>
-<td>基于TreeMap实现</td>
-<td>可以指定比较方法进行排序</td>
-<td>非线程安全</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>LinkedHashSet</td>
-<td>是（用二叉树实现排序）</td>
-<td>否</td>
-<td>是</td>
-<td>继承HashSet，底层使用LinkedHashMap</td>
-<td>链表保证元素有序，hash表保证元素唯一</td>
-<td>双重链接列表</td>
-<td>16</td>
-<td>0.75</td>
-<td>2倍</td>
-</tr>
-<tr>
-<td>Map</td>
-<td>HashMap</td>
-<td>否</td>
-<td>使用key-value来映射和存储数据，key必须唯一，value可以重复</td>
-<td>最多只允许一条记录的key为null</td>
-<td>根据key的hashCode值存储数据</td>
-<td>使用hash算法去重效率高</td>
-<td>非线程安全</td>
-<td>16</td>
-<td>0.75</td>
-<td>2倍</td>
-</tr>
-<tr>
-<td></td>
-<td>TreeMap</td>
-<td>是（用二叉树排序）</td>
-<td>同上</td>
-<td>否</td>
-<td>基于红黑树实现，继承AbstractMap，并且实现了NavigableMap接口</td>
-<td>可以用指定比较方法进行排序</td>
-<td>非线程安全</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>LinkedHashMap</td>
-<td>是</td>
-<td>同上</td>
-<td>是</td>
-<td>在HashMap基础上采用了双向链表</td>
-<td>元素迭代顺序和插入顺序一致</td>
-<td>双重链接链表，非同步，遍历比HashMap慢</td>
-<td>16</td>
-<td>0.75</td>
-<td>2倍</td>
-</tr>
-<tr>
-<td></td>
-<td>WeakHashMap</td>
-<td>否</td>
-<td>同上</td>
-<td>是</td>
-<td>KV对存储，“弱键”自动GC回收删除，继承AbstractMap</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>HashTable</td>
-<td>否</td>
-<td>同上</td>
-<td>否</td>
-<td>在HashMap基础上加synchronized</td>
-<td>线程安全</td>
-<td>效率低</td>
-<td>11</td>
-<td>0.75</td>
-<td>2倍+1</td>
-</tr>
-</tbody></table>
-<p>容器主要包括 Collection 和 Map 两种，Collection 存储着对象的集合，而 Map 存储着键值对（两个对象）的映射表。<br><img src="/2022/10/24/Java%E9%9B%86%E5%90%88/1.png" alt="在这里插入图片描述"></p>
-<h2 id="Collection"><a href="#Collection" class="headerlink" title="Collection"></a>Collection</h2><p><img src="/2022/10/24/Java%E9%9B%86%E5%90%88/2.png" alt="在这里插入图片描述"></p>
+          <p>消息队列（MQ），一种能实现生产者到消费者单向通信的通信模型，这也是现在常用的主流中间件。</p>
+<p>常见有 RabbitMQ、ActiveMQ、Kafka等  他们的特点也有很多 比如 <strong>解偶</strong>、<strong>异步</strong>、<strong>广播</strong>、<strong>削峰</strong> 等等多种优势特点。</p>
+<p>在设计模式中也有一种模式能有效的达到<strong>解偶</strong>、<strong>异步</strong>的特点，那就是<strong>观察者模式</strong>又称为<strong>发布订阅模式</strong>。</p>
+<p>今天阿丙就分享一下实际开发中比较常见的这种模式</p>
+<h2 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h2>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/Java%E9%9B%86%E5%90%88/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -916,7 +858,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Java%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -934,7 +876,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Java%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/" class="post-title-link" itemprop="url">Java语言基础</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-工厂模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -946,7 +888,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 14:24:29 / 修改时间：14:39:31" itemprop="dateCreated datePublished" datetime="2022-10-24T14:24:29+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:10:53 / 修改时间：19:20:13" itemprop="dateCreated datePublished" datetime="2022-10-25T19:10:53+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -954,7 +896,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">Java基础</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -965,14 +907,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>34k</span>
+      <span>5.8k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>31 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -983,12 +925,15 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="一、数据类型"><a href="#一、数据类型" class="headerlink" title="一、数据类型"></a>一、数据类型</h1><p><strong>数据类型分类:</strong><br>Java的数据类型分为两大类：<br>基本数据类型：包括 整数 、 浮点数 、 字符 、 布尔 。<br>引用数据类型：包括 类 、 数组 、 接口 。</p>
-<h2 id="基本数据类型"><a href="#基本数据类型" class="headerlink" title="基本数据类型"></a>基本数据类型</h2><p>四类八种基本数据类型：<br><img src="/2022/10/24/Java%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/1.png" alt="在这里插入图片描述"></p>
-<p>boolean 只有两个值：true、false，可以使用 1 bit 来存储，但是具体大小没有明确规定。JVM 会在编译时期将 boolean 类型的数据转换为 int，使用 1 来表示 true，0 表示 false。JVM 支持 boolean 数组，但是是通过读写 byte 数组来实现的。</p>
+          <p>1.简单工厂模式：代替new产生对象，产品的类型比较少时。</p>
+<p>   我们要获得三种不同的数据库对象，如Mysql,SQLserver,Oracle，它们拥有共同的特征，即可以进行抽象，简单工厂目的是将获得具体数据库实体的任务交给工厂类。</p>
+<p> 接口DataBase：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">DataBase</span> &#123;</span><br><span class="line">         <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">open</span><span class="params">()</span>;</span><br><span class="line">         <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">close</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 类Mysql:</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/Java%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1019,7 +964,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/%E7%AC%AC316%E5%9C%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -1037,7 +982,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/%E7%AC%AC316%E5%9C%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B/" class="post-title-link" itemprop="url">第316场力扣周赛</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">设计模式-单例模式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -1049,7 +994,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 13:49:07 / 修改时间：14:01:42" itemprop="dateCreated datePublished" datetime="2022-10-24T13:49:07+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:10:39 / 修改时间：19:23:54" itemprop="dateCreated datePublished" datetime="2022-10-25T19:10:39+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1057,7 +1002,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -1068,14 +1013,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>3.7k</span>
+      <span>5.3k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>3 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -1086,15 +1031,14 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h4 id="1-6214-判断两个事件是否存在冲突"><a href="#1-6214-判断两个事件是否存在冲突" class="headerlink" title="1.6214. 判断两个事件是否存在冲突"></a>1.<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/determine-if-two-events-have-conflict/">6214. 判断两个事件是否存在冲突</a></h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">haveConflict</span><span class="params">(String[] event1, String[] event2)</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">start1</span> <span class="operator">=</span> helper(event1[<span class="number">0</span>]), end1 = helper(event1[<span class="number">1</span>]);</span><br><span class="line">        <span class="type">int</span> <span class="variable">start2</span> <span class="operator">=</span> helper(event2[<span class="number">0</span>]), end2 = helper(event2[<span class="number">1</span>]);</span><br><span class="line">        <span class="keyword">if</span> (start1 &gt; end2 || start2 &gt; end1) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> <span class="title function_">helper</span><span class="params">(String str)</span> &#123;</span><br><span class="line">        <span class="comment">//将时间全部转化为分钟</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">h</span> <span class="operator">=</span> (str.charAt(<span class="number">0</span>) - <span class="string">&#x27;0&#x27;</span>) * <span class="number">10</span> + (str.charAt(<span class="number">1</span>) - <span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">        <span class="type">int</span> <span class="variable">m</span> <span class="operator">=</span> (str.charAt(<span class="number">3</span>) - <span class="string">&#x27;0&#x27;</span>) * <span class="number">10</span> + (str.charAt(<span class="number">4</span>) - <span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">        <span class="keyword">return</span> h * <span class="number">60</span> + m;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="2-2447-最大公因数等于-K-的子数组数目"><a href="#2-2447-最大公因数等于-K-的子数组数目" class="headerlink" title="2.2447. 最大公因数等于 K 的子数组数目"></a>2.<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/number-of-subarrays-with-gcd-equal-to-k/">2447. 最大公因数等于 K 的子数组数目</a></h4><p>两个或多个<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E6%95%B4%E6%95%B0/1293937?fromModule=lemma_inlink">整数</a>公有的<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E5%80%8D%E6%95%B0/7827981?fromModule=lemma_inlink">倍数</a>叫做它们的公倍数，其中除0以外最小的一个公倍数就叫做这几个整数的最小公倍数。整数a，b的最小公倍数记为[a，b]，同样的，a，b，c的最小公倍数记为[a，b，c]，多个整数的最小公倍数也有同样的记号。</p>
-<p>与最小公倍数相对应的概念是<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E6%9C%80%E5%A4%A7%E5%85%AC%E7%BA%A6%E6%95%B0/869308?fromModule=lemma_inlink">最大公约数</a>，a，b的最大公约数记为（a，b）。关于最小公倍数与最大公约数，我们有这样的定理：(a,b)x[a,b]&#x3D;ab(a,b均为整数)。</p>
+          <p>我不知道大家工作或者面试时候遇到过单例模式没，面试的话我记得我当时在17年第一次实习的时候，就遇到了单例模式，面试官是我后来的leader，当时就让我手写单例，我记得我就写出了饿汉式，懒汉式，但是并没说出懒汉和饿汉的区别，当时他给我一通解释我才知道了其中的奥秘。</p>
+<p>写这篇文章之前我刻意的在我手上的项目里面去找了找，我发现单例在每个项目里面都有运用到，而且我后面所说的几种实现还基本上都涉及了，还挺有意思的。</p>
+<p><strong>开篇我就给大家一个思考题</strong>：为什么不用静态方法而用单例模式？</p>
+<p>问题的答案我会在最后公布，大家可以带着问题看下去，看看大家的思考是不是跟我一样的。</p>
+<p>大家肯定也能经常听到身边的同学说单例很简单，自己也会，但是真到自己的时候你能就一个知识点讲的很透彻，并且能够发散思考引出更多的答案吗？或者能说出他每种模式更适合的场景么？这是值得深思的。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/%E7%AC%AC316%E5%9C%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1125,7 +1069,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/22/7%E7%A7%8D%E5%AE%9E%E7%8E%B0web%E5%AE%9E%E6%97%B6%E6%B6%88%E6%81%AF%E6%8E%A8%E9%80%81%E7%9A%84%E6%96%B9%E6%A1%88/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FII/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -1143,7 +1087,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/22/7%E7%A7%8D%E5%AE%9E%E7%8E%B0web%E5%AE%9E%E6%97%B6%E6%B6%88%E6%81%AF%E6%8E%A8%E9%80%81%E7%9A%84%E6%96%B9%E6%A1%88/" class="post-title-link" itemprop="url">7种实现web实时消息推送的方案</a>
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FII/" class="post-title-link" itemprop="url">设计模式-策略模式II</a>
         </h2>
 
         <div class="post-meta-container">
@@ -1155,7 +1099,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-22 20:07:41 / 修改时间：21:14:32" itemprop="dateCreated datePublished" datetime="2022-10-22T20:07:41+08:00">2022-10-22</time>
+      <time title="创建时间：2022-10-25 19:10:26 / 修改时间：19:17:29" itemprop="dateCreated datePublished" datetime="2022-10-25T19:10:26+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1163,7 +1107,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
         </span>
     </span>
 
@@ -1174,7 +1118,116 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>11k</span>
+      <span>5.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>那么工厂模式和策略模式有什么区别呢？</p>
+<blockquote>
+<ul>
+<li>工厂模式是属于创建型设计模式，主要用来针对不同类型创建不同的对象，达到解偶类对象。</li>
+<li>策略模式是属于行为型设计模式，主要是针对不同的策略做出对应行为，达到行为解偶</li>
+</ul>
+</blockquote>
+<p>本次就来具体聊聊<strong>策略模式</strong>它是如何做到行为解耦</p>
+<h2 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h2><p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FII/60.png" alt="图片"></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FII/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/" class="post-title-link" itemprop="url">设计模式-策略模式I</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 19:10:20 / 修改时间：19:15:13" itemprop="dateCreated datePublished" datetime="2022-10-25T19:10:20+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>10k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -1192,123 +1245,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="7种实现web实时消息推送的方案"><a href="#7种实现web实时消息推送的方案" class="headerlink" title="7种实现web实时消息推送的方案"></a>7种实现web实时消息推送的方案</h1><p><img src="/2022/10/22/7%E7%A7%8D%E5%AE%9E%E7%8E%B0web%E5%AE%9E%E6%97%B6%E6%B6%88%E6%81%AF%E6%8E%A8%E9%80%81%E7%9A%84%E6%96%B9%E6%A1%88/1.png" alt="图片"></p>
-<h3 id="什么是消息推送（push）"><a href="#什么是消息推送（push）" class="headerlink" title="什么是消息推送（push）"></a><strong>什么是消息推送（push）</strong></h3><p>推送的场景比较多，比如有人关注我的公众号，这时我就会收到一条推送消息，以此来吸引我点击打开应用。</p>
-<p>消息推送(push)通常是指网站的运营工作等人员，通过某种工具对用户当前网页或移动设备APP进行的主动消息推送。</p>
+          <h1 id="策略模式"><a href="#策略模式" class="headerlink" title="策略模式"></a>策略模式</h1><h2 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h2><p><img src="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/1.png" alt="图片"></p>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>什么是策略模式？它的原理实现是怎么样的？</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/22/7%E7%A7%8D%E5%AE%9E%E7%8E%B0web%E5%AE%9E%E6%97%B6%E6%B6%88%E6%81%AF%E6%8E%A8%E9%80%81%E7%9A%84%E6%96%B9%E6%A1%88/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/21/JDKDubboSpring%20%E4%B8%89%E7%A7%8D%20SPI%20%E6%9C%BA%E5%88%B6%EF%BC%8C%E8%B0%81%E6%9B%B4%E5%A5%BD/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/21/JDKDubboSpring%20%E4%B8%89%E7%A7%8D%20SPI%20%E6%9C%BA%E5%88%B6%EF%BC%8C%E8%B0%81%E6%9B%B4%E5%A5%BD/" class="post-title-link" itemprop="url">JDK/Dubbo/Spring 三种 SPI 机制，谁更好？</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2022-10-21 16:39:46" itemprop="dateCreated datePublished" datetime="2022-10-21T16:39:46+08:00">2022-10-21</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-10-24 15:13:57" itemprop="dateModified" datetime="2022-10-24T15:13:57+08:00">2022-10-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">Java基础</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>9.3k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>8 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h1 id="JDK-x2F-Dubbo-x2F-Spring-三种-SPI-机制，谁更好？"><a href="#JDK-x2F-Dubbo-x2F-Spring-三种-SPI-机制，谁更好？" class="headerlink" title="JDK&#x2F;Dubbo&#x2F;Spring 三种 SPI 机制，谁更好？"></a>JDK&#x2F;Dubbo&#x2F;Spring 三种 SPI 机制，谁更好？</h1><blockquote>
-<p>SPI 全称为 Service Provider Interface，是一种服务发现机制。SPI 的本质是将接口实现类的全限定名配置在文件中，并由服务加载器读取配置文件，加载实现类。这样可以在运行时，动态为接口替换实现类。正因此特性，我们可以很容易的通过 SPI 机制为我们的程序提供拓展功能。</p>
-</blockquote>
-<p>本文主要是特性 &amp; 用法介绍，不涉及源码解析（源码都很简单，相信你一定一看就懂）</p>
-<h2 id="SPI-有什么用？"><a href="#SPI-有什么用？" class="headerlink" title="SPI 有什么用？"></a>SPI 有什么用？</h2><p>举个栗子，现在我们设计了一款全新的日志框架：<strong>super-logger</strong>。默认以XML文件作为我们这款日志的配置文件，并设计了一个配置文件解析的接口：</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/21/JDKDubboSpring%20%E4%B8%89%E7%A7%8D%20SPI%20%E6%9C%BA%E5%88%B6%EF%BC%8C%E8%B0%81%E6%9B%B4%E5%A5%BD/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8FI/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1332,7 +1273,7 @@
 
 
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 </div>
@@ -1355,13 +1296,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">370k</span>
+    <span title="站点总字数">1m</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:37</span>
+    <span title="站点阅读时长">15:38</span>
   </span>
 </div>
 <div class="busuanzi-count">

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="OSI案例详解+ARP+DNS案例，淘宝买东西案例，淘宝买东西 DNS（走的UDP）域名的作用其实就是相对ip地址来说更好记忆和识别，DNS就是根据域名解析出ip">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计算机网络-OSI案例详解+ARP+DNS">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="OSI案例详解+ARP+DNS案例，淘宝买东西案例，淘宝买东西 DNS（走的UDP）域名的作用其实就是相对ip地址来说更好记忆和识别，DNS就是根据域名解析出ip">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/1.jpg">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/50.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/4.png">
+<meta property="article:published_time" content="2022-10-25T12:00:39.000Z">
+<meta property="article:modified_time" content="2022-10-25T14:37:16.892Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="计算机网络">
+<meta property="article:tag" content="HTTP">
+<meta property="article:tag" content="RPC">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/1.jpg">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/","path":"2022/10/25/计算机网络-OSI案例详解-ARP-DNS/","title":"计算机网络-OSI案例详解+ARP+DNS"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>计算机网络-OSI案例详解+ARP+DNS | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS"><span class="nav-number">1.</span> <span class="nav-text">OSI案例详解+ARP+DNS</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%EF%BC%8C%E6%B7%98%E5%AE%9D%E4%B9%B0%E4%B8%9C%E8%A5%BF%E6%A1%88%E4%BE%8B%EF%BC%8C%E6%B7%98%E5%AE%9D%E4%B9%B0%E4%B8%9C%E8%A5%BF"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">案例，淘宝买东西案例，淘宝买东西</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DNS%EF%BC%88%E8%B5%B0%E7%9A%84UDP%EF%BC%89"><span class="nav-number">1.0.0.2.</span> <span class="nav-text">DNS（走的UDP）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ARP%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.0.0.3.</span> <span class="nav-text">ARP协议</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E8%BF%87%E7%A8%8B"><span class="nav-number">1.0.0.4.</span> <span class="nav-text">工作过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%B1%82-DNS%EF%BC%8CHTTP%EF%BC%8CHTTPS"><span class="nav-number">1.0.0.5.</span> <span class="nav-text">应用层 DNS，HTTP，HTTPS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E8%BE%93%E5%B1%82"><span class="nav-number">1.0.0.6.</span> <span class="nav-text">传输层</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%B1%82"><span class="nav-number">1.0.0.7.</span> <span class="nav-text">网络层</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%93%BE%E8%B7%AF%E5%B1%82"><span class="nav-number">1.0.0.8.</span> <span class="nav-text">数据链路层</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%89%A9%E7%90%86%E5%B1%82"><span class="nav-number">1.0.0.9.</span> <span class="nav-text">物理层</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%A0%E8%BE%93%E8%BF%87%E7%A8%8B"><span class="nav-number">1.0.0.10.</span> <span class="nav-text">传输过程</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="计算机网络-OSI案例详解+ARP+DNS | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          计算机网络-OSI案例详解+ARP+DNS
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 20:00:39 / 修改时间：22:37:16" itemprop="dateCreated datePublished" datetime="2022-10-25T20:00:39+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="OSI案例详解-ARP-DNS"><a href="#OSI案例详解-ARP-DNS" class="headerlink" title="OSI案例详解+ARP+DNS"></a>OSI案例详解+ARP+DNS</h1><h4 id="案例，淘宝买东西案例，淘宝买东西"><a href="#案例，淘宝买东西案例，淘宝买东西" class="headerlink" title="案例，淘宝买东西案例，淘宝买东西"></a>案例，淘宝买东西案例，淘宝买东西</h4><p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/1.jpg" alt="img"></p>
+<h4 id="DNS（走的UDP）"><a href="#DNS（走的UDP）" class="headerlink" title="DNS（走的UDP）"></a>DNS（走的UDP）</h4><p>域名的作用其实就是相对ip地址来说更好记忆和识别，DNS就是根据域名解析出ip</p>
+<p><strong>一次请求，DNS解析的过程</strong></p>
+<p>1.在浏览器输入一个域名，操作系统首先会检查自己的本地hosts文件是否存在这个域名的映射关系，如果有就解析完成</p>
+<p>2.如果1没有对应的关系，然后就会去配置的服务器找</p>
+<p>3.最后到根DNS服务器去寻找，就算这个DNS不知道IP地址，但是它会告诉你哪一台知道，最后把结果返回（全球只有13台根DNS服务器，9台美国，亚洲只有日本有一台）</p>
+<p><strong>为啥只有13台？</strong></p>
+<p>因为UDP一个包一般为512字节，刚好能放下13个根地址</p>
+<p><strong>DNS配置</strong></p>
+<p>域名-ipv4 A记录</p>
+<p>域名-ipv6 AAAA记录</p>
+<p>域名-域名 CName</p>
+<p>域名-URL URL</p>
+<p>域名-文本 TXT</p>
+<h4 id="ARP协议"><a href="#ARP协议" class="headerlink" title="ARP协议"></a>ARP协议</h4><p>arp在数据传输中起着非常重要的作用，它在数据链路层中起作用</p>
+<p><strong>常见问题，数据怎么知道发送的ip地址？</strong></p>
+<p>这个问题其实很普通，数据发送的时候是肯定知道对方的ip地址的，只是我们发送数据的时候我们看不见而已，他是发送数据的一个重要的基础<br><strong>数据怎么知道发送的mac地址？</strong></p>
+<p>这个问题就比较高级一点了，我们知道数据传输其实真正起作用的是mac地址，怎么知道对方的mac地址呢，其实这就是arp协议在做的工作</p>
+<h4 id="工作过程"><a href="#工作过程" class="headerlink" title="工作过程"></a><strong>工作过程</strong></h4><p>分两种，一种是在同一个网段（广播域），还有一种是在不同网段</p>
+<p><strong>当数据到达数据链路层层</strong></p>
+<p><strong>同一网段</strong></p>
+<p>数据链路层的功能就是填源mac和目标mac，其实到这一步计算机就会判断目标ip是不是在一个网段，是的话就去本机的mac表找有没有目标ip的mac地址，没有的话，就把mac地址填FFFFFFFF，发送广播，接收到的机器拿出目标ip地址判断，如果是自己就返回响应</p>
+<p><strong>不同网段</strong></p>
+<p>如果计算出不是一个网段的，那么目标mac地址就直接填写网关的mac地址，数据发送到网关，mac地址就换成下一站的mac地址，直到找到目标的机器的网段的网关，最后网关发送一个类似上面的包找到目标机器</p>
+<h4 id="应用层-DNS，HTTP，HTTPS"><a href="#应用层-DNS，HTTP，HTTPS" class="headerlink" title="应用层 DNS，HTTP，HTTPS"></a>应用层 DNS，HTTP，HTTPS</h4><p>1.我们在浏览器输入<a target="_blank" rel="noopener" href="https://www.taobao.com网址,然后按下回车/">https://www.taobao.com网址，然后按下回车</a></p>
+<p>2.浏览器并不知道<a href="https://www.taobao.com这个URL的具体地点，它会去作为地址簿协议的DNS去查找，最终返回淘宝服务器的IP地址，假如为122.123.34.21">https://www.taobao.com这个URL的具体地点，它会去作为地址簿协议的DNS去查找，最终返回淘宝服务器的IP地址，假如为122.123.34.21</a></p>
+<p>3.浏览器知道了目标地址，就会开始打包它的请求，对于普通的浏览请求，通常会使用HTTP协议，但是对于购物等私密性比较重要的请求，选择了HTTPS加密的协议，给数据加上了HTTP头</p>
+<p>4.将请求数据打包，然后交给下一层传输层</p>
+<p><a target="_blank" rel="noopener" href="https://static001.geekbang.org/resource/image/d8/c6/d8a65ca347ad26acc9f1de49b10320c6.png"><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/2.png" alt="img"></a></p>
+<h4 id="传输层"><a href="#传输层" class="headerlink" title="传输层"></a>传输层</h4><p>在应用层和传输层之间，抽象出来了一层socket层，socket层相当于把传输层封装了一下，把tcp&#x2F;ip层复杂的操作抽象成了几个简单的接口提供给应用层使用。</p>
+<p>1.数据进入传输层，传输层有两种协议，一种是无连接协议UDP和面向连接的协议TCP，因为TCP是可靠的协议，所以选择了TCP协议，TCP协议里面有两个端口，一个是自己的浏览器端口，还有一个是淘宝应用的端口，于是给数据加上了TCP头</p>
+<p>2.传输层数据封装完毕，交给下一层网络层</p>
+<p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/3.png" alt="img"></p>
+<h4 id="网络层"><a href="#网络层" class="headerlink" title="网络层"></a>网络层</h4><p>1.网络层的协议是IP协议，IP协议中有浏览器的IP和淘宝服务器的IP</p>
+<p>2.给数据加上IP头，交给下一层数据链路层</p>
+<p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/50.png" alt="img"></p>
+<h4 id="数据链路层"><a href="#数据链路层" class="headerlink" title="数据链路层"></a>数据链路层</h4><p>1.既然知道了目的IP地址，就会想如何找到目标机器，通过判断IP地址判断，这台机器是局域网中的还是外网的，如果是外网的话就会去问路由器中的网关。</p>
+<p>2.默认的网关的IP地址是192.168.1.1，在局域网中广播的方式，找谁是192.168.1.1，网关就会回答他，并告诉他网关的MAC地址（通过IP找MAC地址的过程就是ARP协议，地址解析协议）</p>
+<p>3.既然知道了网关的MAC地址，就给数据加上了MAC头，接下来就可以交给物理层传输了</p>
+<p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/4.png" alt="img"></p>
+<h4 id="物理层"><a href="#物理层" class="headerlink" title="物理层"></a>物理层</h4><p>传输数据</p>
+<h4 id="传输过程"><a href="#传输过程" class="headerlink" title="传输过程"></a>传输过程</h4><p>1.数据终于从电脑出发了，首先它经过了交换机，交换机,交换机问数据你去哪呀，数据回答，找一个网关的MAC地址，交换机知道了，就告诉他怎么走</p>
+<p>2.找到了网关，网关一般是路由器，路由器问数据你去哪呀，数据拿出了淘宝的IP，说，你看，我要去这里，路由器回答说哦，去这里，先去路由器B吧，他会告诉你接下来怎么走的（路由器之间也经常沟通，知道怎么走，这种沟通就是路由协议，有OSPF开放式最短路径优先和BGP边界网关协议）</p>
+<p>3.最后终于到了最后一个路由器，路由器就会向某一个网络广播，数据找到交换机问，谁是淘宝服务器，淘宝服务器收到后，回复一个带MAC地址的数据，最后成功找到了淘宝服务器</p>
+<p>4.目标服务器发现MAC地址对上了，就脱下MAC头，IP也对上了，脱下了IP头，然后就是TCP头了，把数据交给传输层，由于是TCP协议，每收到一个数据都会告诉发送者，我收到了，不然的话，发送者会一直发送没有响应的数据的。最后根据端口号，把数据交给监听这个端口的进程。</p>
+<p>5.终于到达了进程，这时候就剩下一层HTTP头了，通过解析淘宝进程知道发送者要买东西了，于是操作数据库等，最后返回一个响应。</p>
+<p>6.最后，发送者的浏览器，弹出了购买成功，他开心的流出了眼泪！</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag"># 计算机网络</a>
+              <a href="/tags/HTTP/" rel="tag"># HTTP</a>
+              <a href="/tags/RPC/" rel="tag"># RPC</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/" rel="prev" title="计算机网络-计算机网络面试突击">
+                  <i class="fa fa-chevron-left"></i> 计算机网络-计算机网络面试突击
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E5%9B%BE%E8%A7%A3%E7%BD%91%E7%BB%9C%E4%B9%A6%E7%B1%8D/" rel="next" title="计算机网络-图解网络书籍">
+                  计算机网络-图解网络书籍 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

@@ -167,18 +167,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-count">88</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-count">66</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -224,7 +224,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Redis%E7%9F%A5%E8%AF%86%E7%82%B9PDF%E6%80%BB%E7%BB%93/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -242,7 +242,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Redis%E7%9F%A5%E8%AF%86%E7%82%B9PDF%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Redis知识点PDF总结</a>
+          <a href="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/" class="post-title-link" itemprop="url">操作系统-IO多路复用</a>
         </h2>
 
         <div class="post-meta-container">
@@ -254,7 +254,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 23:30:32 / 修改时间：23:35:14" itemprop="dateCreated datePublished" datetime="2022-10-24T23:30:32+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 22:42:42 / 修改时间：22:49:27" itemprop="dateCreated datePublished" datetime="2022-10-25T22:42:42+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -262,7 +262,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Redis/" itemprop="url" rel="index"><span itemprop="name">Redis</span></a>
+          <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
         </span>
     </span>
 
@@ -273,7 +273,215 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>13</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>为了讲多路复用，当然还是要跟风，采用鞭尸的思路，先讲讲传统的网络 IO 的弊端，用拉踩的方式捧起多路复用 IO 的优势。</p>
+<p>为了方便理解，以下所有代码都是伪代码，知道其表达的意思即可。</p>
+<p><strong>Let’s go</strong></p>
+<h1 id="阻塞-IO"><a href="#阻塞-IO" class="headerlink" title="阻塞 IO"></a>阻塞 IO</h1><p>服务端为了处理客户端的连接和请求的数据，写了如下代码。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-DMA%E5%92%8C%E9%9B%B6%E6%8B%B7%E8%B4%9D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-DMA%E5%92%8C%E9%9B%B6%E6%8B%B7%E8%B4%9D/" class="post-title-link" itemprop="url">操作系统-DMA和零拷贝</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 22:42:23 / 修改时间：22:45:33" itemprop="dateCreated datePublished" datetime="2022-10-25T22:42:23+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>9.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>9 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>磁盘可以说是计算机系统最慢的硬件之一，读写速度相差内存 10 倍以上，所以针对优化磁盘的技术非常的多，比如零拷贝、直接 I&#x2F;O、异步 I&#x2F;O 等等，这些优化的目的就是为了提高系统的吞吐量，另外操作系统内核中的磁盘高速缓存区，可以有效的减少磁盘的访问次数。</p>
+<p>这次，我们就以「文件传输」作为切入点，来分析 I&#x2F;O 工作方式，以及如何优化传输文件的性能。</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-DMA%E5%92%8C%E9%9B%B6%E6%8B%B7%E8%B4%9D/1.png" alt="在这里插入图片描述"></p>
+<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-DMA%E5%92%8C%E9%9B%B6%E6%8B%B7%E8%B4%9D/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-%E5%9B%BE%E8%A7%A3%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-%E5%9B%BE%E8%A7%A3%E7%B3%BB%E7%BB%9F/" class="post-title-link" itemprop="url">操作系统-图解系统</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 22:42:09 / 修改时间：22:50:45" itemprop="dateCreated datePublished" datetime="2022-10-25T22:42:09+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -291,8 +499,8 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>Redis知识点PDF总结</p>
-<div class="pdf-container" data-target="./Redis高手心法-码哥字节原创.pdf" data-height="1000px"></div>
+          <p>图解系统</p>
+<div class="pdf-container" data-target="./图解系统.pdf" data-height="1000px"></div>
       
     </div>
 
@@ -318,7 +526,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/ES%E7%9F%A5%E8%AF%86%E7%82%B9/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E7%BD%91%E7%BB%9C%E6%98%AF%E6%80%8E%E6%A0%B7%E8%BF%9E%E6%8E%A5%E7%9A%84%E4%B9%A6%E7%B1%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -336,7 +544,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/ES%E7%9F%A5%E8%AF%86%E7%82%B9/" class="post-title-link" itemprop="url">ES知识点</a>
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E7%BD%91%E7%BB%9C%E6%98%AF%E6%80%8E%E6%A0%B7%E8%BF%9E%E6%8E%A5%E7%9A%84%E4%B9%A6%E7%B1%8D/" class="post-title-link" itemprop="url">计算机网络-网络是怎样连接的书籍</a>
         </h2>
 
         <div class="post-meta-container">
@@ -348,7 +556,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 17:31:37 / 修改时间：23:29:52" itemprop="dateCreated datePublished" datetime="2022-10-24T17:31:37+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 22:38:25 / 修改时间：22:42:46" itemprop="dateCreated datePublished" datetime="2022-10-25T22:38:25+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -356,7 +564,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/ElasticSearch/" itemprop="url" rel="index"><span itemprop="name">ElasticSearch</span></a>
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
         </span>
     </span>
 
@@ -367,7 +575,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>20</span>
+      <span>8</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -385,10 +593,8 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>Elasticsearch基础知识点总结</p>
-<div class="pdf-container" data-target="./1-尚硅谷项目课程系列之Elasticsearch.pdf" data-height="1000px"></div>
-
-
+          <p>网络是怎样连接的</p>
+<div class="pdf-container" data-target="./网络是怎样连接的_户根勤.pdf" data-height="1000px"></div>
       
     </div>
 
@@ -414,7 +620,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/%E6%B5%85%E8%B0%88%E5%91%BD%E4%BB%A4%E6%9F%A5%E8%AF%A2%E8%81%8C%E8%B4%A3%E5%88%86%E7%A6%BBCQRS%E6%A8%A1%E5%BC%8F/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E5%9B%BE%E8%A7%A3%E7%BD%91%E7%BB%9C%E4%B9%A6%E7%B1%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -432,7 +638,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/%E6%B5%85%E8%B0%88%E5%91%BD%E4%BB%A4%E6%9F%A5%E8%AF%A2%E8%81%8C%E8%B4%A3%E5%88%86%E7%A6%BBCQRS%E6%A8%A1%E5%BC%8F/" class="post-title-link" itemprop="url">浅谈命令查询职责分离CQRS模式</a>
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E5%9B%BE%E8%A7%A3%E7%BD%91%E7%BB%9C%E4%B9%A6%E7%B1%8D/" class="post-title-link" itemprop="url">计算机网络-图解网络书籍</a>
         </h2>
 
         <div class="post-meta-container">
@@ -444,7 +650,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 16:41:15 / 修改时间：16:55:28" itemprop="dateCreated datePublished" datetime="2022-10-24T16:41:15+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 22:38:01 / 修改时间：22:42:51" itemprop="dateCreated datePublished" datetime="2022-10-25T22:38:01+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -452,7 +658,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/" itemprop="url" rel="index"><span itemprop="name">DDD领域驱动设计</span></a>
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
         </span>
     </span>
 
@@ -463,14 +669,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>18k</span>
+      <span>4</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>16 分钟</span>
+      <span>1 分钟</span>
     </span>
 </div>
 
@@ -481,12 +687,105 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="浅谈命令查询职责分离-CQRS-模式"><a href="#浅谈命令查询职责分离-CQRS-模式" class="headerlink" title="浅谈命令查询职责分离(CQRS)模式"></a>浅谈命令查询职责分离(CQRS)模式</h1><p>在常用的三层架构中，通常都是通过数据访问层来修改或者查询数据，一般修改和查询使用的是相同的实体。在一些业务逻辑简单的系统中可能没有什么问题，但是随着系统逻辑变得复杂，用户增多，这种设计就会出现一些性能问题。虽然在DB上可以做一些读写分离的设计，但在业务上如果在读写方面混合在一起的话，仍然会出现一些问题。</p>
-<p>本文介绍了命令查询职责分离模式(Command Query Responsibility Segregation，CQRS)，该模式从业务上分离修改 (Command，增，删，改，会对系统状态进行修改)和查询（Query，查，不会对系统状态进行修改)的行为。从而使得逻辑更加清晰，便于对不同部分进行针对性的优化。文章首先简要介绍了传统的CRUD方式存在的问题，接着介绍了CQRS模式，最后以一个简单的在线日记系统演示了如何实现CQRS模式。要谈到读写操作，首先我们来看传统的CRUD的问题。</p>
-<h1 id="一-CRUD方式的问题"><a href="#一-CRUD方式的问题" class="headerlink" title="一 CRUD方式的问题"></a>一 CRUD方式的问题</h1><p>在以前的管理系统中，命令(Command，通常用来更新数据，操作DB)和查询(Query)通常使用的是在数据访问层中Repository中的实体对象(这些对象是对DB中表的映射)，这些实体有可能是SQLServer中的一行数据或者多个表。</p>
+          <p>图解网络</p>
+<div class="pdf-container" data-target="./图解网络.pdf" data-height="1000px"></div>
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/" class="post-title-link" itemprop="url">计算机网络-OSI案例详解+ARP+DNS</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 20:00:39 / 修改时间：22:37:16" itemprop="dateCreated datePublished" datetime="2022-10-25T20:00:39+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="OSI案例详解-ARP-DNS"><a href="#OSI案例详解-ARP-DNS" class="headerlink" title="OSI案例详解+ARP+DNS"></a>OSI案例详解+ARP+DNS</h1><h4 id="案例，淘宝买东西案例，淘宝买东西"><a href="#案例，淘宝买东西案例，淘宝买东西" class="headerlink" title="案例，淘宝买东西案例，淘宝买东西"></a>案例，淘宝买东西案例，淘宝买东西</h4><p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/1.jpg" alt="img"></p>
+<h4 id="DNS（走的UDP）"><a href="#DNS（走的UDP）" class="headerlink" title="DNS（走的UDP）"></a>DNS（走的UDP）</h4><p>域名的作用其实就是相对ip地址来说更好记忆和识别，DNS就是根据域名解析出ip</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/%E6%B5%85%E8%B0%88%E5%91%BD%E4%BB%A4%E6%9F%A5%E8%AF%A2%E8%81%8C%E8%B4%A3%E5%88%86%E7%A6%BBCQRS%E6%A8%A1%E5%BC%8F/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-OSI%E6%A1%88%E4%BE%8B%E8%AF%A6%E8%A7%A3-ARP-DNS/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -517,7 +816,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/DDD-%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -535,7 +834,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/DDD-%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84/" class="post-title-link" itemprop="url">DDD-应用架构</a>
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/" class="post-title-link" itemprop="url">计算机网络-计算机网络面试突击</a>
         </h2>
 
         <div class="post-meta-container">
@@ -547,7 +846,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 16:40:48 / 修改时间：16:52:43" itemprop="dateCreated datePublished" datetime="2022-10-24T16:40:48+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:54:34 / 修改时间：20:00:01" itemprop="dateCreated datePublished" datetime="2022-10-25T19:54:34+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -555,7 +854,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/" itemprop="url" rel="index"><span itemprop="name">DDD领域驱动设计</span></a>
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
         </span>
     </span>
 
@@ -566,14 +865,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>19k</span>
+      <span>43k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>17 分钟</span>
+      <span>39 分钟</span>
     </span>
 </div>
 
@@ -584,20 +883,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><strong>简介：</strong> 应用架构，指软件系统中固定不变的代码结构、设计模式、规范和组件间的通信方式。在应用开发中架构之所以是最重要的第一步，因为一个好的架构能让系统安全、稳定、快速迭代。但是今天我们在做业务研发时，更多会关注一些宏观的架构，而忽略了应用内部的架构设计，希望能通过案例分析和重构，推演出一套高质量的DDD架构。</p>
-<p>架构这个词源于英文里的“Architecture“，源头是土木工程里的“建筑”和“结构”，而架构里的”架“同时又包含了”架子“（scaffolding）的含义，意指能快速搭建起来的固定结构。而今天的应用架构，意指软件系统中固定不变的代码结构、设计模式、规范和组件间的通信方式。在应用开发中架构之所以是最重要的第一步，因为一个好的架构能让系统安全、稳定、快速迭代。在一个团队内通过规定一个固定的架构设计，可以让团队内能力参差不齐的同学们都能有一个统一的开发规范，降低沟通成本，提升效率和代码质量。</p>
-<p>在做架构设计时，一个好的架构应该需要实现以下几个目标：</p>
-<ul>
-<li><strong>独立于框架：</strong>架构不应该依赖某个外部的库或框架，不应该被框架的结构所束缚。</li>
-<li><strong>独立于UI：</strong>前台展示的样式可能会随时发生变化（今天可能是网页、明天可能变成console、后天是独立app），但是底层架构不应该随之而变化。</li>
-<li><strong>独立于底层数据源：</strong>无论今天你用MySQL、Oracle还是MongoDB、CouchDB，甚至使用文件系统，软件架构不应该因为不同的底层数据储存方式而产生巨大改变。</li>
-<li><strong>独立于外部依赖：</strong>无论外部依赖如何变更、升级，业务的核心逻辑不应该随之而大幅变化。</li>
-<li><strong>可测试：</strong>无论外部依赖了什么数据库、硬件、UI或者服务，业务的逻辑应该都能够快速被验证正确性。</li>
-</ul>
-<p>这就好像是建筑中的楼宇，一个好的楼宇，无论内部承载了什么人、有什么样的活动、还是外部有什么风雨，一栋楼都应该屹立不倒，而且可以确保它不会倒。但是今天我们在做业务研发时，更多的会去关注一些宏观的架构，比如SOA架构、微服务架构，而忽略了应用内部的架构设计，很容易导致代码逻辑混乱，很难维护，容易产生bug而且很难发现。今天，我希望能够通过案例的分析和重构，来推演出一套高质量的DDD架构。</p>
+          <h1 id="计算机网络面试突击"><a href="#计算机网络面试突击" class="headerlink" title="计算机网络面试突击"></a>计算机网络面试突击</h1><h2 id="一：各协议层以及它们的服务类型"><a href="#一：各协议层以及它们的服务类型" class="headerlink" title="一：各协议层以及它们的服务类型"></a>一：各协议层以及它们的服务类型</h2><h3 id="1-OSI-七层模型"><a href="#1-OSI-七层模型" class="headerlink" title="1. OSI 七层模型"></a>1. OSI 七层模型</h3><p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/1.png" alt="img"> OSI 模型全称为开放式通信系统互连参考模型，是国际标准化组织 ( ISO ) 提出的一个试图使各种计算机在世界范围内互连为网络的标准框架。 OSI 将计算机网络体系结构划分为七层，每一层实现各自的功能和协议，并完成与相邻层的接口通信。OSI 的服务定义详细说明了各层所提供的服务。某一层的服务就是该层及其下各层的一种能力，它通过接口提供给更高一层。各层所提供的服务与这些服务是怎么实现的无关。</p>
+<p>① 应用层</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/DDD-%E5%BA%94%E7%94%A8%E6%9E%B6%E6%9E%84/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -628,7 +918,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/DDD-%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E5%86%99%E6%B5%81%E6%B0%B4%E8%B4%A6%E4%BB%A3%E7%A0%81/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-RPC%E5%92%8CHTTP%E5%8C%BA%E5%88%AB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -646,7 +936,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/DDD-%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E5%86%99%E6%B5%81%E6%B0%B4%E8%B4%A6%E4%BB%A3%E7%A0%81/" class="post-title-link" itemprop="url">DDD-如何避免写流水账代码</a>
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-RPC%E5%92%8CHTTP%E5%8C%BA%E5%88%AB/" class="post-title-link" itemprop="url">计算机网络-RPC和HTTP区别</a>
         </h2>
 
         <div class="post-meta-container">
@@ -658,7 +948,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 16:40:31 / 修改时间：16:48:21" itemprop="dateCreated datePublished" datetime="2022-10-24T16:40:31+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:40:06 / 修改时间：19:50:08" itemprop="dateCreated datePublished" datetime="2022-10-25T19:40:06+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -666,7 +956,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/" itemprop="url" rel="index"><span itemprop="name">DDD领域驱动设计</span></a>
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
         </span>
     </span>
 
@@ -677,319 +967,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>23k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>21 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h1 id="1-案例简介"><a href="#1-案例简介" class="headerlink" title="1. 案例简介"></a>1. 案例简介</h1><p>这里举一个简单的常见案例：下单链路。假设我们在做一个checkout接口，需要做各种校验、查询商品信息、调用库存服务扣库存、然后生成订单：</p>
-<p><img src="/2022/10/24/DDD-%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E5%86%99%E6%B5%81%E6%B0%B4%E8%B4%A6%E4%BB%A3%E7%A0%81/1.png" alt="image.png"></p>
-<p>一个比较典型的代码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="meta">@RequestMapping(&quot;/&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">CheckoutController</span> &#123;</span><br><span class="line">    <span class="meta">@Resource</span></span><br><span class="line">    <span class="keyword">private</span> ItemService itemService;</span><br><span class="line">    <span class="meta">@Resource</span></span><br><span class="line">    <span class="keyword">private</span> InventoryService inventoryService;</span><br><span class="line">    <span class="meta">@Resource</span></span><br><span class="line">    <span class="keyword">private</span> OrderRepository orderRepository;</span><br><span class="line">    <span class="meta">@PostMapping(&quot;checkout&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> Result&lt;OrderDO&gt; <span class="title function_">checkout</span><span class="params">(Long itemId, Integer quantity)</span> &#123;</span><br><span class="line">        <span class="comment">// 1) Session管理</span></span><br><span class="line">        <span class="type">Long</span> <span class="variable">userId</span> <span class="operator">=</span> SessionUtils.getLoggedInUserId();</span><br><span class="line">        <span class="keyword">if</span> (userId &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> Result.fail(<span class="string">&quot;Not Logged In&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">                </span><br><span class="line">        <span class="comment">// 2）参数校验</span></span><br><span class="line">        <span class="keyword">if</span> (itemId &lt;= <span class="number">0</span> || quantity &lt;= <span class="number">0</span> || quantity &gt;= <span class="number">1000</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> Result.fail(<span class="string">&quot;Invalid Args&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 3）外部数据补全</span></span><br><span class="line">        <span class="type">ItemDO</span> <span class="variable">item</span> <span class="operator">=</span> itemService.getItem(itemId);</span><br><span class="line">        <span class="keyword">if</span> (item == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> Result.fail(<span class="string">&quot;Item Not Found&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 4）调用外部服务</span></span><br><span class="line">        <span class="type">boolean</span> <span class="variable">withholdSuccess</span> <span class="operator">=</span> inventoryService.withhold(itemId, quantity);</span><br><span class="line">        <span class="keyword">if</span> (!withholdSuccess) &#123;</span><br><span class="line">            <span class="keyword">return</span> Result.fail(<span class="string">&quot;Inventory not enough&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">      </span><br><span class="line">        <span class="comment">// 5）领域计算</span></span><br><span class="line">        <span class="type">Long</span> <span class="variable">cost</span> <span class="operator">=</span> item.getPriceInCents() * quantity;</span><br><span class="line">        <span class="comment">// 6）领域对象操作</span></span><br><span class="line">        <span class="type">OrderDO</span> <span class="variable">order</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OrderDO</span>();</span><br><span class="line">        order.setItemId(itemId);</span><br><span class="line">        order.setBuyerId(userId);</span><br><span class="line">        order.setSellerId(item.getSellerId());</span><br><span class="line">        order.setCount(quantity);</span><br><span class="line">        order.setTotalCost(cost);</span><br><span class="line">        <span class="comment">// 7）数据持久化</span></span><br><span class="line">        orderRepository.createOrder(order);</span><br><span class="line">        <span class="comment">// 8）返回</span></span><br><span class="line">        <span class="keyword">return</span> Result.success(order);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/24/DDD-%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E5%86%99%E6%B5%81%E6%B0%B4%E8%B4%A6%E4%BB%A3%E7%A0%81/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/" class="post-title-link" itemprop="url">DDD领域驱动设计</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-24 16:40:10 / 修改时间：17:31:11" itemprop="dateCreated datePublished" datetime="2022-10-24T16:40:10+08:00">2022-10-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/" itemprop="url" rel="index"><span itemprop="name">DDD领域驱动设计</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>6.3k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>6 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="从遇到问题开始"><a href="#从遇到问题开始" class="headerlink" title="从遇到问题开始"></a>从遇到问题开始</h2><p>当人们要做一个软件系统时，一般总是因为遇到了什么问题，然后希望通过一个软件系统来解决。</p>
-<p>比如，我是一家企业，然后我觉得我现在线下销售自己的产品还不够，我希望能够在线上也能销售自己的产品。所以，自然而然就想到要做一个普通电商系统，用于实现在线销售自己企业产品的目的。</p>
-<p>再比如，我是一家互联网公司，公司有很多系统对外提供服务，面向很多客户端设备。但是最近由于各种原因，导致服务经常出故障。所以，我们希望通过各种措施提高服务的质量和稳定性。其中的一个措施就是希望能做一个灰度发布的平台，这个平台可以提供灰度发布的服务。然后，当某个业务系统做了一些修改并需要发布时，可以使用我们的灰度发布平台来非常方便的实现灰度发布的功能。比如在灰度发布平台上方便的定制允许哪些特定的客户端才会访问新服务，哪些客户端继续使用老服务。灰度发布平台可以提供各种灰度的策略。有了这样的灰度发布机制，那即便系统的新逻辑有什么问题，受影响的面也不会很大，在可控范围内。所以，如果公司里的所有对外提供服务的系统都接入了灰度平台，那这些系统的发布环节就可以更加有保障了。</p>
-<p>总之，我们做任何一个软件系统，都是有原因的，否则就没必要做这个系统，而这个原因就是我们遇到的问题。所以，通过问题，我们就知道了我们需要一个什么样的系统，这个系统解决什么样的问题。最后，我们就很自然的得出了一个目标，即知道了自己要什么。比如我要做一个论坛、一个博客系统、一个电商平台、一个灰度发布系统、一个IDE、一个分布式消息队列、一个通信框架，等等。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/24/DDD%E9%A2%86%E5%9F%9F%E9%A9%B1%E5%8A%A8%E8%AE%BE%E8%AE%A1/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Paxos%E5%8D%8F%E8%AE%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Paxos%E5%8D%8F%E8%AE%AE/" class="post-title-link" itemprop="url">Paxos协议</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-24 16:29:13 / 修改时间：16:34:26" itemprop="dateCreated datePublished" datetime="2022-10-24T16:29:13+08:00">2022-10-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AE/" itemprop="url" rel="index"><span itemprop="name">分布式一致性协议</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>6k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>5 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>Google的粗粒度锁服务Chubby的设计开发者Burrows曾经说过：<strong>所有一致性协议本质上要么是Paxos要么是其变体</strong>。</p>
-<p>网上有很多讲解Paxos算法的文章，但是质量层次不齐。今天笔者带大家深入聊一下Paxos</p>
-<h2 id="Paxos是什么？"><a href="#Paxos是什么？" class="headerlink" title="Paxos是什么？"></a>Paxos是什么？</h2><p>Paxos算法是基于<strong>消息传递</strong>且具有<strong>高度容错特性</strong>的<strong>一致性算法</strong>，是目前公认的解决<strong>分布式一致性</strong>问题<strong>最有效</strong>的算法之一。</p>
-<p>Paxos算法是Lamport宗师提出的一种基于消息传递的分布式一致性算法，使其获得2013年图灵奖。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/24/Paxos%E5%8D%8F%E8%AE%AE/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/" class="post-title-link" itemprop="url">Gossip协议</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-24 16:28:59 / 修改时间：16:32:07" itemprop="dateCreated datePublished" datetime="2022-10-24T16:28:59+08:00">2022-10-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AE/" itemprop="url" rel="index"><span itemprop="name">分布式一致性协议</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>3k</span>
+      <span>2.9k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -1007,13 +985,13 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h2><p>我是一个小病毒，其他病毒都叫我小 B，我长得就是下图这个样子了。</p>
-<p><img src="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/1.png" alt="图片">冠状病毒</p>
-<p>我现在已经有 100 nm 大小了，我还有很多触角，人类把我的触角称为<code>冠</code>，所以给我起了个学术名：<code>冠状病毒</code>。对于这个学术名，我一直不满意，怎么能用外貌来取名呢，这是<code>以貌取毒</code>。</p>
-<p>我出生在一个蝙蝠身上，每到晚上，这只动物就到处觅食，它最喜欢的就是在森林中觅食，但最近森林的范围急剧减少，它不得不到人类居住的城市来觅食，看着五颜六色的灯光，我如痴如醉。</p>
+          <p>网上充斥着各类类似于这样的文章：rpc 比 http 快了多少倍？既然有了 http，为什么还要用 rpc 调用等等。遇到这类文章，说明对 http 和 rpc 是由理解误区的。</p>
+<p>　　这里再次重复强调一遍，通信协议不是 rpc 最重要的部分，不要被这类回答带偏。如果要了解 rpc 请更多的去了解服务治理(SOA)的一些基本策略，推荐去看看 dubbo 的相关文档。</p>
+<h3 id="详解"><a href="#详解" class="headerlink" title="详解"></a>详解</h3><p>　　rpc是远端过程调用，其调用协议通常包含：传输协议 和 序列化协议。</p>
+<p>　　<strong>传输协议</strong></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/Gossip%E5%8D%8F%E8%AE%AE/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-RPC%E5%92%8CHTTP%E5%8C%BA%E5%88%AB/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1044,7 +1022,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/Redis%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-TCP%E4%BF%9D%E8%AF%81%E9%AB%98%E5%8F%AF%E9%9D%A0%E7%9A%84%E6%96%B9%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -1062,7 +1040,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/Redis%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Redis知识点总结</a>
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-TCP%E4%BF%9D%E8%AF%81%E9%AB%98%E5%8F%AF%E9%9D%A0%E7%9A%84%E6%96%B9%E5%BC%8F/" class="post-title-link" itemprop="url">计算机网络-TCP保证高可靠的方式</a>
         </h2>
 
         <div class="post-meta-container">
@@ -1074,7 +1052,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 16:08:35 / 修改时间：16:27:54" itemprop="dateCreated datePublished" datetime="2022-10-24T16:08:35+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:39:53 / 修改时间：19:54:04" itemprop="dateCreated datePublished" datetime="2022-10-25T19:39:53+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1082,7 +1060,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Redis/" itemprop="url" rel="index"><span itemprop="name">Redis</span></a>
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
         </span>
     </span>
 
@@ -1093,14 +1071,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>24k</span>
+      <span>11k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>22 分钟</span>
+      <span>10 分钟</span>
     </span>
 </div>
 
@@ -1111,12 +1089,14 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="1-在分布式数据库中CAP原理CAP-BASE"><a href="#1-在分布式数据库中CAP原理CAP-BASE" class="headerlink" title="1.在分布式数据库中CAP原理CAP+BASE"></a>1.在分布式数据库中CAP原理CAP+BASE</h1><h3 id="CAP"><a href="#CAP" class="headerlink" title="CAP"></a>CAP</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">C:Consistency（强一致性）</span><br><span class="line"></span><br><span class="line">A:Availability（可用性）</span><br><span class="line"></span><br><span class="line">P:Partition tolerance（分区容错性）</span><br><span class="line"></span><br><span class="line">注意：分布式架构的时候必须做出取舍。</span><br><span class="line">一致性和可用性之间取一个平衡。多余大多数web应用，其实并不需要强一致性。因此牺牲C换取P，这是目前分布式数据库产品的方向</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h3 id="经典CAP图"><a href="#经典CAP图" class="headerlink" title="经典CAP图"></a>经典CAP图</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">CAP理论的核心是：一个分布式系统不可能同时很好的满足一致性，可用性和分区容错性这三个需求，</span><br><span class="line">最多只能同时较好的满足两个。</span><br><span class="line">因此，根据 CAP 原理将 NoSQL 数据库分成了满足 CA 原则、满足 CP 原则和满足 AP 原则三大类：</span><br><span class="line">CA - 单点集群，满足一致性，可用性的系统，通常在可扩展性上不太强大。</span><br><span class="line">CP - 满足一致性，分区容忍必的系统，通常性能不是特别高。</span><br><span class="line">AP - 满足可用性，分区容忍性的系统，通常可能对一致性要求低一些。</span><br></pre></td></tr></table></figure>
+          <p>相信大家都知道 TCP 是一个可靠传输的协议，那它是如何保证可靠的呢？</p>
+<p>为了实现可靠性传输，需要考虑很多事情，例如数据的破坏、丢包、重复以及分片顺序混乱等问题。如不能解决这些问题，也就无从谈起可靠传输。</p>
+<p>那么，TCP 是通过序列号、确认应答、重发控制、连接管理以及窗口控制等机制实现可靠性传输的。</p>
+<p>今天，将重点介绍 TCP 的<strong>重传机制、滑动窗口、流量控制、拥塞控制</strong>。<br><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-TCP%E4%BF%9D%E8%AF%81%E9%AB%98%E5%8F%AF%E9%9D%A0%E7%9A%84%E6%96%B9%E5%BC%8F/1.png" alt="在这里插入图片描述"></p>
+<h2 id="重传机制"><a href="#重传机制" class="headerlink" title="重传机制"></a>重传机制</h2>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/Redis%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-TCP%E4%BF%9D%E8%AF%81%E9%AB%98%E5%8F%AF%E9%9D%A0%E7%9A%84%E6%96%B9%E5%BC%8F/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1147,7 +1127,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/24/JVM%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-HTTPS%E8%AF%A6%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -1165,7 +1145,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/24/JVM%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">JVM知识点总结</a>
+          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-HTTPS%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">计算机网络-HTTPS详解</a>
         </h2>
 
         <div class="post-meta-container">
@@ -1177,7 +1157,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2022-10-24 15:44:05 / 修改时间：16:04:17" itemprop="dateCreated datePublished" datetime="2022-10-24T15:44:05+08:00">2022-10-24</time>
+      <time title="创建时间：2022-10-25 19:37:47 / 修改时间：19:42:03" itemprop="dateCreated datePublished" datetime="2022-10-25T19:37:47+08:00">2022-10-25</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1185,7 +1165,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
         </span>
     </span>
 
@@ -1196,14 +1176,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>29k</span>
+      <span>4.6k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>26 分钟</span>
+      <span>4 分钟</span>
     </span>
 </div>
 
@@ -1214,12 +1194,21 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="java-程序编译和运行过程详解"><a href="#java-程序编译和运行过程详解" class="headerlink" title="java 程序编译和运行过程详解"></a>java 程序编译和运行过程详解</h2><p>java整个编译以及运行的过程相当繁琐，这里有个简单的例子。</p>
-<h4 id="Java程序从源文件创建到程序运行要经过两大步骤："><a href="#Java程序从源文件创建到程序运行要经过两大步骤：" class="headerlink" title="Java程序从源文件创建到程序运行要经过两大步骤："></a>Java程序从源文件创建到程序运行要经过两大步骤：</h4><p>1、源文件由编译器编译成字节码（ByteCode）；<br>2、字节码由java虚拟机解释运行。因为java程序既要编译同时也要经过JVM的解释运行，所以说Java被称为半解释语言(“semi-interpreted” language)。</p>
-<p><img src="/2022/10/24/JVM%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/1.png" alt="在这里插入图片描述"></p>
+          <p>每篇文章都希望你能收获到东西，这篇将带你深入 HTTPS 加解密原理，希望看完能够有这些收获：</p>
+<ul>
+<li><p>明白 HTTPS 到底解决了什么问题</p>
+</li>
+<li><p>理解对称加密与非对称加密的原理和使用场景</p>
+</li>
+<li><p>明白 CA 机构和根证书到底起了什么作用</p>
+</li>
+</ul>
+<h2 id="Why-HTTPS"><a href="#Why-HTTPS" class="headerlink" title="Why HTTPS"></a>Why HTTPS</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">近几年来，各大公司都在大力推进 HTTPS 的建设。Google Chrome将非 HTTPS 的网站标注为「不安全」，苹果要求 APP 中需要使用HTTPS进行通信，微信小程序也要求使用HTTPS协议。那么，我们为什么非要做这么一件事呢？</span><br></pre></td></tr></table></figure>
+
+<p>我们先来看看HTTP。HTTP（Hypertext Transfer Protocol）超文本传输协议，是一种用于分布式、协作式和超媒体信息系统的应用层协议，可以说 HTTP 是当代互联网通信的基础。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/24/JVM%E7%9F%A5%E8%AF%86%E7%82%B9%E6%80%BB%E7%BB%93/#more" rel="contents">
+              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-HTTPS%E8%AF%A6%E8%A7%A3/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1243,7 +1232,7 @@
 
 
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 </div>
@@ -1266,13 +1255,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">370k</span>
+    <span title="站点总字数">1m</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:37</span>
+    <span title="站点阅读时长">15:38</span>
   </span>
 </div>
 <div class="busuanzi-count">

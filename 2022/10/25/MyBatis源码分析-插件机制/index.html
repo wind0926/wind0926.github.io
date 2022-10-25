@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="1.简介一般情况下，开源框架都会提供插件或其他形式的拓展点，供开发者自行拓展。这样的好处是显而易见的，一是增加了框架的灵活性。二是开发者可以结合实际需求，对框架进行拓展，使其能够更好的工作。以 MyBatis 为例，我们可基于 MyBatis 插件机制实现分页、分表，监控等功能。由于插件和业务无关，业务也无法感知插件的存在。因此可以无感植入插件，在无形中增强功能。 开发 MyBatis 插件需要对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MyBatis源码分析-插件机制">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E6%8F%92%E4%BB%B6%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="1.简介一般情况下，开源框架都会提供插件或其他形式的拓展点，供开发者自行拓展。这样的好处是显而易见的，一是增加了框架的灵活性。二是开发者可以结合实际需求，对框架进行拓展，使其能够更好的工作。以 MyBatis 为例，我们可基于 MyBatis 插件机制实现分页、分表，监控等功能。由于插件和业务无关，业务也无法感知插件的存在。因此可以无感植入插件，在无形中增强功能。 开发 MyBatis 插件需要对">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15352797020539.jpg">
+<meta property="og:image" content="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15352145822059.jpg">
+<meta property="article:published_time" content="2022-10-25T07:37:14.000Z">
+<meta property="article:modified_time" content="2022-10-25T07:39:48.240Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="Mybatis">
+<meta property="article:tag" content="ORM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15352797020539.jpg">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E6%8F%92%E4%BB%B6%E6%9C%BA%E5%88%B6/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E6%8F%92%E4%BB%B6%E6%9C%BA%E5%88%B6/","path":"2022/10/25/MyBatis源码分析-插件机制/","title":"MyBatis源码分析-插件机制"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MyBatis源码分析-插件机制 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">1.简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%8F%92%E4%BB%B6%E6%9C%BA%E5%88%B6%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">2. 插件机制原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">3. 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E6%A4%8D%E5%85%A5%E6%8F%92%E4%BB%B6%E9%80%BB%E8%BE%91"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 植入插件逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E6%89%A7%E8%A1%8C%E6%8F%92%E4%BB%B6%E9%80%BB%E8%BE%91"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 执行插件逻辑</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%88%86%E9%A1%B5%E6%8F%92%E4%BB%B6"><span class="nav-number">4.</span> <span class="nav-text">4. 实现一个分页插件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">5. 总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E6%8F%92%E4%BB%B6%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MyBatis源码分析-插件机制 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MyBatis源码分析-插件机制
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 15:37:14 / 修改时间：15:39:48" itemprop="dateCreated datePublished" datetime="2022-10-25T15:37:14+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Mybatis/" itemprop="url" rel="index"><span itemprop="name">Mybatis</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>8.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h2><p>一般情况下，开源框架都会提供插件或其他形式的拓展点，供开发者自行拓展。这样的好处是显而易见的，一是增加了框架的灵活性。二是开发者可以结合实际需求，对框架进行拓展，使其能够更好的工作。以 MyBatis 为例，我们可基于 MyBatis 插件机制实现分页、分表，监控等功能。由于插件和业务无关，业务也无法感知插件的存在。因此可以无感植入插件，在无形中增强功能。</p>
+<p>开发 MyBatis 插件需要对 MyBatis 比较深了解才行，一般来说最好能够掌握 MyBatis 的源码，门槛相对较高。本篇文章在分析完 MyBatis 插件机制后，会手写一个简单的分页插件，以帮助大家更好的掌握 MyBatis 插件的编写。</p>
+<h2 id="2-插件机制原理"><a href="#2-插件机制原理" class="headerlink" title="2. 插件机制原理"></a>2. 插件机制原理</h2><p>我们在编写插件时，除了需要让插件类实现 Interceptor 接口，还需要通过注解标注该插件的拦截点。所谓拦截点指的是插件所能拦截的方法，MyBatis 所允许拦截的方法如下：</p>
+<ul>
+<li>Executor (update, query, flushStatements, commit, rollback, getTransaction, close, isClosed)</li>
+<li>ParameterHandler (getParameterObject, setParameters)</li>
+<li>ResultSetHandler (handleResultSets, handleOutputParameters)</li>
+<li>StatementHandler (prepare, parameterize, batch, update, query)</li>
+</ul>
+<p>如果我们想要拦截 Executor 的 query 方法，那么可以这样定义插件。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">@Intercepts(&#123;</span><br><span class="line">    @Signature(</span><br><span class="line">        type = Executor.class,</span><br><span class="line">        method = &quot;query&quot;,</span><br><span class="line">        args =&#123;MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class&#125;</span><br><span class="line">    )</span><br><span class="line">&#125;)</span><br><span class="line">public class ExamplePlugin implements Interceptor &#123;</span><br><span class="line">    // 省略逻辑</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>除此之外，我们还需将插件配置到相关文件中。这样 MyBatis 在启动时可以加载插件，并保存插件实例到相关对象（InterceptorChain，拦截器链）中。待准备工作做完后，MyBatis 处于就绪状态。我们在执行 SQL 时，需要先通过 DefaultSqlSessionFactory 创建 SqlSession 。Executor 实例会在创建 SqlSession 的过程中被创建，Executor 实例创建完毕后，MyBatis 会通过 JDK 动态代理为实例生成代理类。这样，插件逻辑即可在 Executor 相关方法被调用前执行。</p>
+<p>以上就是 MyBatis 插件机制的基本原理。接下来，我们来看一下原理背后对应的源码是怎样的。</p>
+<h2 id="3-源码分析"><a href="#3-源码分析" class="headerlink" title="3. 源码分析"></a>3. 源码分析</h2><h3 id="3-1-植入插件逻辑"><a href="#3-1-植入插件逻辑" class="headerlink" title="3.1 植入插件逻辑"></a>3.1 植入插件逻辑</h3><p>本节，我将以 Executor 为例，分析 MyBatis 是如何为 Executor 实例植入插件逻辑的。Executor 实例是在开启 SqlSession 时被创建的，因此，下面我们从源头进行分析。先来看一下 SqlSession 开启的过程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">// -☆- DefaultSqlSessionFactory</span><br><span class="line">public SqlSession openSession() &#123;</span><br><span class="line">    return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) &#123;</span><br><span class="line">    Transaction tx = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        // 省略部分逻辑</span><br><span class="line">        </span><br><span class="line">        // 创建 Executor</span><br><span class="line">        final Executor executor = configuration.newExecutor(tx, execType);</span><br><span class="line">        return new DefaultSqlSession(configuration, executor, autoCommit);</span><br><span class="line">    &#125; </span><br><span class="line">    catch (Exception e) &#123;...&#125; </span><br><span class="line">    finally &#123;...&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Executor 的创建过程封装在 Configuration 中，我们跟进去看看看。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">// -☆- Configuration</span><br><span class="line">public Executor newExecutor(Transaction transaction, ExecutorType executorType) &#123;</span><br><span class="line">    executorType = executorType == null ? defaultExecutorType : executorType;</span><br><span class="line">    executorType = executorType == null ? ExecutorType.SIMPLE : executorType;</span><br><span class="line">    Executor executor;</span><br><span class="line">    </span><br><span class="line">    // 根据 executorType 创建相应的 Executor 实例</span><br><span class="line">    if (ExecutorType.BATCH == executorType) &#123;...&#125; </span><br><span class="line">    else if (ExecutorType.REUSE == executorType) &#123;...&#125; </span><br><span class="line">    else &#123;</span><br><span class="line">        executor = new SimpleExecutor(this, transaction);</span><br><span class="line">    &#125;</span><br><span class="line">    if (cacheEnabled) &#123;</span><br><span class="line">        executor = new CachingExecutor(executor);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // 植入插件</span><br><span class="line">    executor = (Executor) interceptorChain.pluginAll(executor);</span><br><span class="line">    return executor;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上，newExecutor 方法在创建好 Executor 实例后，紧接着通过拦截器链 interceptorChain 为 Executor 实例植入代理逻辑。那下面我们看一下 InterceptorChain 的代码是怎样的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public class InterceptorChain &#123;</span><br><span class="line"></span><br><span class="line">    private final List&lt;Interceptor&gt; interceptors = new ArrayList&lt;Interceptor&gt;();</span><br><span class="line"></span><br><span class="line">    public Object pluginAll(Object target) &#123;</span><br><span class="line">        // 遍历拦截器集合</span><br><span class="line">        for (Interceptor interceptor : interceptors) &#123;</span><br><span class="line">            // 调用拦截器的 plugin 方法植入相应的插件逻辑</span><br><span class="line">            target = interceptor.plugin(target);</span><br><span class="line">        &#125;</span><br><span class="line">        return target;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** 添加插件实例到 interceptors 集合中 */</span><br><span class="line">    public void addInterceptor(Interceptor interceptor) &#123;</span><br><span class="line">        interceptors.add(interceptor);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /** 获取插件列表 */</span><br><span class="line">    public List&lt;Interceptor&gt; getInterceptors() &#123;</span><br><span class="line">        return Collections.unmodifiableList(interceptors);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上是 InterceptorChain 的全部代码，比较简单。它的 pluginAll 方法会调用具体插件的 plugin 方法植入相应的插件逻辑。如果有多个插件，则会多次调用 plugin 方法，最终生成一个层层嵌套的代理类。形如下面：</p>
+<p><img src="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15352797020539.jpg" alt="img"></p>
+<p>当 Executor 的某个方法被调用的时候，插件逻辑会先行执行。执行顺序由外而内，比如上图的执行顺序为 <code>plugin3 → plugin2 → Plugin1 → Executor</code>。</p>
+<p>plugin 方法是由具体的插件类实现，不过该方法代码一般比较固定，所以下面找个示例分析一下。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">// -☆- ExamplePlugin</span><br><span class="line">public Object plugin(Object target) &#123;</span><br><span class="line">    return Plugin.wrap(target, this);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// -☆- Plugin</span><br><span class="line">public static Object wrap(Object target, Interceptor interceptor) &#123;</span><br><span class="line">    /*</span><br><span class="line">     * 获取插件类 @Signature 注解内容，并生成相应的映射结构。形如下面：</span><br><span class="line">     * &#123;</span><br><span class="line">     *     Executor.class : [query, update, commit],</span><br><span class="line">     *     ParameterHandler.class : [getParameterObject, setParameters]</span><br><span class="line">     * &#125;</span><br><span class="line">     */</span><br><span class="line">    Map&lt;Class&lt;?&gt;, Set&lt;Method&gt;&gt; signatureMap = getSignatureMap(interceptor);</span><br><span class="line">    Class&lt;?&gt; type = target.getClass();</span><br><span class="line">    // 获取目标类实现的接口</span><br><span class="line">    Class&lt;?&gt;[] interfaces = getAllInterfaces(type, signatureMap);</span><br><span class="line">    if (interfaces.length &gt; 0) &#123;</span><br><span class="line">        // 通过 JDK 动态代理为目标类生成代理类</span><br><span class="line">        return Proxy.newProxyInstance(</span><br><span class="line">            type.getClassLoader(),</span><br><span class="line">            interfaces,</span><br><span class="line">            new Plugin(target, interceptor, signatureMap));</span><br><span class="line">    &#125;</span><br><span class="line">    return target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上，plugin 方法在内部调用了 Plugin 类的 wrap 方法，用于为目标对象生成代理。Plugin 类实现了 InvocationHandler 接口，因此它可以作为参数传给 Proxy 的 newProxyInstance 方法。</p>
+<p>到这里，关于插件植入的逻辑就分析完了。接下来，我们来看看插件逻辑是怎样执行的。</p>
+<h3 id="3-2-执行插件逻辑"><a href="#3-2-执行插件逻辑" class="headerlink" title="3.2 执行插件逻辑"></a>3.2 执行插件逻辑</h3><p>Plugin 实现了 InvocationHandler 接口，因此它的 invoke 方法会拦截所有的方法调用。invoke 方法会对所拦截的方法进行检测，以决定是否执行插件逻辑。该方法的逻辑如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">// -☆- Plugin</span><br><span class="line">public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        /*</span><br><span class="line">         * 获取被拦截方法列表，比如：</span><br><span class="line">         *    signatureMap.get(Executor.class)，可能返回 [query, update, commit]</span><br><span class="line">         */</span><br><span class="line">        Set&lt;Method&gt; methods = signatureMap.get(method.getDeclaringClass());</span><br><span class="line">        // 检测方法列表是否包含被拦截的方法</span><br><span class="line">        if (methods != null &amp;&amp; methods.contains(method)) &#123;</span><br><span class="line">            // 执行插件逻辑</span><br><span class="line">            return interceptor.intercept(new Invocation(target, method, args));</span><br><span class="line">        &#125;</span><br><span class="line">        // 执行被拦截的方法</span><br><span class="line">        return method.invoke(target, args);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        throw ExceptionUtil.unwrapThrowable(e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>invoke 方法的代码比较少，逻辑不难理解。首先，invoke 方法会检测被拦截方法是否配置在插件的 @Signature 注解中，若是，则执行插件逻辑，否则执行被拦截方法。插件逻辑封装在 intercept 中，该方法的参数类型为 Invocation。Invocation 主要用于存储目标类，方法以及方法参数列表。下面简单看一下该类的定义。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public class Invocation &#123;</span><br><span class="line"></span><br><span class="line">    private final Object target;</span><br><span class="line">    private final Method method;</span><br><span class="line">    private final Object[] args;</span><br><span class="line"></span><br><span class="line">    public Invocation(Object target, Method method, Object[] args) &#123;</span><br><span class="line">        this.target = target;</span><br><span class="line">        this.method = method;</span><br><span class="line">        this.args = args;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 省略部分代码</span><br><span class="line"></span><br><span class="line">    public Object proceed() throws InvocationTargetException, IllegalAccessException &#123;</span><br><span class="line">        // 调用被拦截的方法</span><br><span class="line">        return method.invoke(target, args);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>关于插件的执行逻辑就分析到这，整个过程不难理解，大家简单看看即可。</p>
+<h2 id="4-实现一个分页插件"><a href="#4-实现一个分页插件" class="headerlink" title="4. 实现一个分页插件"></a>4. 实现一个分页插件</h2><p>为了更好的向大家介绍 MyBatis 的插件机制，下面我将手写一个针对 MySQL 的分页插件。Talk is cheap. Show the code。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">@Intercepts(&#123;</span><br><span class="line">    @Signature(</span><br><span class="line">        type = Executor.class,    // 目标类</span><br><span class="line">        method = &quot;query&quot;,    // 目标方法</span><br><span class="line">        args =&#123;MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class&#125;</span><br><span class="line">    )</span><br><span class="line">&#125;)</span><br><span class="line">public class MySqlPagingPlugin implements Interceptor &#123;</span><br><span class="line"></span><br><span class="line">    private static final Integer MAPPED_STATEMENT_INDEX = 0;</span><br><span class="line">    private static final Integer PARAMETER_INDEX = 1;</span><br><span class="line">    private static final Integer ROW_BOUNDS_INDEX = 2;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object intercept(Invocation invocation) throws Throwable &#123;</span><br><span class="line">        Object[] args = invocation.getArgs();</span><br><span class="line">        RowBounds rb = (RowBounds) args[ROW_BOUNDS_INDEX];</span><br><span class="line">        // 无需分页</span><br><span class="line">        if (rb == RowBounds.DEFAULT) &#123;</span><br><span class="line">            return invocation.proceed();</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        // 将原 RowBounds 参数设为 RowBounds.DEFAULT，关闭 MyBatis 内置的分页机制</span><br><span class="line">        args[ROW_BOUNDS_INDEX] = RowBounds.DEFAULT;</span><br><span class="line"></span><br><span class="line">        MappedStatement ms = (MappedStatement) args[MAPPED_STATEMENT_INDEX];</span><br><span class="line">        BoundSql boundSql = ms.getBoundSql(args[PARAMETER_INDEX]);</span><br><span class="line"></span><br><span class="line">        // 获取 SQL 语句，拼接 limit 语句</span><br><span class="line">        String sql = boundSql.getSql();</span><br><span class="line">        String limit = String.format(&quot;LIMIT %d,%d&quot;, rb.getOffset(), rb.getLimit());</span><br><span class="line">        sql = sql + &quot; &quot; + limit;</span><br><span class="line"></span><br><span class="line">        // 创建一个 StaticSqlSource，并将拼接好的 sql 传入</span><br><span class="line">        SqlSource sqlSource = new StaticSqlSource(ms.getConfiguration(), sql, boundSql.getParameterMappings());</span><br><span class="line"></span><br><span class="line">        // 通过反射获取并设置 MappedStatement 的 sqlSource 字段</span><br><span class="line">        Field field = MappedStatement.class.getDeclaredField(&quot;sqlSource&quot;);</span><br><span class="line">        field.setAccessible(true);</span><br><span class="line">        field.set(ms, sqlSource);</span><br><span class="line">        </span><br><span class="line">        // 执行被拦截方法</span><br><span class="line">        return invocation.proceed();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object plugin(Object target) &#123;</span><br><span class="line">        return Plugin.wrap(target, this);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void setProperties(Properties properties) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的分页插件通过 RowBounds 参数获取分页信息，并生成相应的 limit 语句。之后拼接 sql，并使用该 sql 作为参数创建 StaticSqlSource。最后通过反射替换 MappedStatement 对象中的 sqlSource 字段。以上代码中出现了一些大家不太熟悉的类，比如 BoundSql，MappedStatement 以及 StaticSqlSource，这里简单解释一下吧。BoundSql 包含了经过解析后的 sql 语句，以及使用者运行时传入的参数，这些参数最终会被设置到 sql 中。MappedStatement 与映射文件中的 <select>，<insert> 等节点对应，包含了节点的配置信息，比如 id，fetchSize 以及 SqlSource。StaticSqlSource 是 SqlSource 实现类之一，包含完全解析后的 sql 语句。所谓完全解析是指 sql 语句中不包含 ${xxx} 或 #{xxx} 等占位符，以及其他一些未解析的动态节点，比如 <if>，<where> 等。关于这些类就介绍这么多，如果大家还是不怎么理解的话，可以看看我之前写的文章。接下里，写点测试代码验证一下插件是否可以正常运行。先来看一下 Dao 接口与映射文件的定义：</where></if></insert></select></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public interface StudentDao &#123;</span><br><span class="line">    List&lt;Student&gt; findByPaging(@Param(&quot;id&quot;) Integer id, RowBounds rb);</span><br><span class="line">&#125;</span><br><span class="line">&lt;mapper namespace=&quot;xyz.coolblog.dao6.StudentDao&quot;&gt;</span><br><span class="line">    &lt;select id=&quot;findByPaging&quot; resultType=&quot;xyz.coolblog.model5.Student&quot;&gt;</span><br><span class="line">        SELECT</span><br><span class="line">            `id`, `name`, `age`</span><br><span class="line">        FROM</span><br><span class="line">            student</span><br><span class="line">        WHERE</span><br><span class="line">            id &gt; #&#123;id&#125;</span><br><span class="line">    &lt;/select&gt;</span><br><span class="line">&lt;/mapper&gt;</span><br></pre></td></tr></table></figure>
+
+<p>测试代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public class PluginTest &#123;</span><br><span class="line"></span><br><span class="line">    private SqlSessionFactory sqlSessionFactory;</span><br><span class="line"></span><br><span class="line">    @Before</span><br><span class="line">    public void prepare() throws IOException &#123;</span><br><span class="line">        String resource = &quot;mybatis-plugin-config.xml&quot;;</span><br><span class="line">        InputStream inputStream = Resources.getResourceAsStream(resource);</span><br><span class="line">        sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);</span><br><span class="line">        inputStream.close();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    public void testPlugin() &#123;</span><br><span class="line">        SqlSession session = sqlSessionFactory.openSession();</span><br><span class="line">        try &#123;</span><br><span class="line">            StudentDao studentDao = session.getMapper(StudentDao.class);</span><br><span class="line">            studentDao.findByPaging(1, new RowBounds(20, 10));</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            session.close();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面代码运行之后，会打印如下日志。</p>
+<p><img src="https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15352145822059.jpg" alt="img"></p>
+<p>在上面的输出中，SQL 语句中包含了 LIMIT 字样，这说明插件生效了。</p>
+<h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><p>到此，关于 MyBatis 插件机制就分析完了。总体来说，MyBatis 插件机制比较简单。但实现一个插件却较为复杂，需要对 MyBatis 比较了解才行。因此，若想写出高效的插件，还需深入学习源码才行。</p>
+<p>好了，本篇文章就先到这了。感谢大家的阅读。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Mybatis/" rel="tag"># Mybatis</a>
+              <a href="/tags/ORM/" rel="tag"># ORM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-SQL%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/" rel="prev" title="MyBatis源码分析-SQL的执行过程">
+                  <i class="fa fa-chevron-left"></i> MyBatis源码分析-SQL的执行过程
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MyBatis%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E7%BC%93%E5%AD%98%E5%8E%9F%E7%90%86/" rel="next" title="MyBatis源码分析-缓存原理">
+                  MyBatis源码分析-缓存原理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

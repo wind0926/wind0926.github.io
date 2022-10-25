@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="为了讲多路复用，当然还是要跟风，采用鞭尸的思路，先讲讲传统的网络 IO 的弊端，用拉踩的方式捧起多路复用 IO 的优势。 为了方便理解，以下所有代码都是伪代码，知道其表达的意思即可。 Let’s go 阻塞 IO服务端为了处理客户端的连接和请求的数据，写了如下代码。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="操作系统-IO多路复用">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="为了讲多路复用，当然还是要跟风，采用鞭尸的思路，先讲讲传统的网络 IO 的弊端，用拉踩的方式捧起多路复用 IO 的优势。 为了方便理解，以下所有代码都是伪代码，知道其表达的意思即可。 Let’s go 阻塞 IO服务端为了处理客户端的连接和请求的数据，写了如下代码。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/1.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/2.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/4.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/5.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/8.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/9.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/10.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/11.gif">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/12.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/13.gif">
+<meta property="article:published_time" content="2022-10-25T14:42:42.000Z">
+<meta property="article:modified_time" content="2022-10-25T14:49:27.681Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="多路复用">
+<meta property="article:tag" content="操作系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/1.gif">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/","path":"2022/10/25/操作系统-IO多路复用/","title":"操作系统-IO多路复用"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>操作系统-IO多路复用 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E-IO"><span class="nav-number">1.</span> <span class="nav-text">阻塞 IO</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9D%9E%E9%98%BB%E5%A1%9E-IO"><span class="nav-number">2.</span> <span class="nav-text">非阻塞 IO</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#IO-%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">IO 多路复用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#select"><span class="nav-number">3.1.</span> <span class="nav-text">select</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#poll"><span class="nav-number">3.2.</span> <span class="nav-text">poll</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#epoll"><span class="nav-number">3.3.</span> <span class="nav-text">epoll</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="nav-number">3.4.</span> <span class="nav-text">后记</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="操作系统-IO多路复用 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          操作系统-IO多路复用
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 22:42:42 / 修改时间：22:49:27" itemprop="dateCreated datePublished" datetime="2022-10-25T22:42:42+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>为了讲多路复用，当然还是要跟风，采用鞭尸的思路，先讲讲传统的网络 IO 的弊端，用拉踩的方式捧起多路复用 IO 的优势。</p>
+<p>为了方便理解，以下所有代码都是伪代码，知道其表达的意思即可。</p>
+<p><strong>Let’s go</strong></p>
+<h1 id="阻塞-IO"><a href="#阻塞-IO" class="headerlink" title="阻塞 IO"></a>阻塞 IO</h1><p>服务端为了处理客户端的连接和请求的数据，写了如下代码。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">listenfd = socket();   <span class="comment">// 打开一个网络通信端口</span></span><br><span class="line">bind(listenfd);        <span class="comment">// 绑定</span></span><br><span class="line">listen(listenfd);      <span class="comment">// 监听</span></span><br><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br><span class="line">  connfd = accept(listenfd);  <span class="comment">// 阻塞建立连接</span></span><br><span class="line">  <span class="type">int</span> n = read(connfd, buf);  <span class="comment">// 阻塞读数据</span></span><br><span class="line">  doSomeThing(buf);  <span class="comment">// 利用读到的数据做些什么</span></span><br><span class="line">  close(connfd);     <span class="comment">// 关闭连接，循环等待下一个连接</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码会执行得磕磕绊绊，就像这样。</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/1.gif" alt="在这里插入图片描述"></p>
+<p>可以看到，服务端的线程阻塞在了两个地方，一个是 accept 函数，一个是 read 函数。</p>
+<p>如果再把 read 函数的细节展开，我们会发现其阻塞在了两个阶段。<br><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/2.gif" alt="在这里插入图片描述"></p>
+<p>这就是传统的阻塞 IO。</p>
+<p>整体流程如下图。<br><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/3.png" alt="在这里插入图片描述"></p>
+<p>所以，如果这个连接的客户端一直不发数据，那么服务端线程将会一直阻塞在 read 函数上不返回，也无法接受其他客户端连接。</p>
+<p>这肯定是不行的。</p>
+<h1 id="非阻塞-IO"><a href="#非阻塞-IO" class="headerlink" title="非阻塞 IO"></a>非阻塞 IO</h1><p>为了解决上面的问题，其关键在于改造这个 read 函数。</p>
+<p>有一种聪明的办法是，每次都创建一个新的进程或线程，去调用 read 函数，并做业务处理。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br><span class="line">  connfd = accept(listenfd);  <span class="comment">// 阻塞建立连接</span></span><br><span class="line">  pthread_create（doWork);  <span class="comment">// 创建一个新的线程</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">doWork</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">int</span> n = read(connfd, buf);  <span class="comment">// 阻塞读数据</span></span><br><span class="line">  doSomeThing(buf);  <span class="comment">// 利用读到的数据做些什么</span></span><br><span class="line">  close(connfd);     <span class="comment">// 关闭连接，循环等待下一个连接</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样，当给一个客户端建立好连接后，就可以立刻等待新的客户端连接，而不用阻塞在原客户端的 read 请求上。</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/4.gif" alt="在这里插入图片描述"></p>
+<p>不过，这不叫非阻塞 IO，只不过用了多线程的手段使得主线程没有卡在 read 函数上不往下走罢了。操作系统为我们提供的 read 函数仍然是阻塞的。</p>
+<p>所以真正的非阻塞 IO，不能是通过我们用户层的小把戏，而是要恳请操作系统为我们提供一个非阻塞的 read 函数。</p>
+<p>这个 read 函数的效果是，如果没有数据到达时（到达网卡并拷贝到了内核缓冲区），立刻返回一个错误值（-1），而不是阻塞地等待。</p>
+<p>操作系统提供了这样的功能，只需要在调用 read 前，将文件描述符设置为非阻塞即可。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">fcntl(connfd, F_SETFL, O_NONBLOCK);</span><br><span class="line"><span class="type">int</span> n = read(connfd, buffer) != SUCCESS);</span><br></pre></td></tr></table></figure>
+
+<p>这样，就需要用户线程循环调用 read，直到返回值不为 -1，再开始处理业务。</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/5.gif" alt="在这里插入图片描述"></p>
+<p>这里我们注意到一个细节。</p>
+<p>非阻塞的 read，指的是在数据到达前，即数据还未到达网卡，或者到达网卡但还没有拷贝到内核缓冲区之前，这个阶段是非阻塞的。</p>
+<p>当数据已到达内核缓冲区，此时调用 read 函数仍然是阻塞的，需要等待数据从内核缓冲区拷贝到用户缓冲区，才能返回。</p>
+<p>整体流程如下图</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/6.png" alt="在这里插入图片描述"></p>
+<h1 id="IO-多路复用"><a href="#IO-多路复用" class="headerlink" title="IO 多路复用"></a>IO 多路复用</h1><p>为每个客户端创建一个线程，服务器端的线程资源很容易被耗光。</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/8.png" alt="在这里插入图片描述"></p>
+<p>当然还有个聪明的办法，我们可以每 accept 一个客户端连接后，将这个文件描述符（connfd）放到一个数组里。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fdlist.add(connfd);</span><br></pre></td></tr></table></figure>
+
+<p>然后弄一个新的线程去不断遍历这个数组，调用每一个元素的非阻塞 read 方法。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br><span class="line">  <span class="keyword">for</span>(fd &lt;-- fdlist) &#123;</span><br><span class="line">    <span class="keyword">if</span>(read(fd) != <span class="number">-1</span>) &#123;</span><br><span class="line">      doSomeThing();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样，我们就成功用一个线程处理了多个客户端连接。<br><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/9.gif" alt="在这里插入图片描述"></p>
+<p>你是不是觉得这有些多路复用的意思？</p>
+<p>但这和我们用多线程去将阻塞 IO 改造成看起来是非阻塞 IO 一样，这种遍历方式也只是我们用户自己想出的小把戏，每次遍历遇到 read 返回 -1 时仍然是一次浪费资源的系统调用。</p>
+<p>在 while 循环里做系统调用，就好比你做分布式项目时在 while 里做 rpc 请求一样，是不划算的。</p>
+<p>所以，还是得恳请操作系统老大，提供给我们一个有这样效果的函数，我们将一批文件描述符通过一次系统调用传给内核，由内核层去遍历，才能真正解决这个问题。</p>
+<h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><p>select 是操作系统提供的系统调用函数，通过它，我们可以把一个文件描述符的数组发给操作系统， 让操作系统去遍历，确定哪个文件描述符可以读写， 然后告诉我们去处理：<br><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/10.gif" alt="在这里插入图片描述"></p>
+<p>select系统调用的函数定义如下。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">select</span><span class="params">(</span></span><br><span class="line"><span class="params">    <span class="type">int</span> nfds,</span></span><br><span class="line"><span class="params">    fd_set *readfds,</span></span><br><span class="line"><span class="params">    fd_set *writefds,</span></span><br><span class="line"><span class="params">    fd_set *exceptfds,</span></span><br><span class="line"><span class="params">    <span class="keyword">struct</span> timeval *timeout)</span>;</span><br><span class="line"><span class="comment">// nfds:监控的文件描述符集里最大文件描述符加1</span></span><br><span class="line"><span class="comment">// readfds：监控有读数据到达文件描述符集合，传入传出参数</span></span><br><span class="line"><span class="comment">// writefds：监控写数据到达文件描述符集合，传入传出参数</span></span><br><span class="line"><span class="comment">// exceptfds：监控异常发生达文件描述符集合, 传入传出参数</span></span><br><span class="line"><span class="comment">// timeout：定时阻塞监控时间，3种情况</span></span><br><span class="line"><span class="comment">//  1.NULL，永远等下去</span></span><br><span class="line"><span class="comment">//  2.设置timeval，等待固定时间</span></span><br><span class="line"><span class="comment">//  3.设置timeval里时间均为0，检查描述字后立即返回，轮询</span></span><br></pre></td></tr></table></figure>
+
+<p>服务端代码，这样来写。</p>
+<p>首先一个线程不断接受客户端连接，并把 socket 文件描述符放到一个 list 里。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br><span class="line">  connfd = accept(listenfd);</span><br><span class="line">  fcntl(connfd, F_SETFL, O_NONBLOCK);</span><br><span class="line">  fdlist.add(connfd);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后，另一个线程不再自己遍历，而是调用 select，将这批文件描述符 list 交给操作系统去遍历。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br><span class="line">  <span class="comment">// 把一堆文件描述符 list 传给 select 函数</span></span><br><span class="line">  <span class="comment">// 有已就绪的文件描述符就返回，nready 表示有多少个就绪的</span></span><br><span class="line">  nready = select(<span class="built_in">list</span>);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不过，当 select 函数返回后，用户依然需要遍历刚刚提交给操作系统的 list。</p>
+<p>只不过，操作系统会将准备就绪的文件描述符做上标识，用户层将不会再有无意义的系统调用开销。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>) &#123;</span><br><span class="line">  nready = select(<span class="built_in">list</span>);</span><br><span class="line">  <span class="comment">// 用户层依然要遍历，只不过少了很多无效的系统调用</span></span><br><span class="line">  <span class="keyword">for</span>(fd &lt;-- fdlist) &#123;</span><br><span class="line">    <span class="keyword">if</span>(fd != <span class="number">-1</span>) &#123;</span><br><span class="line">      <span class="comment">// 只读已就绪的文件描述符</span></span><br><span class="line">      read(fd, buf);</span><br><span class="line">      <span class="comment">// 总共只有 nready 个已就绪描述符，不用过多遍历</span></span><br><span class="line">      <span class="keyword">if</span>(--nready == <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>正如刚刚的动图中所描述的，其直观效果如下。（同一个动图消耗了你两次流量，气不气？）</p>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/11.gif" alt="在这里插入图片描述"></p>
+<p>可以看出几个细节：</p>
+<ol>
+<li>select 调用需要传入 fd 数组，需要拷贝一份到内核，高并发场景下这样的拷贝消耗的资源是惊人的。（可优化为不复制）</li>
+<li>select 在内核层仍然是通过遍历的方式检查文件描述符的就绪状态，是个同步过程，只不过无系统调用切换上下文的开销。（内核层可优化为异步事件通知）</li>
+<li>select 仅仅返回可读文件描述符的个数，具体哪个可读还是要用户自己遍历。（可优化为只返回给用户就绪的文件描述符，无需用户做无效的遍历）<br>整个 select 的流程图如下。</li>
+</ol>
+<p><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/12.png" alt="在这里插入图片描述"></p>
+<p>可以看到，这种方式，既做到了一个线程处理多个客户端连接（文件描述符），又减少了系统调用的开销（多个文件描述符只有一次 select 的系统调用 + n 次就绪状态的文件描述符的 read 系统调用）。</p>
+<h2 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h2><p>poll 也是操作系统提供的系统调用函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd *fds, nfds_tnfds, <span class="type">int</span> timeout)</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">  intfd; <span class="comment">/*文件描述符*/</span></span><br><span class="line">  shortevents; <span class="comment">/*监控的事件*/</span></span><br><span class="line">  shortrevents; <span class="comment">/*监控事件中满足条件返回的事件*/</span></span><br><span class="line">&#125;;</span><br><span class="line">它和 select 的主要区别就是，去掉了 select 只能监听 <span class="number">1024</span> 个文件描述符的限制。</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h2><p>epoll 是最终的大 boss，它解决了 select 和 poll 的一些问题。</p>
+<p>还记得上面说的 select 的三个细节么？</p>
+<ol>
+<li>select 调用需要传入 fd 数组，需要拷贝一份到内核，高并发场景下这样的拷贝消耗的资源是惊人的。（可优化为不复制）</li>
+<li>select 在内核层仍然是通过遍历的方式检查文件描述符的就绪状态，是个同步过程，只不过无系统调用切换上下文的开销。（内核层可优化为异步事件通知）</li>
+<li>select 仅仅返回可读文件描述符的个数，具体哪个可读还是要用户自己遍历。（可优化为只返回给用户就绪的文件描述符，无需用户做无效的遍历）</li>
+</ol>
+<p>所以 epoll 主要就是针对这三点进行了改进。</p>
+<ol>
+<li>内核中保存一份文件描述符集合，无需用户每次都重新传入，只需告诉内核修改的部分即可。</li>
+<li>内核不再通过轮询的方式找到就绪的文件描述符，而是通过异步 IO 事件唤醒。</li>
+<li>内核仅会将有 IO 事件的文件描述符返回给用户，用户也无需遍历整个文件描述符集合。<br>具体，操作系统提供了这三个函数。</li>
+</ol>
+<p>第一步，创建一个 epoll 句柄</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int epoll_create(int size);</span><br></pre></td></tr></table></figure>
+
+<p>第二步，向内核添加、修改或删除要监控的文件描述符。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">epoll_ctl</span><span class="params">(</span></span><br><span class="line"><span class="params">  <span class="type">int</span> epfd, <span class="type">int</span> op, <span class="type">int</span> fd, <span class="keyword">struct</span> epoll_event *event)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>第三步，类似发起了 select() 调用</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">epoll_wait</span><span class="params">(</span></span><br><span class="line"><span class="params">  <span class="type">int</span> epfd, <span class="keyword">struct</span> epoll_event *events, <span class="type">int</span> max events, <span class="type">int</span> timeout)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>使用起来，其内部原理就像如下一般丝滑。<br><img src="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/13.gif" alt="在这里插入图片描述"></p>
+<p>如果你想继续深入了解 epoll 的底层原理，推荐阅读飞哥的《图解 | 深入揭秘 epoll 是如何实现 IO 多路复用的！》，从 linux 源码级别，一行一行非常硬核地解读 epoll 的实现原理，且配有大量方便理解的图片，非常适合源码控的小伙伴阅读。</p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>大白话总结一下。<br>一切的开始，都起源于这个 read 函数是操作系统提供的，而且是阻塞的，我们叫它 阻塞 IO。<br>为了破这个局，程序员在用户态通过多线程来防止主线程卡死。<br>后来操作系统发现这个需求比较大，于是在操作系统层面提供了非阻塞的 read 函数，这样程序员就可以在一个线程内完成多个文件描述符的读取，这就是 非阻塞 IO。<br>但多个文件描述符的读取就需要遍历，当高并发场景越来越多时，用户态遍历的文件描述符也越来越多，相当于在 while 循环里进行了越来越多的系统调用。<br>后来操作系统又发现这个场景需求量较大，于是又在操作系统层面提供了这样的遍历文件描述符的机制，这就是 IO 多路复用。<br>多路复用有三个函数，最开始是 select，然后又发明了 poll 解决了 select 文件描述符的限制，然后又发明了 epoll 解决 select 的三个不足。<br>所以，IO 模型的演进，其实就是时代的变化，倒逼着操作系统将更多的功能加到自己的内核而已。<br>如果你建立了这样的思维，很容易发现网上的一些错误。<br>比如好多文章说，多路复用之所以效率高，是因为用一个线程就可以监控多个文件描述符。<br>这显然是知其然而不知其所以然，多路复用产生的效果，完全可以由用户态去遍历文件描述符并调用其非阻塞的 read 函数实现。而多路复用快的原因在于，操作系统提供了这样的系统调用，使得原来的 while 循环里多次系统调用，变成了一次系统调用 + 内核层遍历这些文件描述符。<br>就好比我们平时写业务代码，把原来 while 循环里调 http 接口进行批量，改成了让对方提供一个批量添加的 http 接口，然后我们一次 rpc 请求就完成了批量添加。<br>一个道理。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/" rel="tag"># 多路复用</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-DMA%E5%92%8C%E9%9B%B6%E6%8B%B7%E8%B4%9D/" rel="prev" title="操作系统-DMA和零拷贝">
+                  <i class="fa fa-chevron-left"></i> 操作系统-DMA和零拷贝
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

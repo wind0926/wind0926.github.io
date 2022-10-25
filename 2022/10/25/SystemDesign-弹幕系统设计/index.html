@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="直播业务现在特别火爆，也给人们的互动方式带来了很多新的改变，比如刷礼物、弹幕、排行榜等等。面对巨大的流量规模，直播技术的发展也备受关注。作为一个技术爱好者，相信你也会对直播的技术比较感兴趣，于是我去翻了几篇文章，了解了直播的技术方案，发现涉及到的技术细节太多，有部分已经是知识盲区，如音频、视频的编码传输等。 　　直播中弹幕是一个非常亮眼和重要的功能，相比于秒杀架构，直播弹幕系统也有很多有趣的知识可">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SystemDesign-弹幕系统设计">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="直播业务现在特别火爆，也给人们的互动方式带来了很多新的改变，比如刷礼物、弹幕、排行榜等等。面对巨大的流量规模，直播技术的发展也备受关注。作为一个技术爱好者，相信你也会对直播的技术比较感兴趣，于是我去翻了几篇文章，了解了直播的技术方案，发现涉及到的技术细节太多，有部分已经是知识盲区，如音频、视频的编码传输等。 　　直播中弹幕是一个非常亮眼和重要的功能，相比于秒杀架构，直播弹幕系统也有很多有趣的知识可">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/5.png">
+<meta property="article:published_time" content="2022-10-25T09:10:17.000Z">
+<meta property="article:modified_time" content="2022-10-25T09:12:08.963Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="SystemDesign">
+<meta property="article:tag" content="系统设计">
+<meta property="article:tag" content="弹幕系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/","path":"2022/10/25/SystemDesign-弹幕系统设计/","title":"SystemDesign-弹幕系统设计"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>SystemDesign-弹幕系统设计 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="SystemDesign-弹幕系统设计 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SystemDesign-弹幕系统设计
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:10:17 / 修改时间：17:12:08" itemprop="dateCreated datePublished" datetime="2022-10-25T17:10:17+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/SystemDesign/" itemprop="url" rel="index"><span itemprop="name">SystemDesign</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>直播业务现在特别火爆，也给人们的互动方式带来了很多新的改变，比如刷礼物、弹幕、排行榜等等。面对巨大的流量规模，直播技术的发展也备受关注。作为一个技术爱好者，相信你也会对直播的技术比较感兴趣，于是我去翻了几篇文章，了解了直播的技术方案，发现涉及到的技术细节太多，有部分已经是知识盲区，如<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E9%9F%B3%E9%A2%91&spm=1001.2101.3001.7020">音频</a>、视频的编码传输等。</p>
+<p>　　直播中弹幕是一个非常亮眼和重要的功能，相比于秒杀架构，直播弹幕系统也有很多有趣的知识可以挖掘，一起来 YY 下如何设计一个直播弹幕系统，不对的地方还请有经验的大佬指出。</p>
+<p>　　直播弹幕是一个读写 QPS 要求都很高，假设一个直播间有 100w 用户同时在线观看，假设弹幕的提交频率为有 10000条&#x2F;秒，那么需要每秒同时推送给在线用户的次数为 100w * 10000。由此可见，读请求的吞吐量需要远大于写请求，这点类似于 IM 实时聊天。</p>
+<p>　　架构设计考虑以下几个场景：</p>
+<p>　　支持直播弹幕回放用户进入直播间可以推送最新几秒的弹幕数据长连模式和短连模式可以做降级切换</p>
+<p>　　为了不影响读写的性能，采用读写分离架构。</p>
+<p>　　写服务：若不考虑历史弹幕可回放，可以直接使用 Redis 作为唯一存储。若考虑支持弹幕的回放，数据还是需要持久化，可以考虑使用 MySQL 或者 TiDB，暂且认为写入不是较大的瓶颈。如果有更高性能的写需求，HBase、OpenTSDB 等都可以解决问题。读服务：Redis 主要用于读缓存，缓存直播间最新的弹幕数据，采用直播间 ID 作为 Key。系统读服务最大 QPS&#x3D;Redis 集群QPS。</p>
+<p>　　Redis 存储结构选择：SortedSet。</p>
+<p>　　提交弹幕：ZADD，score 设置为时间戳。进一步优化可以只存储时间的 delta 值，减少数据存储量。弹幕查询：ZRANGEBYSCORE 定时轮询弹幕数据。</p>
+<p>　　有什么问题？</p>
+<p>　　系统性能与 Redis 集群容量强相关，性能提升需要扩容 Redis，成本高。Redis 重复请求较多，相同直播间会存在很多重复的轮询请求。</p>
+<p><img src="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/1.png" alt="img"></p>
+<p>　　如果能让最新的实时弹幕数据都能命中本地缓存，那性能是最高的，同时大幅度降低了 Redis 的读取压力。所以弹幕读服务可以每秒轮询 Redis 数据，构建本地缓存。</p>
+<p>　　热点问题：</p>
+<p>　　假设同时在线的直播间有 10000 个，读服务<a target="_blank" rel="noopener" href="https://www.jianfei8.net/">机器</a>有 50 台，那么每秒轮询 Redis 的 QPS&#x3D;10000 * 50&#x3D;50w，读取请求线性膨胀。本地内存的使用量也随直播间的数量增长而膨胀，每个直播间的缓存的数据量降低，导致本地缓存的命中率降低，容易导致 GC 频繁。</p>
+<p><img src="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/2.png" alt="img"></p>
+<p>　　如何降低本地缓存的使用量？</p>
+<p>　　因为火爆的直播间会占据整个平台大部分的流量，可以只针对火爆的直播间开启本地缓存。通过路由控制同一个直播间的请求分发到固定的几台机器，例如一致性 Hash 算法。通过减少读服务机器上的直播间数量，达到降低本地缓存使用量的目的。</p>
+<p><img src="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/3.png" alt="img"></p>
+<p>　　上述方法可以有效地解决问题，但是不能解决流量不均衡的问题。不同直播间分配的机器资源不是拍脑袋定的，需要有理论依据， 可以根据直播间的一些数据指标进行动态分配机器资源。</p>
+<p>　　增加对直播间数据指标的统计，如单机 QPS、集群 QPS、单机直播间在线数等。关于自适应的负载均衡又是一个可以深挖的话题，在这里我们讨论几个常用的方案，有可能结合起来使用效果更好。分桶：不同 QPS 的范围段划分为不同的桶，根据桶范围的不同分配的机器数量也是不同的。最大最小公平分配：根据直播间的 QPS 划分资源需求的权重比例，根据总机器的数量和权重比例来分配机器数量。启发式算法：遗传算法、蚁群算法等。</p>
+<p>　　单元化可以说是解决性能容量以及容灾的杀手锏。实现单元化需要完成有很多重要的工作，如数据同步 DRC、流量调度等，在此不作展开。</p>
+<p>　　</p>
+<p><img src="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/4.png" alt="img"></p>
+<p>　　推荐一篇携程的 DRC 实践： 携程异地多活-MySQL实时双向（多向）复制实践</p>
+<p>　　为了保障客户端消息的推送性能和实时性，长连接基本是必备的，最新的消息可以直接采用长连接实时推送。</p>
+<p>　　Push Server 从 Redis 中获取用户和直播间的订阅关系以及长连接信息。连接代理只负责与客户端保持长连接。海量的消息推送需要批量压缩。</p>
+<p><img src="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/5.png" alt="img"></p>
+<p>　　增加一组专门用于回放的 Redis 集群，同时增加回放的本地缓存，其余设计与上述方案保持一致。</p>
+<p>　　抱着学习的心态，思考了直播弹幕系统的架构应该如何设计，本文主要讨论了以下几个点：</p>
+<p>　　读写分离的架构设计通过缓存优化读性能通过路由规则解决直播间流量不均衡的热点问题长连接的方案设计以及客户端的消息推送</p>
+<p>　　暂时就 YY 这么多吧，做好一个系统还有需要细节需要考虑：高可用、监控、限流降级、延迟优化等。有什么错误和好的实践经验欢迎留言。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/SystemDesign/" rel="tag"># SystemDesign</a>
+              <a href="/tags/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/" rel="tag"># 系统设计</a>
+              <a href="/tags/%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F/" rel="tag"># 弹幕系统</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/SpringCloud-%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E5%8E%9F%E7%90%86%E5%92%8C%E9%80%89%E5%9E%8B/" rel="prev" title="SpringCloud-注册中心原理和选型">
+                  <i class="fa fa-chevron-left"></i> SpringCloud-注册中心原理和选型
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Tomcat-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" rel="next" title="Tomcat-架构解析">
+                  Tomcat-架构解析 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

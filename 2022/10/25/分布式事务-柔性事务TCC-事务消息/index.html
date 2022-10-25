@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="【前言】在前面的文章中我们提到了柔性事务遵循BASE理论，满足最终一致性，柔性事务主要分为补偿型和通知型。补偿型事务又分TCC、Saga，通知型事务分事务消息、最大努力通知型。补偿型事务都是同步的，通知型事务都是异步的。本篇介绍柔性事务的这几种实现方案：TCC、Saga、事务消息、本地消息表、最大努力通知。 TCCTCC（Try-Confirm-Cancel）采用补偿机制，其核心思想是：针对每个操">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式事务-柔性事务TCC+事务消息">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="【前言】在前面的文章中我们提到了柔性事务遵循BASE理论，满足最终一致性，柔性事务主要分为补偿型和通知型。补偿型事务又分TCC、Saga，通知型事务分事务消息、最大努力通知型。补偿型事务都是同步的，通知型事务都是异步的。本篇介绍柔性事务的这几种实现方案：TCC、Saga、事务消息、本地消息表、最大努力通知。 TCCTCC（Try-Confirm-Cancel）采用补偿机制，其核心思想是：针对每个操">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/4.png">
+<meta property="article:published_time" content="2022-10-25T09:24:31.000Z">
+<meta property="article:modified_time" content="2022-10-25T09:37:12.334Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="cAP">
+<meta property="article:tag" content="BASE">
+<meta property="article:tag" content="分布式事务">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/","path":"2022/10/25/分布式事务-柔性事务TCC-事务消息/","title":"分布式事务-柔性事务TCC+事务消息"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>分布式事务-柔性事务TCC+事务消息 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E3%80%90%E5%89%8D%E8%A8%80%E3%80%91"><span class="nav-number">1.</span> <span class="nav-text">【前言】</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TCC"><span class="nav-number">2.</span> <span class="nav-text">TCC</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Saga"><span class="nav-number">3.</span> <span class="nav-text">Saga</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E3%80%90%E9%80%9A%E7%9F%A5%E5%9E%8B%E4%BA%8B%E5%8A%A1%E3%80%91"><span class="nav-number">4.</span> <span class="nav-text">【通知型事务】</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%B6%88%E6%81%AF%E8%A1%A8"><span class="nav-number">5.</span> <span class="nav-text">本地消息表</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MQ%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF"><span class="nav-number">6.</span> <span class="nav-text">MQ事务消息</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E5%A4%A7%E5%8A%AA%E5%8A%9B%E9%80%9A%E7%9F%A5"><span class="nav-number">7.</span> <span class="nav-text">最大努力通知</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="分布式事务-柔性事务TCC+事务消息 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分布式事务-柔性事务TCC+事务消息
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:24:31 / 修改时间：17:37:12" itemprop="dateCreated datePublished" datetime="2022-10-25T17:24:31+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">分布式事务</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="【前言】"><a href="#【前言】" class="headerlink" title="【前言】"></a>【前言】</h1><p>在前面的文章中我们提到了<strong>柔性事务遵循BASE理论，满足最终一致性</strong>，柔性事务主要分为<strong>补偿型</strong>和<strong>通知型</strong>。补偿型事务又分TCC、Saga，通知型事务分事务消息、最大努力通知型。补偿型事务都是同步的，通知型事务都是异步的。本篇介绍柔性事务的这几种实现方案：TCC、Saga、事务消息、本地消息表、最大努力通知。</p>
+<h1 id="TCC"><a href="#TCC" class="headerlink" title="TCC"></a>TCC</h1><p><strong>TCC（Try-Confirm-Cancel）</strong>采用补偿机制，其核心思想是：针对每个操作，都要注册一个与其对应的确认和补偿（撤销）操作。TCC模型通过对业务逻辑的分解来实现分布式事务：</p>
+<ol>
+<li><strong>Try</strong>：尝试执行业务，完成所有业务检查(一致性)，预留必要的业务资源(准隔离性)。</li>
+<li><strong>Confirm</strong>：确认执行业务，不再做业务检查。只使用Try阶段预留的业务资源，Confirm操作满足幂等性。</li>
+<li><strong>Cancel</strong>： 若业务执行失败，则取消执行业务并释放Try阶段预留的业务资源。</li>
+</ol>
+<p><strong>TCC分布式事务模型包括如下三部分：</strong></p>
+<ul>
+<li><strong>主业务服务</strong>：负责发起并完成整个业务活动。</li>
+<li><strong>从业务服务</strong>：是整个业务活动的参与方，实现 Try、Confirm、Cancel 操作，供主业务服务调用。</li>
+<li><strong>事务管理器</strong>：管理整个业务活动，包括记录事务状态，调用从业务服务的 Confirm&#x2F;Cancel 操作等。</li>
+</ul>
+<p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/1.png" alt="图片"></p>
+<p><strong>TCC对比2PC</strong></p>
+<p>可以看出，TCC也是把事务分成了两个阶段，Try是阶段一，Confirm 和 Cancel 是阶段二的两个分支。这有点像2PC（二阶段提交），但其实他们是不一样的，下面是他们的区别：</p>
+<ol>
+<li>2PC和3PC都是数据库层面的操作，对于开发人员无感知；而TCC是业务层的操作，对开发人员来说具有较高的开发成本。</li>
+<li>2PC是一个整体的长事务，是刚性事务；而TCC是一组本地短事务，是柔性事务；</li>
+<li>2PC是全局锁定资源，所有参与者阻塞等待事务管理器的通知；而TCC的资源锁定在于Try操作，业务方可以灵活选择业务资源的锁定粒度。</li>
+</ol>
+<p><strong>TCC优缺点</strong></p>
+<p>优点：</p>
+<ul>
+<li>应用可以自定义数据操作的粒度，降低了锁冲突，提升吞吐量。</li>
+</ul>
+<p>缺点： </p>
+<ul>
+<li>应用侵入性强， Try、Confirm、Cancel 三个阶段都需要业务逻辑实现。</li>
+<li>需要根据网络、系统故障等不同失败原因实现不同的回滚策略， 实现难度大，一般借助 TCC 开源框架，ByteTCC，TCC-transaction，Himly。</li>
+</ul>
+<h1 id="Saga"><a href="#Saga" class="headerlink" title="Saga"></a>Saga</h1><p><strong>Saga</strong>模型是把一个分布式事务拆分为多个本地事务，每个本地事务都有相应的执行模块和补偿模块（对应TCC中的Confirm和Cancel），当Saga事务中任意一个本地事务出错时，可以通过调用相关的补偿方法恢复之前的事务，达到事务最终一致性。</p>
+<p><strong>Saga 模型由三部分组成</strong>：</p>
+<ul>
+<li><strong>LLT</strong>（Long Live Transaction）：由一个个本地事务组成的事务链<strong>。</strong></li>
+<li><strong>本地事务</strong>：事务链由一个个子事务（本地事务）组成，LLT &#x3D; T1+T2+T3+…+Ti。</li>
+<li><strong>补偿</strong>：每个本地事务 Ti 有对应的补偿 Ci。</li>
+</ul>
+<p><strong>Saga 的执行顺序</strong>：</p>
+<ul>
+<li>正常情况：T1,T2,T3,…,Ti</li>
+<li>异常情况：T1,T2,T3,..Ti,Ci,…C3,C2,C1</li>
+</ul>
+<p><strong>Saga 两种恢复策略</strong>：</p>
+<ul>
+<li><strong>向后恢复</strong>（Backward Recovery）：撤销掉之前所有成功子事务。如果任意本地子事务失败，则补偿已完成的事务。如异常情况的执行顺序T1,T2,T3,..Ti,Ci,…C3,C2,C1。</li>
+<li><strong>向前恢复</strong>（Forward Recovery）：即重试失败的事务，适用于必须要成功的场景，该情况下不需要Ci。执行顺序：T1,T2,…,Tj（失败）,Tj（重试）,…,Ti。</li>
+</ul>
+<p><strong>Saga 模型可以满足事务的三个特性ACD</strong>：</p>
+<ul>
+<li>原子性：Saga 协调器协调事务链中的本地事务要么全部提交，要么全部回滚。</li>
+<li>一致性：Saga 事务可以实现最终一致性。</li>
+<li>持久性：基于本地事务，所以这个特性可以很好实现。</li>
+</ul>
+<p>Saga缺乏隔离性会带来<a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=Mzg4NjU0NTg2MA==&mid=2247483770&idx=1&sn=8f05f6edef012cfa64ce94553f84f748&chksm=cf994dd1f8eec4c73b768b040d2e42870cb3d03be445311bc1c8cc3b6e657c6be8354e2d03d1&scene=21#wechat_redirect">脏读，幻读，不可重复读</a>的问题。由于Saga 事务和 TCC 事务一样，都是强依靠业务改造，因此需要在业务设计上去解决这个问题：</p>
+<ul>
+<li>在应⽤层⾯加⼊逻辑锁的逻辑。</li>
+<li>Session 层⾯隔离来保证串⾏化操作。</li>
+<li>业务层⾯采⽤预先冻结数据的方式隔离此部分数据。</li>
+<li>业务操作过程中通过及时读取当前状态的⽅式获取更新。</li>
+</ul>
+<blockquote>
+<p> <strong>实现Saga的注意事项</strong>：</p>
+<ol>
+<li>Ti和Ci必须是幂等的。如向后恢复和向前恢复时候如果不是幂等操作会导致数据不一致。</li>
+<li>Ci必须是能够成功的，如果无法成功则需要人工介入。</li>
+<li>Ti-&gt;Ci和Ci-&gt;Ti的执行结果必须是一样的。</li>
+</ol>
+</blockquote>
+<p><strong>Saga对比TCC</strong></p>
+<p>Saga和TCC都是补偿型事务，他们的区别为：</p>
+<p>劣势：</p>
+<ul>
+<li>无法保证隔离性；</li>
+</ul>
+<p>优势：</p>
+<ul>
+<li>一阶段提交本地事务，无锁，高性能；</li>
+<li>事件驱动模式，参与者可异步执行，高吞吐；</li>
+<li>Saga 对业务侵入较小，只需要提供一个逆向操作的Cancel即可；而TCC需要对业务进行全局性的流程改造；</li>
+</ul>
+<hr>
+<h1 id="【通知型事务】"><a href="#【通知型事务】" class="headerlink" title="【通知型事务】"></a>【通知型事务】</h1><p>上面提到柔性事务主要分为<strong>补偿型</strong>和<strong>通知型</strong>，我们已经介绍了补偿型的TCC，Saga模型，下面继续介绍通知型事务。</p>
+<p>通知型事务的主流实现是通过MQ（消息队列）来通知其他事务参与者自己事务的执行状态，MQ组件的引入有效的将事务参与者进行解耦，各参与者都可以异步执行，所以通知型事务又被称为<strong>异步事务</strong>。通知型事务主要适用于那些需要异步更新数据，并且对数据的实时性要求较低的场景，主要包含<strong>事务消息</strong>和<strong>最大努力通知事务</strong>两种。</p>
+<p><strong>事务消息</strong>：主要适用于内部系统的数据最终一致性保障，因为内部相对比较可控，如订单和购物车、收货与清算、支付与结算等等场景；</p>
+<p><strong>最大努力通知</strong>：主要用于外部系统，因为外部的网络环境更加复杂和不可信，所以只能尽最大努力去通知实现数据最终一致性，比如充值平台与运营商、支付对接等等跨网络系统级别对接；</p>
+<p>普通消息是无法解决本地事务执行和消息发送的一致性问题的。因为消息发送是一个网络通信的过程，发送消息的过程就有可能出现发送失败、或者超时的情况。超时有可能发送成功了，有可能发送失败了，消息的发送方是无法确定的，所以此时消息发送方无论是提交事务还是回滚事务，都有可能不一致性出现。因此通知型事务的难点在于投递消息和参与者自身本地事务的一致性保障。目前业界解决这个一致性的方案有两个分支：</p>
+<ul>
+<li>基于MQ自身的事务消息方案</li>
+<li>基于DB的本地消息表方案</li>
+</ul>
+<h1 id="本地消息表"><a href="#本地消息表" class="headerlink" title="本地消息表"></a>本地消息表</h1><p>本地消息表最初由eBay 提出来解决分布式事务的问题。是目前业界使用的比较多的方案之一，它的核心思想就是将分布式事务<strong>拆分</strong>成本地事务进行处理。</p>
+<p><strong>流程</strong></p>
+<p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/2.png" alt="图片"></p>
+<p>发送消息方：</p>
+<ul>
+<li>需要有一个消息表，记录着消息状态相关信息。</li>
+<li>业务数据和消息表在同一个数据库，要保证它俩在同一个本地事务。</li>
+<li>在本地事务中处理完业务数据和写消息表操作后，通过写消息到 MQ 消息队列。</li>
+<li>消息会发到消息消费方，如果发送失败，即进行重试。</li>
+</ul>
+<p>消息消费方：</p>
+<ul>
+<li>处理消息队列中的消息，完成自己的业务逻辑。</li>
+<li>如果本地事务处理成功，则表明已经处理成功了。</li>
+<li>如果本地事务处理失败，那么就会重试执行。</li>
+<li>如果是业务层面的失败，给消息生产方发送一个业务补偿消息，通知进行回滚等操作。</li>
+</ul>
+<p>生产方和消费方定时扫描本地消息表，把还没处理完成的消息或者失败的消息再发送一遍。如果有靠谱的自动对账补账逻辑，这种方案还是非常实用的。</p>
+<p><strong>本地消息表优缺点：</strong></p>
+<p>优点：</p>
+<ul>
+<li>本地消息表建设成本比较低，实现了可靠消息的传递确保了分布式事务的最终一致性。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>本地消息表与业务耦合在一起，难于做成通用性，不可独立伸缩。</li>
+<li>本地消息表是基于数据库来做的，而数据库是要读写磁盘IO的，因此在高并发下是有性能瓶颈的</li>
+</ul>
+<h1 id="MQ事务消息"><a href="#MQ事务消息" class="headerlink" title="MQ事务消息"></a>MQ事务消息</h1><p>基于MQ的事务消息方案主要依靠MQ的<strong>半消息机制</strong>来实现投递消息和参与者自身本地事务的一致性保障。半消息机制实现原理其实借鉴的2PC的思路，是二阶段提交的广义拓展。</p>
+<blockquote>
+<p><strong>半消息</strong>：在原有队列消息执行后的逻辑，如果后面的本地逻辑出错，则不发送该消息，如果通过则告知MQ发送；</p>
+</blockquote>
+<p><strong>流程</strong></p>
+<p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/3.png" alt="图片"></p>
+<ol>
+<li>事务发起方首先发送半消息到MQ；</li>
+<li>MQ通知发送方消息发送成功；</li>
+<li>在发送半消息成功后执行本地事务；</li>
+<li>根据本地事务执行结果返回commit或者是rollback；</li>
+<li>如果消息是rollback, MQ将丢弃该消息不投递；如果是commit，MQ将会消息发送给消息订阅方；</li>
+<li>订阅方根据消息执行本地事务；</li>
+<li>订阅方执行本地事务成功后再从MQ中将该消息标记为已消费；</li>
+<li>如果执行本地事务过程中，执行端挂掉，或者超时，MQ服务器端将不停的询问producer来获取事务状态；</li>
+<li>Consumer端的消费成功机制有MQ保证；</li>
+</ol>
+<p><strong>MQ事务消息对比本地消息表</strong></p>
+<p>MQ事务消息：</p>
+<ul>
+<li>需要MQ支持半消息机制或者类似特性，在重复投递上具有比较好的去重处理；</li>
+<li>具有比较大的业务侵入性，需要业务方进行改造，提供对应的本地操作成功的回查功能；</li>
+</ul>
+<p>DB本地消息表：</p>
+<ul>
+<li>使用了数据库来存储事务消息，降低了对MQ的要求，但是增加了存储成本；</li>
+<li>事务消息使用了异步投递，增大了消息重复投递的可能性；</li>
+</ul>
+<h1 id="最大努力通知"><a href="#最大努力通知" class="headerlink" title="最大努力通知"></a>最大努力通知</h1><p>最大努力通知方案的目标，就是发起通知方通过一定的机制，最大努力将业务处理结果通知到接收方。本质是通过引入<strong>定期校验机制</strong>实现最终一致性，对业务的侵入性较低，适合于对最终一致性敏感度比较低、业务链路较短的场景。</p>
+<p><strong>最大努力通知解决方案：</strong>要实现最大努力通知，可以采用 MQ 的 ACK 机制。</p>
+<p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E6%9F%94%E6%80%A7%E4%BA%8B%E5%8A%A1TCC-%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF/4.png" alt="图片"></p>
+<ol>
+<li>业务活动的主动方，在完成业务处理之后，向业务活动的被动方发送消息，允许消息丢失。</li>
+<li>主动方可以设置时间阶梯型通知规则，在通知失败后按规则重复通知，直到通知N次后不再通知。</li>
+<li>主动方提供校对查询接口给被动方按需校对查询，用于恢复丢失的业务消息。</li>
+<li>业务活动的被动方如果正常接收了数据，就正常返回响应，并结束事务。</li>
+<li>如果被动方没有正常接收，根据定时策略，向业务活动主动方查询，恢复丢失的业务消息。</li>
+</ol>
+<p><strong>特点</strong></p>
+<ol>
+<li>用到的服务模式：可查询操作、幂等操作；</li>
+<li>被动方的处理结果不影响主动方的处理结果；</li>
+<li>适用于对业务最终一致性的时间敏感度低的系统；</li>
+<li>适合跨企业的系统间的操作，或者企业内部比较独立的系统间的操作，比如银行通知、商户通知等；</li>
+</ol>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>方案对比：</p>
+<table>
+<thead>
+<tr>
+<th align="left">属性</th>
+<th align="left">2PC</th>
+<th align="left">TCC</th>
+<th align="left">Saga</th>
+<th align="left">本地消息表</th>
+<th align="left">事务消息</th>
+<th align="left">尽最大努力通知</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">事务一致性</td>
+<td align="left">强</td>
+<td align="left">弱</td>
+<td align="left">弱</td>
+<td align="left">弱</td>
+<td align="left">弱</td>
+<td align="left">弱</td>
+</tr>
+<tr>
+<td align="left">复杂性</td>
+<td align="left">中</td>
+<td align="left">高</td>
+<td align="left">中</td>
+<td align="left">低</td>
+<td align="left">低</td>
+<td align="left">低</td>
+</tr>
+<tr>
+<td align="left">业务侵入性</td>
+<td align="left">小</td>
+<td align="left">大</td>
+<td align="left">小</td>
+<td align="left">中</td>
+<td align="left">中</td>
+<td align="left">中</td>
+</tr>
+<tr>
+<td align="left">使用局限性</td>
+<td align="left">大</td>
+<td align="left">大</td>
+<td align="left">中</td>
+<td align="left">小</td>
+<td align="left">中</td>
+<td align="left">中</td>
+</tr>
+<tr>
+<td align="left">性能</td>
+<td align="left">低</td>
+<td align="left">中</td>
+<td align="left">高</td>
+<td align="left">高</td>
+<td align="left">高</td>
+<td align="left">高</td>
+</tr>
+<tr>
+<td align="left">维护成本</td>
+<td align="left">低</td>
+<td align="left">高</td>
+<td align="left">中</td>
+<td align="left">低</td>
+<td align="left">中</td>
+<td align="left">中</td>
+</tr>
+</tbody></table>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/cAP/" rel="tag"># cAP</a>
+              <a href="/tags/BASE/" rel="tag"># BASE</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" rel="tag"># 分布式事务</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-%E5%88%9A%E6%80%A7%E4%BA%8B%E5%8A%A12PC-3PC/" rel="prev" title="分布式事务-刚性事务2PC+3PC">
+                  <i class="fa fa-chevron-left"></i> 分布式事务-刚性事务2PC+3PC
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Redis-%E6%90%BA%E7%A8%8B%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E5%92%8C%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E7%BC%93%E5%AD%98%E5%AE%9E%E8%B7%B5/" rel="next" title="Redis-携程最终一致和强一致性缓存实践">
+                  Redis-携程最终一致和强一致性缓存实践 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言目前大部分的后端开发人员对MySQL的理解可能停留在一个黑盒子阶段。 对MySQL基本使用没什么问题，比如建库、建表、建索引，执行各种增删改查。 所有很多后端开发人员眼中的MySQL如下图所示">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL-架构介绍简介">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="前言目前大部分的后端开发人员对MySQL的理解可能停留在一个黑盒子阶段。 对MySQL基本使用没什么问题，比如建库、建表、建索引，执行各种增删改查。 所有很多后端开发人员眼中的MySQL如下图所示">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/15png.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/8.png">
+<meta property="article:published_time" content="2022-10-25T07:48:45.000Z">
+<meta property="article:modified_time" content="2022-10-25T11:35:23.642Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="OLTP">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="分库分表">
+<meta property="article:tag" content="db">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/","path":"2022/10/25/MySQL-架构介绍简介/","title":"MySQL-架构介绍简介"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MySQL-架构介绍简介 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">连接管理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E4%B8%8E%E4%BC%98%E5%8C%96"><span class="nav-number">3.</span> <span class="nav-text">解析与优化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MySQL-架构介绍简介 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MySQL-架构介绍简介
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 15:48:45 / 修改时间：19:35:23" itemprop="dateCreated datePublished" datetime="2022-10-25T15:48:45+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/MySQL/" itemprop="url" rel="index"><span itemprop="name">MySQL</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>目前大部分的后端开发人员对<code>MySQL</code>的理解可能停留在一个黑盒子阶段。</p>
+<p>对<code>MySQL</code>基本使用没什么问题，比如建库、建表、建索引，执行各种增删改查。</p>
+<p>所有很多后端开发人员眼中的<code>MySQL</code>如下图所示</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/1.png" alt="图片"></p>
+<p>导致在实际工作中碰到<code>MySQL</code>中死锁异常、<code>SQL</code>性能太差、异常报错等问题时，直接百度搜索。</p>
+<p>然后跟着博客捣鼓就解决了，可能自己都没搞明白里面的原理。</p>
+<p>为了解决这种<strong>知其然而不知其所以然</strong>的问题，阿星的<strong>重学MySQL系列</strong>会带着大家去探索MySQL底层原理的方方面面。</p>
+<p>这样大家碰到<code>MySQL</code>的一些异常或者问题时，能够直戳本质，快速地定位解决。</p>
+<h1 id="连接管理"><a href="#连接管理" class="headerlink" title="连接管理"></a>连接管理</h1><p>系统（客户端）访问<code>MySQL</code>服务器前，做的第一件事就是建立<code>TCP</code>连接。</p>
+<p>经过三次握手建立连接成功后，<code>MySQL</code>服务器对<code>TCP</code>传输过来的账号密码做身份认证、权限获取。</p>
+<ul>
+<li><strong>用户名或密码不对，会收到一个Access denied for user错误，客户端程序结束执行</strong></li>
+<li><strong>用户名密码认证通过，会从权限表查出账号拥有的权限与连接关联，之后的权限判断逻辑，都将依赖于此时读到的权限</strong></li>
+</ul>
+<p>接着我们来思考一个问题</p>
+<p>一个系统只会和<code>MySQL</code>服务器建立一个连接吗？</p>
+<p>只能有一个系统和<code>MySQL</code>服务器建立连接吗？</p>
+<p>当然不是，多个系统都可以和<code>MySQL</code>服务器建立连接，每个系统建立的连接肯定不止一个。</p>
+<p>所以，为了解决<code>TCP</code>无限创建与<code>TCP</code>频繁创建销毁带来的资源耗尽、性能下降问题。</p>
+<p><code>MySQL</code>服务器里有专门的<code>TCP</code>连接池限制接数，采用长连接模式复用<code>TCP</code>连接，来解决上述问题。</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/2.png" alt="图片"></p>
+<p><code>TCP</code>连接收到请求后，必须要分配给一个线程去执行，所以还会有个线程池，去走后面的流程。</p>
+<p>这些内容我们都归纳到<code>MySQL</code>的<strong>连接管理</strong>组件中。</p>
+<p>所以<strong>连接管理</strong>的职责是负责认证、管理连接、获取权限信息。</p>
+<h1 id="解析与优化"><a href="#解析与优化" class="headerlink" title="解析与优化"></a>解析与优化</h1><p>经过了连接管理，现在<code>MySQL</code>服务器已经获取到<code>SQL</code>字符串。</p>
+<p>如果是查询语句，<code>MySQL</code>服务器会使用<code>select SQL</code>字符串作为<code>key</code>。</p>
+<p>去缓存中获取，命中缓存，直接返回结果（<strong>返回前需要做权限验证</strong>），未命中执行后面的阶段，这个步骤叫<strong>查询缓存</strong>。</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/3.png" alt="图片"></p>
+<p>需要注意，<code>select SQL</code>字符串要完全匹配，有任何不同的地方都会导致缓存不被命中（<strong>空格、注释、大小写、某些系统函数</strong>）。</p>
+<blockquote>
+<p>小贴士：虽然查询缓存有时可以提升系统性能，但也不得不因维护这块缓存而造成一些开销，从MySQL 5.7.20开始，不推荐使用查询缓存，并在MySQL 8.0中删除。</p>
+</blockquote>
+<p>没有命中缓存，或者非<code>select SQL</code>就来到<strong>分析器</strong>阶段了。</p>
+<p>因为系统发送过来的只是一段文本字符串，所以<code>MySQL</code>服务器要按照<code>SQL</code>语法对这段文本进行解析。</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/4.png" alt="图片"></p>
+<p>如果你的<code>SQL</code>字符串不符合语法规范，就会收到<code>You have an error in your SQL syntax</code>错误提醒</p>
+<p>通过了<strong>分析器</strong>，说明<code>SQL</code>字符串符合语法规范，现在<code>MySQL</code>服务器要执行<code>SQL</code>语句了。</p>
+<p><code>MySQL</code>服务器要怎么执行呢？</p>
+<p>你需要产出执行计划，交给<code>MySQL</code>服务器执行，所以来到了<strong>优化器</strong>阶段。</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/15png.png" alt="图片"></p>
+<p>优化器不仅仅只是生成执行计划这么简单，这个过程它会帮你优化<code>SQL</code>语句。</p>
+<p>如<strong>外连接转换为内连接、表达式简化、子查询转为连接、连接顺序、索引选择</strong>等一堆东西，优化的结果就是执行计划。</p>
+<p>截止到现在，还没有真正去读写真实的表，仅仅只是产出了一个执行计划。</p>
+<p>于是就进入了<strong>执行器</strong>阶段，<code>MySQL</code>服务器终于要执行<code>SQL</code>语句了。</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/5.png" alt="图片"></p>
+<p>开始执行的时候，要先判断一下对这个表有没有相应的权限，如果没有，就会返回权限错误。</p>
+<p>如果有权限，根据执行计划调用存储引擎<code>API</code>对表进行的读写。</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/6.png" alt="图片"></p>
+<p>存储引擎<code>API</code>只是抽象接口，下面还有个<strong>存储引擎层</strong>，具体实现还是要看表选择的存储引擎。</p>
+<p>讲到这里，上面提到的<strong>查询缓存、分析器、优化器、执行器</strong>都可以归纳到<code>MySQL</code>的<strong>解析与优化</strong>组件中。</p>
+<p>所以<strong>解析与优化</strong>的职责如下：</p>
+<ul>
+<li><strong>缓存</strong></li>
+<li><strong>SQL语法解析验证</strong></li>
+<li><strong>SQL优化并生成执行计划</strong></li>
+<li><strong>根据执行计划调用存储引擎接口</strong></li>
+</ul>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/7.png" alt="图片"></p>
+<p>其中<strong>连接管理</strong>与<strong>解析与优化</strong>处于<code>MySQL</code>架构中的<code>Server</code>层。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>在学习任何知识前，先不要着急的陷入细节，而是先了解大致脉络，有个全局观，之后再去深入相关的细节。</p>
+<p><code>MySql</code>架构分为<code>Servce</code>层与<strong>存储引擎</strong>层。</p>
+<p><strong>连接管理、解析与优化</strong>这些并不涉及读写表数据的组件划分到<code>Servce</code>层，读写表数据而是交给<strong>存储引擎层</strong>来做。</p>
+<p>通过这种架构设计，我们发现<code>Servce</code>层其实就是公用层，<strong>存储引擎层</strong>就是多态层，按需选择具体的存储引擎。</p>
+<p>再细想下，它和<strong>模板方法设计模式</strong>一摸一样，它们的执行流程是固定的，<code>Servce</code>层等于公用模板函数，<strong>存储引擎层</strong>等于抽象模板函数，按需子类实现。</p>
+<p>阿星最后以一张<code>MySQL</code>简化版的架构图结束本文，我们下期再见~</p>
+<p><img src="/2022/10/25/MySQL-%E6%9E%B6%E6%9E%84%E4%BB%8B%E7%BB%8D%E7%AE%80%E4%BB%8B/8.png" alt="图片"></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+              <a href="/tags/OLTP/" rel="tag"># OLTP</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+              <a href="/tags/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" rel="tag"># 分库分表</a>
+              <a href="/tags/db/" rel="tag"># db</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MySQL-LSM%E6%A0%91%E4%BB%8B%E7%BB%8D2/" rel="prev" title="MySQL-LSM树介绍2">
+                  <i class="fa fa-chevron-left"></i> MySQL-LSM树介绍2
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MySQL-%E9%94%81/" rel="next" title="MySQL-锁">
+                  MySQL-锁 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

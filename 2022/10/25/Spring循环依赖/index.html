@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="众所周知spring在默认单例的情况下是支持循环引用的 为了节省图片大小我把那些可以动得gif图片做成了只循环一次，如果看到图片不动了请右键选择在新标签打开，那么图片就会动，手机用户则更简单，直接手指点击图片便能看到动图，每张gif我都标识了，如果没有标识则为静态图片； Appconfig.java类的代码 1234@Configurable@ComponentScan(&quot;com.sha">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring循环依赖">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="众所周知spring在默认单例的情况下是支持循环引用的 为了节省图片大小我把那些可以动得gif图片做成了只循环一次，如果看到图片不动了请右键选择在新标签打开，那么图片就会动，手机用户则更简单，直接手指点击图片便能看到动图，每张gif我都标识了，如果没有标识则为静态图片； Appconfig.java类的代码 1234@Configurable@ComponentScan(&quot;com.sha">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/8.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/9.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/10.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/11.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/12.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/13.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/14.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/15.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/16.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/17.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/18.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/19.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/20.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/21.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/22.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/23.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/24.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/25.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/26.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/27.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/28.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/29.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/30.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/31.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/32.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/33.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/34.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/35.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/36.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/37.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/38.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/39.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/40.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/41.png">
+<meta property="article:published_time" content="2022-10-25T08:48:10.000Z">
+<meta property="article:modified_time" content="2022-10-25T09:02:18.864Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="Spring">
+<meta property="article:tag" content="框架源码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/","path":"2022/10/25/Spring循环依赖/","title":"Spring循环依赖"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Spring循环依赖 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Spring循环依赖 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spring循环依赖
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 16:48:10 / 修改时间：17:02:18" itemprop="dateCreated datePublished" datetime="2022-10-25T16:48:10+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>25k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>22 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>众所周知spring在默认单例的情况下是支持循环引用的</p>
+<p>为了节省图片大小我把那些可以动得gif图片做成了只循环一次，如果看到图片不动了请右键选择在新标签打开，那么图片就会动，手机用户则更简单，直接手指点击图片便能看到动图，每张gif我都标识了，如果没有标识则为静态图片；</p>
+<p><code>Appconfig.java</code>类的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configurable</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.shadow&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Appconfig</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>X.java</code>类的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.shadow.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">X</span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Autowired</span></span><br><span class="line">	Y y;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="title function_">X</span><span class="params">()</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;X create&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><code>Y.java</code>类的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.shadow.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Y</span> &#123;</span><br><span class="line">	<span class="meta">@Autowired</span></span><br><span class="line">	X x;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">public</span> <span class="title function_">Y</span><span class="params">()</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;Y create&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这两个类非常简单，就是相互引用了对方，也就是我们常常的说的循环依赖，spring是允许这样的循环依赖(前提是单例的情况下的,非构造方法注入的情况下)</p>
+<p><strong>运行这段代码的结果下图</strong></p>
+<blockquote>
+<p>注意这是张gif，如果你看着不动请参考我上面说的方法</p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/1.png" alt="在这里插入图片描述"></p>
+<p>上面代码从容器中能正常获取到<code>Xbean</code>，说明循环依赖成功。但是spring的循环依赖其实是可以关闭的，spring提供了api来关闭循环依赖的功能。当然你也可以修改<code>spring</code>源码来关闭这个功能，这里笔者为了提高逼格，就修改一下spring的源码来关闭这个功能，老话说:要想高明就得装逼。<br>下图是我修改spring源码运行的结果<br>我在<code>AnnotationConfigApplicationContext</code>的构造方法中加了一行<code>setAllowCircularReferences(false)</code>;结果代码异常，循环依赖失败<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/2.png" alt="在这里插入图片描述"></p>
+<p>那么为什么<code>setAllowCircularReferences(false);</code>会关闭循环依赖呢？首要明白spring的循环依赖是怎么做到的呢？spring源码当中是如何处理循环依赖的？ 分析一下所谓的循环依赖其实无非就是属性注入，或者就是大家常常说的自动注入， 故而搞明白循环依赖就需要去研究spring自动注入的源码；spring的属性注入属于spring bean的生命周期一部分；怎么理解spring bean的生命周期呢？注意笔者这里并不打算对bean的生命周期大书特书，只是需要读者理解生命周期的概念，细节以后在计较；<br>要理解bean的生命周期首先记住两个概念<br>请读者一定记住两个概念——spring bean（以下简称bean）和对象；<br>1、<strong>spring bean</strong>——受spring容器管理的对象，可能经过了完整的spring bean生命周期（为什么是可能？难道还有bean是没有经过bean生命周期的？答案是有的，具体我们后面文章分析），最终存在spring容器当中；一个bean一定是个对象<br>2、<strong>对象</strong>——任何符合java语法规则实例化出来的对象，但是一个对象并不一定是spring bean；</p>
+<p>所谓的bean的生命周期就是磁盘上的类通过spring扫描，然后实例化，跟着初始化，继而放到容器当中的过程；<br>我画了一张简单图来阐述一下spring bean的生命周期大概有哪些步骤<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/3.png" alt="在这里插入图片描述"></p>
+<p>上图就是spring容器初始化bean的大概过程(至于详细的过程，后面文章再来介绍)；<br>文字总结一下：<br>1：实例化一个ApplicationContext的对象；<br>2：调用bean工厂后置处理器完成扫描；<br>3：循环解析扫描出来的类信息；<br>4：实例化一个BeanDefinition对象来存储解析出来的信息；<br>5：把实例化好的beanDefinition对象put到<code>beanDefinitionMap</code>当中缓存起来，以便后面实例化bean；<br>6：再次调用bean工厂后置处理器；<br>7：当然spring还会干很多事情，比如国际化，比如注册BeanPostProcessor等等，如果我们只关心如何实例化一个bean的话那么这一步就是spring调用<code>finishBeanFactoryInitialization</code>方法来实例化单例的bean，实例化之前spring要做验证，需要遍历所有扫描出来的类，依次判断这个bean是否Lazy，是否prototype，是否abstract等等；<br>8：如果验证完成spring在实例化一个bean之前需要推断构造方法，因为spring实例化对象是通过构造方法反射，故而需要知道用哪个构造方法；<br>9：推断完构造方法之后spring调用构造方法反射实例化一个对象；注意我这里说的是对象、对象、对象；这个时候对象已经实例化出来了，但是并不是一个完整的bean，最简单的体现是这个时候实例化出来的对象属性是没有注入，所以不是一个完整的bean；<br>10：spring处理合并后的beanDefinition(合并？是spring当中非常重要的一块内容，后面的文章我会分析)；<br>11：判断是否支持循环依赖，如果支持则提前把一个工厂存入singletonFactories——map；<br>12：判断是否需要完成属性注入<br>13：如果需要完成属性注入，则开始注入属性<br>14：判断bean的类型回调Aware接口<br>15：调用生命周期回调方法<br>16：如果需要代理则完成代理<br>17：put到单例池——bean完成——存在spring容器当中</p>
+<p>用一个例子来证明上面的步骤，结合一些运行时期的动态图片</p>
+<p>为了节省图片大小我把那些可以动得gif图片做成了只循环一次，如果看到图片不动了请右键选择在新标签打开，那么图片就会动，手机用户则更简单，直接手指点击图片便能看到动图，每张gif我都标识了，如果没有标识则为静态图片；</p>
+<p><code>Z.java</code>的源码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.shadow.service;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.BeansException;</span><br><span class="line"><span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line"><span class="keyword">import</span> org.springframework.context.ApplicationContext;</span><br><span class="line"><span class="keyword">import</span> org.springframework.context.ApplicationContextAware;</span><br><span class="line"><span class="keyword">import</span> org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.annotation.PostConstruct;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Z</span> <span class="keyword">implements</span> <span class="title class_">ApplicationContextAware</span> &#123;</span><br><span class="line">	<span class="meta">@Autowired</span></span><br><span class="line">	X x;<span class="comment">//注入X</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//构造方法</span></span><br><span class="line">	<span class="keyword">public</span> <span class="title function_">Z</span><span class="params">()</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;Z create&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//生命周期初始化回调方法</span></span><br><span class="line">	<span class="meta">@PostConstruct</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">zinit</span><span class="params">()</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;call z lifecycle init callback&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//ApplicationContextAware 回调方法</span></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setApplicationContext</span><span class="params">(ApplicationContext ac)</span> &#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;call aware callback&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>来看看Z的生命周期，注意下图当中的字幕，会和上面的17个步骤一一对应<br><strong>下图是第一步到第六步，请自行对应</strong><br>接下来我们通过各种图片分析一下springbean的生命周期，读者只需要看图搞明白流程，至于图中涉及的源码，分析完流程之后再来解释；</p>
+<blockquote>
+<p><strong>图① 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/4.png" alt="在这里插入图片描述"></p>
+<p>在研究其他步骤之前，首先了解spring大概在什么时候实例化bean的</p>
+<blockquote>
+<p><strong>图② 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/5.png" alt="在这里插入图片描述"></p>
+<p>上图可以知道spring在<code>AbstractApplicationContext#finishBeanFactoryInitialization</code>方法中完成了bean的实例化。这点需要记住</p>
+<p><strong>然后通过图片来说明一下第7步</strong></p>
+<blockquote>
+<p><strong>图③ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/6.png" alt="在这里插入图片描述"></p>
+<p>接下来spring需要推断构造方法，然后通过推断出来的构造方法反射实例化对象，也就是上面说的<strong>第</strong>8<strong>步和第</strong>9<strong>步</strong></p>
+<blockquote>
+<p>当然有可能推断不出来构造方法；关于这块知识博主后面更新文章</p>
+</blockquote>
+<blockquote>
+<p><strong>图④ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/7.png" alt="在这里插入图片描述"></p>
+<p>上图说明spring是通过<code>createBeanInstance(beanName, mbd, args);</code>完成了推断构造方法和实例化的事情那么接下来便要执行<strong>第10步处理合并后的beanDefinition对象</strong>，这一块内容特别多，读者可以先不必要理解，后面文章会解释；</p>
+<blockquote>
+<p><strong>图⑤ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/8.png" alt="在这里插入图片描述"></p>
+<p>仔细看上图，其实这个时候虽然Z被实例化出来了，但是并没有完成属性的注入；其中的X属性为null，而且里面的Aware接口的方法也没有调用，再就是<code>@PostConstruct</code>方法也没有调用，再一次说明他不是一个完整的bean，这里我们只能说z是个对象；<br>继而<code>applyMergedBeanDefinitionPostProcessors</code>方法就是用来处理合并后的beanDefinition对象；</p>
+<p>跟着第11步，判断是否支持循环依赖，如果支持则提前暴露一个工厂对象，注意是工厂对象</p>
+<blockquote>
+<p><strong>图⑥ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/9.png" alt="在这里插入图片描述"></p>
+<p><strong>第12步</strong>，spring会判断是否需要完成属性注入（spring默认是需要的，但是程序员可以扩展spring，根据情况是否需要完成属性注入）；如果需要则spring完成<strong>13步</strong>——属性注入，也就是所谓的自动注入；</p>
+<blockquote>
+<p><strong>图⑦ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/10.png" alt="在这里插入图片描述"></p>
+<p>第<strong>14、15、16</strong>步</p>
+<blockquote>
+<p><strong>图⑧ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/11.png" alt="在这里插入图片描述"></p>
+<p>默认情况 至此一个bean完成初始化，被put到单例池，也是对上文说的17个步骤的一个证明；这说明一个bean在spring容器当中被创建出来是有一个过程的，这个过程就是所谓的bean的生命周期，我们的循环依赖也是在这个生命周内完成的。下面我们具体来分析这些步骤</p>
+<blockquote>
+<p>由于bean的生命周期特别复杂本文只对涉及到循环依赖的步骤做分析，其他生命周期的步骤我会在后续博客中分析，可以继续关注博主</p>
+</blockquote>
+<p>回顾上面的图② 和 图③ 我们知道spring的bean是在<code>AbstractApplicationContext#finishBeanFactoryInitialization()</code>方法完成的初始化，即循环依赖也在这个方法里面完成的。该方法里面调用了一个非常重要的方法 <code>doGetBean</code>的方法</p>
+<p>照例用图片来说明一下吧</p>
+<blockquote>
+<p><strong>图⑨ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/12.png" alt="在这里插入图片描述"></p>
+<p><code>doGetBean</code>方法内容有点多，这个方法非常重要，不仅仅针对循环依赖，甚至整个spring bean生命周期中这个方法也有着举足轻重的地位，读者可以认真看看笔者的分析。需要说明的是我为了更好的说清楚这个方法，我把代码放到文章里面进行分析；但是删除了一些无用的代码；比如日志的记录这些无关紧要的代码。下面重点说这个<code>doGetBean</code>方法</p>
+<p>首先笔者把精简后的代码贴出来方便大家阅读</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> &lt;T&gt; T <span class="title function_">doGetBean</span><span class="params">(<span class="keyword">final</span> String name, </span></span><br><span class="line"><span class="params">					<span class="meta">@Nullable</span> <span class="keyword">final</span> Class&lt;T&gt; requiredType,</span></span><br><span class="line"><span class="params">      				<span class="meta">@Nullable</span> <span class="keyword">final</span> Object[] args, </span></span><br><span class="line"><span class="params">      				<span class="type">boolean</span> typeCheckOnly)</span></span><br><span class="line">      				<span class="keyword">throws</span> BeansException &#123;</span><br><span class="line">    <span class="comment">//读者可以简单的认为就是对beanName做一个校验特殊字符串的功能</span></span><br><span class="line">    <span class="comment">//我会在下次更新博客的时候重点讨论这个方法</span></span><br><span class="line">    <span class="comment">//transformedBeanName(name)这里的name就是bean的名字</span></span><br><span class="line">   <span class="keyword">final</span> <span class="type">String</span> <span class="variable">beanName</span> <span class="operator">=</span> transformedBeanName(name);</span><br><span class="line">   </span><br><span class="line">   <span class="comment">//定义了一个对象，用来存将来返回出来的bean</span></span><br><span class="line">   Object bean;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//deGetBean-1</span></span><br><span class="line">   <span class="type">Object</span> <span class="variable">sharedInstance</span> <span class="operator">=</span> getSingleton(beanName);</span><br><span class="line">   </span><br><span class="line">	<span class="comment">//deGetBean-2</span></span><br><span class="line">	<span class="keyword">if</span> (sharedInstance != <span class="literal">null</span> &amp;&amp; args == <span class="literal">null</span>) &#123;</span><br><span class="line">      bean = getObjectForBeanInstance(sharedInstance, name, beanName, <span class="literal">null</span>);</span><br><span class="line">   &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">   		deGetBean-<span class="number">3</span></span><br><span class="line">   		<span class="keyword">if</span> (isPrototypeCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">         	<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">BeanCurrentlyInCreationException</span>(beanName);</span><br><span class="line">      &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">      	<span class="comment">//doGetBean-4</span></span><br><span class="line">      	<span class="keyword">if</span> (mbd.isSingleton()) &#123;</span><br><span class="line">            sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">               <span class="keyword">try</span> &#123;</span><br><span class="line">                  <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">               &#125;</span><br><span class="line">               <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">                  destroySingleton(beanName);</span><br><span class="line">                  <span class="keyword">throw</span> ex;</span><br><span class="line">               &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">            </span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>注意：上面的代码是我对doGetBean方法进行了删减的代码，只保留了和本文讨论的循环依赖有关的代码，完整版可以参考spring的源码<code>org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean</code></p>
+<p>接着笔者对上述代码逐行来解释</p>
+<blockquote>
+<p>1、deGetBean-1</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Object</span> <span class="variable">sharedInstance</span> <span class="operator">=</span> getSingleton(beanName);</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/13.png" alt="在这里插入图片描述"></p>
+<p>首先这行代码上有一句spring作者写的注释</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Eagerly check singleton cache <span class="keyword">for</span> manually registered singletons.</span><br></pre></td></tr></table></figure>
+
+<p>大概的意思就是检查一下单例池当中有没有手动注册的单例对象，说白了spring在创建一个bean之前先检查一下<code>beanName</code>是否被手动注册过到单例池当中；别小看这句spring作者写的javadoc背后的意义，其实这里有两重意思；要搞清楚这两重意思首先知道当代码执行到这里的时候其实是spring在初始化的时候执行过来的；既然spring在初始化的时候他肯定知道这个类X.java肯定没有在容器当中，为什么还需要去验证一下呢？好比说你第一次去天上人间，你几乎都能确定这是你一次去你不可能跑到那里问一下前台你有没有办会员吧？但是spring确这样做了，他问了，他问问自己有没有办会员；为什么呢？回到你自己，如果你去问自己有没有办会员无非就是怕别人拿着你的身份证去办了一个会员，或者各种原因阴差阳错别人吧身份证名字写错了，导致你成了天上人间的会员；其实spring也是这个意思，因为一个bean被put到单例池的渠道有很多；除了spring容器初始化—扫描类—-实例化—–put到容器这条线之外还有很多方法可以把一个对象put到单例池；我这里只列举一种，其他的有机会再讨论，看下图 注意注释；<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/14.png" alt="在这里插入图片描述"></p>
+<p>这就相当于在你第一次抱着紧张心态去天上人间的时候，发现你朋友以前拿着你的身份证去那里办了一个会员卡一样；</p>
+<p>所以上面提到的这句注释的两重意思①第一重意思判断spring当前正准备初始化的bean有没有提前被put到容器；<br>那么第二重意思是什么呢？既然这里用来做spring初始化的工作，为什么这个方法名叫做doGetBean呢？讲道理应该叫做createBean啊才合理啊；有读者可能会说这个方法命名可能作者乱写的，请注意spring之所以经久不衰命名规范绝对是一个重要原因，作者是不会这么乱给方法命名的。诚然有的读者会说讨论这个的意义不大，其实博主觉得讨论这个非常重要；之所这里叫做doGetBean的原因就是因为这个方法就是用来获取bean的，他主要的工作不仅仅服务于spring bean的初始化；这个方法的作用不仅仅是为了spring 在初始化bean的过程中去判断一下这个bean是否被注册了这么简单；笔者认为这个方法最主要的作用是为了从容器中得到一个bean，也就是说当我们在spring代码中调用getBean(“a”)其背后的意义就是调用这个doGetBean，同样用一段代码来证明</p>
+<blockquote>
+<p><strong>图⑩ 注意这是张gif，如果你看着不动请参考我上面说的方法</strong></p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/15.png" alt="在这里插入图片描述"></p>
+<p>可以看到当我调用ac.getBean(“x”)的时候，底层其实就调用doGetBean获取这X对象的；spring之所以这么设计就是因为判断bean是否初始化好和get一个bean都需要从单例池当中获取，所以创建bean和getBean都需要调用这个doGetBean方法；也就是第②重意思，这个方法其实就是程序员getBean的底层实现；</p>
+<p>换成天上人间，你第一次跑去前台，人家前台直接说：先生请出示会员卡；你可能会奇怪——我是来全套的，你应该问我要什么服务，不是问会员卡；但是人家前台的职责有两，办会员和问你要什么服务；所以才会说出这句话；doGetBean也是这个意思，于是解释了这个方法名的意义了；</p>
+<p>总结一下 <code>Object sharedInstance = getSingleton(beanName);</code>目前看来主要是用于在spring初始化bean的时候判断bean是否在容器当中；以及供程序员直接get某个bean。</p>
+<p>注意笔者这里用了 目前这个词；因为getSingleton(beanName);这个方法代码比较多；他里面的逻辑是实现循环依赖最主要的代码，文章下面我会回过头再来讲这个方法的全部意义；</p>
+<p>请注意我们当前代码的场景，当前代码是spring容器在初始化的时候，初始化X这个bean的场景；运行到了<code>Object sharedInstance = getSingleton(beanName);</code><br>根据上面的分析，这个时候我的X Bean肯定没有被创建，所以这里返回<code>sharedInstance = =null</code>；</p>
+<blockquote>
+<p>跟着解析 <code>//deGetBean-2</code></p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//deGetBean-2</span></span><br><span class="line"><span class="keyword">if</span> (sharedInstance != <span class="literal">null</span> &amp;&amp; args == <span class="literal">null</span>) &#123;</span><br><span class="line">  bean = getObjectForBeanInstance(sharedInstance, name, beanName, <span class="literal">null</span>);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>由于 <code>sharedInstance = =null</code> 故而不会进入这个if分支，那么什么时候不等于null呢？两种情况1、在spring初始化完成后程序员调用getBean(“x”)的时候得到的sharedInstance 就不等于null；2、循环依赖的时候第二次获取对象的时候这里也不等于空；比如X 依赖 Y；Y依赖X；spring做初始化第一次执行到这里的时候X 肯定等于null，然后接着往下执行，当执行到属性注入Y的时候，Y也会执行到这里，那么Y也是null，因为Y也没初始化，Y也会接着往下执行，当Y执行到属性注入的时候获取容器中获取X，也就是第二次执行获取X；这个时候X则不为空；至于具体原因，读者接着往下看；</p>
+<p>至于这个if分支里面的代码干了什么事情，本文不讨论，放到后面写factoryBean的时候讨论，现在你可以理解if分支里面就把sharedInstance 原原本本的返回出来就行；即这个if分支没有意义；</p>
+<p>上文说了本次不进入if分支，所以这行代码解析完毕；</p>
+<blockquote>
+<p>接下解析 doGetBean -3</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span>&#123;</span><br><span class="line">   		deGetBean-<span class="number">3</span></span><br><span class="line">   		<span class="keyword">if</span> (isPrototypeCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">         	<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">BeanCurrentlyInCreationException</span>(beanName);</span><br><span class="line">      &#125;</span><br><span class="line">如果把<span class="keyword">throw</span>删了可能更加清晰吧，下面是删除后的代码</span><br><span class="line"><span class="keyword">if</span> (isPrototypeCurrentlyInCreation(beanName)) &#123;&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>不进if分支，则进入这个else分支，把throw删了 就一句代码；判断当前初始化的bean—-X 是不是正在创建原型bean集合当中当中？<br>spring源码当中关于这行代码有两行javadoc</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/16.png" alt="在这里插入图片描述"></p>
+<p>比较简单我就不翻译了，一般情况下这里返回false，也就是不会进入if分支抛异常；为什么呢说一般情况下呢？首先这里是判断当前的类是不是正在创建的原型集合当中，即里面只会存原型；一般情况下我们的类不是原型，而是单例的，大家都知道spring默认是单例；所以返回false，再就是即使这个bean是原型也很少会在这里就存在<strong>正在创建的原型集合</strong>当中。因为不管单例还是原型，bean在创建的过程中会add到这个集合当中，但是创建完成之后就会从这个集合remove掉（关于这个文章后面有证明），原型情况第一次创建的时候会add到这个集合，但是不是在这里，而是在后面的创建过程中add，所以这里肯定不会存在，即使后面过程中add到这个集合了，但是创建完成之后也会remove掉，故而下一次实例化同一个原型bean（原型可以实例化无数次）的时候当代码执行到这里也不可能存在集合当中了；除非循环依赖会在bean还没有在这个集合remove之前再次判断一次，才有可能会存在，故而我前面说了一般情况下这里都返回false；那么单例情况我们已经说了一定返回false，原型情况只有循环依赖才会成立，但是只要是正常人就不会对原型对象做循环依赖的；即使你用原型做了循环依赖这里也出抛异常（因为if成立，进入分支 throw exception）。再一次说明原型不支持循环依赖（当然你非得用原型做循环依赖，其实有办法，以后文章说明，本文忽略）；画了一幅图说明上面的文字，因为这个集合非常重要，但是读者如果这里不理解也没关系，文章下面我还会结合代码分析一次；</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/17.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>重点来了：说明叫做正在创建的原型集合呢？ 还有一个与之对应的叫做正在创建的单例集合<br>唯一的区别就是集合里面存的是单例和原型<br>故而我们统称正在创建的集合，关于正在创建的集合是什么我下面会解释<br>但是需要记住的，这个集合是我的一家之言，说白了这是笔者自己翻译的，叫做正在创建的集合，没有官方支持，至少我也没在书上看到过这个名词</p>
+</blockquote>
+<blockquote>
+<p>下面解析doGetBean-4</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span>&#123;</span><br><span class="line">      	<span class="comment">//doGetBean-4</span></span><br><span class="line">      	<span class="keyword">if</span> (mbd.isSingleton()) &#123;</span><br><span class="line">            sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">               <span class="keyword">try</span> &#123;</span><br><span class="line">                  <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">               &#125;</span><br><span class="line">               <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">                  destroySingleton(beanName);</span><br><span class="line">                  <span class="keyword">throw</span> ex;</span><br><span class="line">               &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">   同样把抛异常的代码删了，如下</span><br><span class="line">   	<span class="comment">//doGetBean-4</span></span><br><span class="line">      	<span class="keyword">if</span> (mbd.isSingleton()) &#123;</span><br><span class="line">            sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">                  <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>代码有点多；<code>if (mbd.isSingleton())</code> 比较简单，判断当前bean是否单例；本文环境下是成立的；继而</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">                  <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这里又调用了一次getSingleton，如果有印象上面也调用了一次getSingleton，这是方法重载，两个getSingleton方法并不是同一个方法，读者自己看参数就行，为了区别我这这里叫做第二次调用getSingleton；上文的叫做第一次调用getSingleton；</p>
+<p>由于这里使用lamda表达式，有些读者看起来不是很理解；笔者改一下吧</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ObjectFactory&lt;?&gt;  singletonFactory = <span class="keyword">new</span> <span class="title class_">ObjectFactory</span>()&#123;</span><br><span class="line">	<span class="keyword">public</span> Object <span class="title function_">getObject</span><span class="params">()</span>&#123;</span><br><span class="line">		<span class="comment">//其实这是个抽象类，不能实例化</span></span><br><span class="line">		<span class="comment">//createBean是子类实现的，这里就不关心了</span></span><br><span class="line">		<span class="comment">//你就理解这不是一个抽象类吧</span></span><br><span class="line">		<span class="type">AbstractBeanFactory</span> <span class="variable">abf</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AbstractBeanFactory</span>();</span><br><span class="line">		<span class="type">Object</span> <span class="variable">bean</span> <span class="operator">=</span> abf.createBean(beanName, mbd, args);</span><br><span class="line">		<span class="keyword">return</span> bean;</span><br><span class="line">	&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">//传入 beanName 和singletonFactory 对象</span></span><br><span class="line">sharedInstance = getSingleton(beanName,singletonFactory);</span><br><span class="line"></span><br><span class="line">这样看是不是明白多了呢？</span><br></pre></td></tr></table></figure>
+
+<p>当然第二次getSingleton就会把我们bean创建出来，换言之整个bean如何被初始化的都是在这个方法里面；至此本文当中笔者例举出来的doGetBean方法的核心代码看起来解析完成了；</p>
+<p>注意我说的是本文当中例举的doGetBean代码，前面我已经说了我删了很多和循环依赖无关的代码，实际spring源码当中这个方法的代码很多，以后文章介绍吧；</p>
+<p>接下来就要研究第二次getSingleton方法的内容了，因为我说了整个bean初始化过程都在里面体现了；</p>
+<p>我先把spring源码贴出来，读者可以忽略这里，因为下面会精简代码；之所以贴出源码就是想告诉读者，为了研究循环依赖，本文中的很代码我是做了删减的；</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">spring源码：-----读者可以忽略</span><br><span class="line"><span class="keyword">public</span> Object <span class="title function_">getSingleton</span><span class="params">(String beanName, ObjectFactory&lt;?&gt; singletonFactory)</span> &#123;</span><br><span class="line">		Assert.notNull(beanName, <span class="string">&quot;Bean name must not be null&quot;</span>);</span><br><span class="line">		<span class="keyword">synchronized</span> (<span class="built_in">this</span>.singletonObjects) &#123;</span><br><span class="line">			<span class="type">Object</span> <span class="variable">singletonObject</span> <span class="operator">=</span> <span class="built_in">this</span>.singletonObjects.get(beanName);</span><br><span class="line">			<span class="keyword">if</span> (singletonObject == <span class="literal">null</span>) &#123;</span><br><span class="line">				<span class="keyword">if</span> (<span class="built_in">this</span>.singletonsCurrentlyInDestruction) &#123;</span><br><span class="line">					<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">BeanCreationNotAllowedException</span>(beanName,</span><br><span class="line">							<span class="string">&quot;Singleton bean creation not allowed while singletons of this factory are in destruction &quot;</span> +</span><br><span class="line">							<span class="string">&quot;(Do not request a bean from a BeanFactory in a destroy method implementation!)&quot;</span>);</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">					logger.debug(<span class="string">&quot;Creating shared instance of singleton bean &#x27;&quot;</span> + beanName + <span class="string">&quot;&#x27;&quot;</span>);</span><br><span class="line">				&#125;</span><br><span class="line">				beforeSingletonCreation(beanName);</span><br><span class="line">				<span class="type">boolean</span> <span class="variable">newSingleton</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">				<span class="type">boolean</span> <span class="variable">recordSuppressedExceptions</span> <span class="operator">=</span> (<span class="built_in">this</span>.suppressedExceptions == <span class="literal">null</span>);</span><br><span class="line">				<span class="keyword">if</span> (recordSuppressedExceptions) &#123;</span><br><span class="line">					<span class="built_in">this</span>.suppressedExceptions = <span class="keyword">new</span> <span class="title class_">LinkedHashSet</span>&lt;&gt;();</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					singletonObject = singletonFactory.getObject();</span><br><span class="line">					newSingleton = <span class="literal">true</span>;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">catch</span> (IllegalStateException ex) &#123;</span><br><span class="line">					<span class="comment">// Has the singleton object implicitly appeared in the meantime -&gt;</span></span><br><span class="line">					<span class="comment">// if yes, proceed with it since the exception indicates that state.</span></span><br><span class="line">					singletonObject = <span class="built_in">this</span>.singletonObjects.get(beanName);</span><br><span class="line">					<span class="keyword">if</span> (singletonObject == <span class="literal">null</span>) &#123;</span><br><span class="line">						<span class="keyword">throw</span> ex;</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">catch</span> (BeanCreationException ex) &#123;</span><br><span class="line">					<span class="keyword">if</span> (recordSuppressedExceptions) &#123;</span><br><span class="line">						<span class="keyword">for</span> (Exception suppressedException : <span class="built_in">this</span>.suppressedExceptions) &#123;</span><br><span class="line">							ex.addRelatedCause(suppressedException);</span><br><span class="line">						&#125;</span><br><span class="line">					&#125;</span><br><span class="line">					<span class="keyword">throw</span> ex;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">finally</span> &#123;</span><br><span class="line">					<span class="keyword">if</span> (recordSuppressedExceptions) &#123;</span><br><span class="line">						<span class="built_in">this</span>.suppressedExceptions = <span class="literal">null</span>;</span><br><span class="line">					&#125;</span><br><span class="line">					afterSingletonCreation(beanName);</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> (newSingleton) &#123;</span><br><span class="line">					addSingleton(beanName, singletonObject);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> singletonObject;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>下面是我删减后只和循环依赖有关的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Object <span class="title function_">getSingleton</span><span class="params">(String beanName, ObjectFactory&lt;?&gt; </span></span><br><span class="line"><span class="params">singletonFactory)</span> &#123;</span><br><span class="line">	<span class="comment">//getSingleton2 -1</span></span><br><span class="line">	<span class="type">Object</span> <span class="variable">singletonObject</span> <span class="operator">=</span> <span class="built_in">this</span>.singletonObjects.get(beanName);</span><br><span class="line">			<span class="comment">//getSingleton2 -2</span></span><br><span class="line">			<span class="keyword">if</span> (singletonObject == <span class="literal">null</span>) &#123;</span><br><span class="line">				<span class="comment">//getSingleton2 -3</span></span><br><span class="line">				<span class="keyword">if</span> (<span class="built_in">this</span>.singletonsCurrentlyInDestruction) &#123;</span><br><span class="line">					<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(beanName,</span><br><span class="line">							<span class="string">&quot;excepition&quot;</span>);</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="comment">//getSingleton2 -4</span></span><br><span class="line">				beforeSingletonCreation(beanName);</span><br><span class="line">				<span class="comment">//getSingleton2 -5</span></span><br><span class="line">				singletonObject = singletonFactory.getObject();	</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> singletonObject;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>&#x2F;&#x2F;getSingleton2 -1 开始解析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Object</span> <span class="variable">singletonObject</span> <span class="operator">=</span> <span class="built_in">this</span>.singletonObjects.get(beanName);</span><br></pre></td></tr></table></figure>
+
+<p>第二次getSingleton上来便调用了this.singletonObjects.get(beanName)，直接从单例池当中获取这个对象，由于这里是创建故而一定返回null；singletonObjects是一个map集合，即所谓的单例池；用大白话说spring所有的单例bean实例化好都存放在这个map当中，这也是很多读者以前认为的spring容器，但是笔者想说这种理解是错误的，因为spring容器的概念比较抽象，而单例池只是spring容器的一个组件而已；但是你如果一定要找一个平衡的说法，只能说这个map——singletonObjects仅仅是狭义上的容器；比如你的原型bean便不在这个map当中，所以是狭义的spring容器；下图为这个map在spring源码当中的定义<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/18.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>&#x2F;&#x2F;getSingleton2 -2 开始解析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (singletonObject == <span class="literal">null</span>) &#123;</span><br><span class="line">上面解释了，在spring 初始化bean的时候这里肯定为空，故而成立</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>&#x2F;&#x2F;getSingleton2 -3 开始解析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">this</span>.singletonsCurrentlyInDestruction) &#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(beanName,</span><br><span class="line">				<span class="string">&quot;excepition&quot;</span>);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这行代码其实比较简单，判断当前实例化的bean是否正在销毁的集合里面；spring不管销毁还是创建一个bean的过程都比较繁琐，都会先把他们放到一个集合当中标识正在创建或者销毁；所以如果你理解了前面那个正在创建集合那么这个正在销毁集合也就理解了；但是不理解也没关系，下面会分析这些集合；</p>
+<p>如果一个bean正在创建，但是有正在销毁那么则会出异常；为什么会有这种情况？其实也很简单，多线程可能会吧；</p>
+<blockquote>
+<p>&#x2F;&#x2F;getSingleton2 -4 假设解析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">beforeSingletonCreation(beanName);</span><br></pre></td></tr></table></figure>
+
+<p>这段代码就比较重要了，关于上面说那个正在创建和正在销毁的集合；这段代码就能解释，所以如果上面你没看明白那个集合的意义，笔者这里用spring源码来说明一下；先看看当代码执行到这里的时候语境</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/19.png" alt="在这里插入图片描述"></p>
+<p>当spring觉得可以着手来创建bean的时候首先便是调用<code>beforeSingletonCreation(beanName);</code>判断当前正在实例化的bean是否存在正在创建的集合当中，说白了就是判断当前是否正在被创建；因为spring不管创建原型bean还是单例bean，当他需要正式创建bean的时候他会记录一下这个bean正在创建(add到一个set集合当中)；故而当他正式创建之前他要去看看这个bean有没有正在被创建（是否存在集合当中）; 为什么spring要去判断是否存在这个集合呢？原因很多除了你们能想到了（你们能想到的基本不会出现，比如并发啊，重复创建什么的，因为他已经做了严格并发处理），其实这个集合主要是为了循环依赖服务的，怎么服务的呢？慢慢看吧，首先我们来看下这行 代码的具体内容<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/20.png" alt="在这里插入图片描述"></p>
+<p>源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">beforeSingletonCreation</span><span class="params">(String beanName)</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (!<span class="built_in">this</span>.inCreationCheckExclusions.contains(beanName) &amp;&amp; !<span class="built_in">this</span>.singletonsCurrentlyInCreation.add(beanName)) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">BeanCurrentlyInCreationException</span>(beanName);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>1、<code>this.inCreationCheckExclusions.contains(beanName)</code>这里是判断当前需要创建的bean是否在Exclusions集合，被排除的bean，程序员可以提供一些bean不被spring初始化（哪怕被扫描到了，也不初始化），那么这些提供的bean便会存在这个集合当中；一般情况下我们不会提供，而且与循环依赖无关；故而所以这里不做深入分析，后面文章如果写到做分析；</p>
+<p><code>this.singletonsCurrentlyInCreation.add(beanName)</code>，如果当前bean不在排除的集合当中那么则这个bean添加到singletonsCurrentlyInCreation（当然这里只是把bean名字添加到集合，为了方便我们直接认为把bean添加到集合吧，因为他能根据名字能找打对应的bean）；</p>
+<p>关于<code>singletonsCurrentlyInCreation</code>的定义参考下图<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/21.png" alt="在这里插入图片描述"></p>
+<p>其实就是一个set集合，当运行完<code>this.singletonsCurrentlyInCreation.add(beanName)</code> 之后结果大概如下图这样</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/22.png" alt="在这里插入图片描述"></p>
+<p>我们可以通过debug来调试证明一下上面这幅图</p>
+<blockquote>
+<p>注意这是张gif，如果你看着不动请参考我上面说的方法</p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/23.png" alt="在这里插入图片描述"></p>
+<p>结果分析：当代码运行完<code>this.singletonsCurrentlyInCreation.add(beanName)</code>之后可以看到singletonsCurrentlyInCreation集合当中只存在一个x，并且后天并没有执行x的构造方法，说明spring仅仅是把x添加到正在创建的集合当中，但是并没有完成bean的创建(因为连构造方法都没调用)；</p>
+<p>请一定注意这个集合的数据情况（目前只有一个x）;因为这和循环依赖有天大的关系；add完x之后代码接着往下执行；</p>
+<blockquote>
+<p>&#x2F;&#x2F;getSingleton2 -5 开始分析</p>
+</blockquote>
+<p><code>singletonObject = singletonFactory.getObject();</code><br>可能有读者已经忘记了singletonFactory这个对象怎么来的了；笔者再把代码贴一遍吧</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ObjectFactory&lt;?&gt;  singletonFactory = <span class="keyword">new</span> <span class="title class_">ObjectFactory</span>()&#123;</span><br><span class="line">	<span class="keyword">public</span> Object <span class="title function_">getObject</span><span class="params">()</span>&#123;</span><br><span class="line">		<span class="comment">//其实这是个抽象类，不能实例化</span></span><br><span class="line">		<span class="comment">//createBean是子类实现的，这里就不关心了</span></span><br><span class="line">		<span class="comment">//你就理解这不是一个抽象类吧</span></span><br><span class="line">		<span class="type">AbstractBeanFactory</span> <span class="variable">abf</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AbstractBeanFactory</span>();</span><br><span class="line">		<span class="type">Object</span> <span class="variable">bean</span> <span class="operator">=</span> abf.createBean(beanName, mbd, args);</span><br><span class="line">		<span class="keyword">return</span> bean;</span><br><span class="line">	&#125;;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">//传入 beanName 和singletonFactory 对象</span></span><br><span class="line">sharedInstance = getSingleton(beanName,singletonFactory);</span><br></pre></td></tr></table></figure>
+
+<p><code>singletonFactory.getObject();</code>调用的就是上面代码中getObject方法，换言之调用的是<code>abf.createBean(beanName, mbd, args)；</code>把创建好的bean返回出来；至此第二次<code>getSingleton</code>方法结束，bean通过<code>singletonFactory.getObject();</code>调用createBean建完成；接下来分析createBean的源码，继续探讨循环依赖的原理；</p>
+<p><code>AbstractAutowireCapableBeanFactory#createBean()</code>方法中调用了<code>doCreateBean</code>方法创建bean；下图是dubug流程</p>
+<blockquote>
+<p>注意这是张gif，如果你看着不动请参考我上面说的方法</p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/24.png" alt="在这里插入图片描述"></p>
+<p>结果分析：因为执行完doCreateBean之后X和Y的构造方法都已经完成了调用，说明这个方法里面对X做了实例化，也就是把bean创建好了，而且完成了循环依赖(因为Y的构造方法也打印说明X在完成属性注入的时候注入了Y，所以Y也实例化了，Y bean也创建好了)；接下来重点分析这个doCreateBean方法内容。</p>
+<p>我先给出这个方法的源码全貌；重点我用红色标记了，并且会在进行代码解析；黄色线下面的读者可以不用管，和本文内容没多大关系；</p>
+<p>读者可以好好看看下图：方便你阅读下面的代码解析<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/25.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>&#x2F;&#x2F;doCreateBean -1</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">instanceWrapper = createBeanInstance(beanName, mbd, args);</span><br></pre></td></tr></table></figure>
+
+<p>createBeanInstance 顾名思义就是创建一个实例，注意这里仅仅是创建一个实例对象，还不能称为bean；因为我文章一开头就解释了什么是bean，什么是对象；好吧再啰嗦一下吧，文章比较长，不方便翻阅；</p>
+<p>1、<strong>spring bean</strong>——受spring容器管理的对象，可能经过了完整的spring bean生命周期（为什么是可能？难道还有bean是没有经过bean生命周期的？答案是有的，具体我们后面文章分析），最终存在spring容器当中；一个bean一定是个对象<br>2、<strong>对象</strong>——任何符合java语法规则实例化出来的对象，但是一个对象并不一定是spring bean；</p>
+<p>同样用dubug来说明一下：</p>
+<blockquote>
+<p>注意这是张gif，如果你看着不动请参考我上面说的方法</p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/26.png" alt="在这里插入图片描述"></p>
+<p>运行完createBeanInstance之后控制打印了X构造方法的内容，说明X对象已经被创建了，但是这个时候的x不是bean，因为bean的生命周期才刚刚开始；这就好比你跑到天上人间，问了各种你想问的问题之后交了1000块钱，但是这个时候你仅仅是个消费者，还不是渣男，因为一条龙的服务是从交钱开始，接下来的各种服务完成你才是一个名副其实的渣男，不知道这么解释有没有偏差；为了把前面知识串起来，照例画一下当前代码的语境吧<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/27.png" alt="在这里插入图片描述"></p>
+<p>这个createBeanInstance方法是如何把对象创建出来的呢？对应文章开头说的bean的生命周期一共17步，其中的第8步（推断构造方法）和第9步（利用构造方法反射来实例化对象）；具体如何推断构造方法我会在后面的博客分析；这里截个图看看代码就行，不做分析；</p>
+<p>推断构造方法的代码运行结果分析——注意这张图比较长，读者可以多看几遍；因为推断构造方法笔者以为是属于spring源码中特别重要和特别难的一块知识；后面会有单独博客来分析，所以读者可以先多看看这张图；</p>
+<blockquote>
+<p>注意这是张gif，如果你看着不动请参考我上面说的方法</p>
+</blockquote>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/28.png" alt="在这里插入图片描述"></p>
+<p>至此x对象已经实例化出来，代码往下执行到合并beanDefinition，看图吧</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/29.png" alt="在这里插入图片描述"></p>
+<p>但是其实合并beanDefinition和本文讨论的循环依赖无关，故而先跳过；</p>
+<blockquote>
+<p>&#x2F;&#x2F;doCreateBean-2 开始解析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">boolean</span> <span class="variable">earlySingletonExposure</span> <span class="operator">=</span> (mbd.isSingleton() &amp;&amp; <span class="built_in">this</span>.allowCircularReferences &amp;&amp;</span><br><span class="line">		isSingletonCurrentlyInCreation(beanName));</span><br></pre></td></tr></table></figure>
+
+<p>这段代码其实比较简单，就是给<code>earlySingletonExposure</code>这个布尔类型的变量赋值；这个变量的意义是——是否支持（开启了）循环依赖；如果返回true则spring会做一些特殊的操作来完成循环依赖；如果返回false，则不会有特殊操作；</p>
+<p>回到天上人间那个问题，好比你去一条龙的时候；人家会分析你是否是雏，如果你是雏则随便给你安排一个技师；当然如果你是笔者这样的资深玩家，可能会安排新亘结衣也说不定；</p>
+<p>那么这个布尔变量的赋值逻辑是怎样的呢？上面代码可知三个条件做&amp;&amp;运算，同时成立才会返回true；<br>1、mbd.isSingleton()；判断当前实例化的bean是否为单例；再一次说明原型是不支持循环依赖的；因为如果是原型这里就会返回false，由于是&amp;&amp;运算，整个结果都为false；相当于人家判断你是雏；那么新亘结衣什么的就别想了；在本文环境里X是默认单例的，故而整个条件是true。<br>2、<code>this.allowCircularReferences</code>；整个全局变量spring 默认为true；当然spring提供了api供程序员修改，这个在本文开头笔者解释过(笔者是通过修改spring源码来改变这个值为false)，在没有修改的情况下这里也返回true<br>3、<code>isSingletonCurrentlyInCreation(beanName)；</code>判断当前正在创建的bean是否在正在创建bean的集合当中；还记得前文笔者已经解释过<code>singletonsCurrentlyInCreation</code>这个集合现在里面存在且只有一个x；故而也会返回true；</p>
+<p>其实这三种情况需要关心的只有第二种；因为第一种是否单例一般都是成立的，因为如果是原型的循环依赖前面代码已经报错了；压根不会执行到这里；第三种情况也一般是成立，因为这个集合是spring操作的，没有提供api给程序员去操作；而正常流程下代码执行到这里，当前正在创建的bean是一定在那个集合里面的；换句话说这三个条件1和3基本恒成立；唯有第二种情况可能会不成立，因为程序员可以通过api来修改第二个条件的结果；</p>
+<p>总结：spring的循环依赖，不支持原型，不支持构造方法注入的bean；默认情况下单例bean是支持循环依赖的，但是也支持关闭，关闭的原理就是设置<code>allowCircularReferences=false；</code>spring提供了api来设置这个值；</p>
+<p>至此我们知道<code>boolean earlySingletonExposure=true，</code>那么代码接着往下执行；判断这个变量；<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/30.png" alt="在这里插入图片描述"></p>
+<p><code>if</code>成立，进入分支；</p>
+<blockquote>
+<p>&#x2F;&#x2F;doCreateBean-3 开始分析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">addSingletonFactory(beanName, () -&gt; getEarlyBeanReference(beanName, mbd, bean));</span><br><span class="line">这段代码又用了lamda表达式；笔者为了初学者看懂，还是改成传统代码</span><br><span class="line">ObjectFactory&lt;?&gt; singletonFactory = <span class="keyword">new</span> <span class="title class_">ObjectFactory</span>&lt;?&gt;()&#123;</span><br><span class="line">	<span class="keyword">public</span> T <span class="title function_">getObject</span><span class="params">()</span>&#123;</span><br><span class="line">		<span class="comment">//至于这个getEarlyBeanReference方法的代码，后面再来说</span></span><br><span class="line">		<span class="comment">// 现在可以理解为就是返回 bean</span></span><br><span class="line">		getEarlyBeanReference(beanName, mbd, bean);</span><br><span class="line">		<span class="comment">//getEarlyBeanReference 的代码稍微复杂一点，可以简单理解为下面这样</span></span><br><span class="line">		getEarlyBeanReference(beanName, mbd, bean)&#123;</span><br><span class="line">			<span class="keyword">return</span> bean;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">也就是singletonFactory.getObject();其实就是返回当前正在实例化的bean</span><br><span class="line">改完之后的代码可以理解成这样：</span><br><span class="line"></span><br><span class="line">addSingletonFactory(beanName,singletonFactory);</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><code>addSingletonFactory(beanName,singletonFactory);</code>顾名思义添加一个单例工厂；其实这里要非常注意，因为大部分资料里面在说到spring循环依赖的时候都说是提前暴露一个半成品bean；笔者觉得这个不严格；甚至算错误了，所谓的提前暴露就是这里的add，但是我们看到源码并不是add一个bean的，而是add一个工厂对象——singletonFactory；两种说法有什么区别呢？区别可大了，简直天壤之别；我们慢慢分析；这里bean和工厂有什么区别呢？在当前的语境下面bean就是x对象经历完spring生命周期之后；所谓的半成品bean，可能还没有经历完整的生命周期；而工厂对象呢？如果你去ObjectFactory的源码或者直接顾名思义他是一个能够产生对象的工厂，或者叫能够产生bean的工厂；换句话说bean是一个产品，而工厂是产生这些产品的公司；如果还不能理解换成天上人间可能好理解——冰火和全套的区别，冰火是全套里面的一个项目，除了冰火还有其他项目；</p>
+<p>那么spring在这里add的是singletonFactory这个工厂对象（这个工厂可以产生半成品对象），而不是一个半成品对象；相当于这里add的是全套，而不是冰火；将来拿出来的时候是得到工厂，继而通过工厂得到半成品bean；将来拿出来的是全套，你可以在全套里面肆意选择一个项目；不知道我又没有解释清楚这个问题；</p>
+<p>当然说了这么多可能你还是没明白为什么需要在这里add这个工厂对象呢？还有add到哪里去呢？</p>
+<p>我们首先分析bean工厂对象到底add到哪里去了，查看源码</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/31.png" alt="在这里插入图片描述"></p>
+<p>读者可以好好看看上图，笔者在spring源码当中把注释写上了（注释的信息很重要，认真看看），整个方法其实就是对三个map操作，至于这三个map的意义，参考下图</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/32.png" alt="在这里插入图片描述"></p>
+<p>通过代码可以得知singletonFactory主要被add到二级缓存中；至于为什么要add到这个map？主要了循环依赖，提前暴露这个工厂；当然如果你不理解为什么要提前暴露，没关系往下看，看完文章一定会知道的；</p>
+<p>保持好习惯照例画个图，让读者知道现在的情况吧</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/33.png" alt="在这里插入图片描述"></p>
+<p>当然这里还是用一幅图来秒杀一下这个三个map的各种情况吧</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/34.png" alt="在这里插入图片描述"></p>
+<p><strong>一级缓存</strong>：可能存在很多bean，比如spring各种内置bean，比如你项目里面其他的已经创建好的bean，但是在X的创建过程中，一级缓存中绝对是没有xbean的，也没用y；因为spring创建bean默认的顺序是根据字母顺序的；</p>
+<p><strong>二级缓存</strong>：里面现在仅仅存在一个工厂对象，对应的key为x的beanName，并且这个bean工厂对象的getObect方法能返回现在的这个时候的x（半成品的xbean）<br>put完成之后，代码接着往下执行；</p>
+<p><strong>三级缓存</strong>：姑且认为里面什么都没有吧</p>
+<blockquote>
+<p>&#x2F;&#x2F;doCreateBean-4 开始解析</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">populateBean(beanName, mbd, instanceWrapper);</span><br></pre></td></tr></table></figure>
+
+<p>populateBean这个方法可谓大名鼎鼎，主要就是完成属性注入，也就是大家常常说的自动注入；假设本文环境中的代码运行完这行代码那么则会注入y，而y又引用了x，所以注入进来的y对象，也完成了x的注入；什么意思呢？首先看一下没有执行populateBean之前的情况</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/35.png" alt="在这里插入图片描述"></p>
+<p>没有执行populateBean之前只实例化了X，Y并没实例化，那么Y也不能注入了；接下来看看执行完这行代码之后的情况</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/36.png" alt="在这里插入图片描述"></p>
+<p>populateBean里面的代码以后我更新文章来说明，本文先来猜测一下这个方法里面究竟干了什么事；<br>x 填充 y （简称 xpy）首先肯定需要获取y，调用getBean(y)，getBean的本质上文已经分析过货进入到第一次调用getSingleton，读者可以回顾一下上文我对doGetBean方法名字的解释里说了这个方法是创建bean和获取共用的；</p>
+<p>第一次getSingleton会从单例池获取一下y，如果y没有存在单例池则开始创建y；</p>
+<p>创建y的流程和创建x一模一样，都会走bean的生命周期；比如把y添加到正在创建的bean的集合当中，推断构造方法，实例化y，提前暴露工厂对象（二级缓存里面现在有两个工厂了，分别是x和y）等等。。。。重复x的步骤；</p>
+<p>直到y的生命周期走到填充x的时候ypx,第一次调用getSingletion获取x？这里问个问题，能否获取到x呢？</p>
+<p>在回答这个问题之前我们先把该画的图贴出来，首先那个正在被创建bean的集合已经不在是只有一个x了；（读者可以对比一下上文的图）<br><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/37.png" alt="在这里插入图片描述"></p>
+<p>然后我们再把xpy到ypx的流程图贴出来，请读者仔细看看</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/38.png" alt="在这里插入图片描述"></p>
+<p>是否能够获取到x呢？首先我们想如果获取失败则又要创建x—&gt;实例化x—填充属性—-获取y——–。。。。。。。就无限循环了；所以结果是完成了循环依赖，那么这里肯定能够获取到x；那么获取到x后流程是怎样呢？</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/39.png" alt="在这里插入图片描述"></p>
+<p>那么为什么能够获取到x呢？讲道理联系上文第一次调用getSingleton是无法获取到x的？因为我们上面说过第一次调用getSingleton是从单例池当中获取一个bean，但是x显然没有完成生命周期（x只走到了填充y，还有很多生命周期没走完），所以应该是获取不到的？为了搞清楚这个原因得去查看第一次getSingleton的源码；如果读者有留意的话笔者前面只是凭只管告诉你第一次getSingleton是从单例池当中获取一个bean，并没有去证明，也就是没有去分析第一次getSingleton的源码；而且我在总结第一次getSingleton的时候用了目前这个词；证据如下（图是本文前面的内容，为了翻阅方便我直接贴这里了）</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/40.png" alt="在这里插入图片描述"></p>
+<p>显然这是笔者前面故意挖的坑，所以各位读者在阅读别人的文章或者书籍的时候一定要小心验证；包括笔者的文章如果有错误一定记得告诉我；</p>
+<p>下面来开始对第一次getSIngleton源码做深入分析；首先把源码以及我写的注释贴出来，分为图片和源代码，建议大家看图片，可读性好</p>
+<p><img src="/2022/10/25/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/41.png" alt="在这里插入图片描述"></p>
+<p>源码：如果你仔细看了上面的图片可以跳过这里的源码展示</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> Object <span class="title function_">getSingleton</span><span class="params">(String beanName, <span class="type">boolean</span> allowEarlyReference)</span> &#123;</span><br><span class="line">		<span class="comment">//从单例池当（一级缓存）中直接拿，也就是文章里面&#x27;目前&#x27;的解释</span></span><br><span class="line">		<span class="comment">//这也是为什么getBean(&quot;xx&quot;)能获取一个初始化好bean的根本代码</span></span><br><span class="line">		<span class="type">Object</span> <span class="variable">singletonObject</span> <span class="operator">=</span> <span class="built_in">this</span>.singletonObjects.get(beanName);</span><br><span class="line">		<span class="comment">//如果这个时候是x注入y，创建y，y注入x，获取x的时候那么x不在容器</span></span><br><span class="line">		<span class="comment">//第一个singletonObject == null成立</span></span><br><span class="line">		<span class="comment">//第二个条件判断是否存在正在创建bean的集合当中，前面我们分析过，成立</span></span><br><span class="line">		<span class="comment">//进入if分支</span></span><br><span class="line">		<span class="keyword">if</span> (singletonObject == <span class="literal">null</span> &amp;&amp; isSingletonCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">			<span class="keyword">synchronized</span> (<span class="built_in">this</span>.singletonObjects) &#123;</span><br><span class="line">				<span class="comment">//先从三级缓存那x？为什么先从三级缓存拿？下文解释</span></span><br><span class="line">				singletonObject = <span class="built_in">this</span>.earlySingletonObjects.get(beanName);</span><br><span class="line">				<span class="comment">//讲道理是拿不到的，因为这三个map现在只有二级缓存中存了一个工厂对象</span></span><br><span class="line">				<span class="comment">//回顾一下文章上面的流程讲工厂对象那里，把他存到了二级缓存</span></span><br><span class="line">				<span class="comment">//所以三级缓存拿到的singletonObject==null  第一个条件成立</span></span><br><span class="line">				<span class="comment">//第二个条件allowEarlyReference=true，这个前文有解释</span></span><br><span class="line">				<span class="comment">//就是spring循环依赖的开关，默认为true 进入if分支</span></span><br><span class="line">				<span class="keyword">if</span> (singletonObject == <span class="literal">null</span> &amp;&amp; allowEarlyReference) &#123;</span><br><span class="line">					<span class="comment">//从二级缓存中获取一个 singletonFactory，回顾前文，能获取到</span></span><br><span class="line">					<span class="comment">//由于这里的beanName=x，故而获取出来的工厂对象，能产生一个x半成品bean</span></span><br><span class="line">					ObjectFactory&lt;?&gt; singletonFactory = <span class="built_in">this</span>.singletonFactories.get(beanName);</span><br><span class="line">					<span class="comment">//由于获取到了，进入if分支</span></span><br><span class="line">					<span class="keyword">if</span> (singletonFactory != <span class="literal">null</span>) &#123;</span><br><span class="line">						<span class="comment">//调用工厂对象的getObject()方法，产生一个x的半成品bean</span></span><br><span class="line">						<span class="comment">//怎么产生的？下文解释，比较复杂</span></span><br><span class="line">						singletonObject = singletonFactory.getObject();</span><br><span class="line">						<span class="comment">//拿到了半成品的xbean之后，把他放到三级缓存；为什么？下文解释</span></span><br><span class="line">						<span class="built_in">this</span>.earlySingletonObjects.put(beanName, singletonObject);</span><br><span class="line">						<span class="comment">//然后从二级缓存清除掉x的工厂对象；？为什么，下文解释</span></span><br><span class="line">						<span class="built_in">this</span>.singletonFactories.remove(beanName);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>针对上面的源码我做一个简单的总结：首先spring从单例池当中获取x，前面说过获取不到，然后判断是否在正在创建bean的集合当中，前面分析过这个集合现在存在x，和y；所以if成立进入分支；进入分支spring直接从三级缓存中获取x，根据前面的分析三级缓存当中现在什么都没有，故而返回nll；进入下一个if分支，从二级缓存中获取一个ObjectFactory工厂对象；根据前面分析，二级缓存中存在x，故而可以获取到；跟着调用singletonFactory.getObject();拿到一个半成品的x bean对象；然后把这个x对象放到三级缓存，同时把二级缓存中x清除（此时二级缓存中只存在一个y了，而三级缓存中多了一个x）；</p>
+<p>问题1、为什么首先是从三级缓存中取呢？主要是为了性能，因为三级缓存中存的是一个x对象，如果能取到则不去二级找了；哪有人会问二级有什么用呢？为什么一开始要存工厂呢？为什么一开始不直接存三级缓存？这里稍微有点复杂，如果直接存到三级缓存，只能存一个对象，假设以前存这个对象的时候这对象的状态为xa，但是我们这里y要注入的x为xc状态，那么则无法满足；但是如果存一个工厂，工厂根据情况产生任意xa或者xb或者xc等等情况；比如说aop的情况下x注入y，y也注入x；而y中注入的x需要加代理（aop），但是加代理的逻辑在注入属性之后，也就是x的生命周期周到注入属性的时候x还不是一个代理对象，那么这个时候把x存起来，然后注入y，获取、创建y，y注入x，获取x；拿出来的x是一个没有代理的对象；但是如果存的是个工厂就不一样；首先把一个能产生x的工厂存起来，然后注入y，注入y的时候获取、创建y，y注入x，获取x，先从三级缓存获取，为null，然后从二级缓存拿到一个工厂，调用工厂的getObject()；spring在getObject方法中判断这个时候x被aop配置了故而需要返回一个代理的x出来注入给y。当然有的读者会问你不是前面说过getObject会返回一个当前状态的xbean嘛？我说这个的前提是不去计较getObject的具体源码，因为这块东西比较复杂，需要去了解spring的后置处理器功能，这里先不讨论，总之getObject会根据情况返回一个x，但是这个x是什么状态，spring会自己根据情况返回；</p>
+<p>问题2、为什么要从二级缓存remove？因为如果存在比较复杂的循环依赖可以提高性能；比如x，y，z相互循环依赖，那么第一次y注入x的时候从二级缓存通过工厂返回了一个x，放到了三级缓存，而第二次z注入x的时候便不需要再通过工厂去获得x对象了。因为if分支里面首先是访问三级缓存；至于remove则是为了gc吧；</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Spring/" rel="tag"># Spring</a>
+              <a href="/tags/%E6%A1%86%E6%9E%B6%E6%BA%90%E7%A0%81/" rel="tag"># 框架源码</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D/" rel="prev" title="SpringBoot自动装配">
+                  <i class="fa fa-chevron-left"></i> SpringBoot自动装配
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/" rel="next" title="spring自动注入">
+                  spring自动注入 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

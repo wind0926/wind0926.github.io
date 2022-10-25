@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="1. Seata 概述Seata 是 Simple Extensible Autonomous Transaction Architecture 的简写，由 feascar 改名而来。 Seata 是阿里开源的分布式事务框架，属于二阶段提交模式。 目前github上已经有 12267 颗星了，也很活跃，最新的提交时间很多都是几天前。 首先我们回顾一下在单体应用中，例如一个业务调用了3个模块，他们都">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式事务-Seata分布式事务框架">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="1. Seata 概述Seata 是 Simple Extensible Autonomous Transaction Architecture 的简写，由 feascar 改名而来。 Seata 是阿里开源的分布式事务框架，属于二阶段提交模式。 目前github上已经有 12267 颗星了，也很活跃，最新的提交时间很多都是几天前。 首先我们回顾一下在单体应用中，例如一个业务调用了3个模块，他们都">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/6.png">
+<meta property="article:published_time" content="2022-10-25T09:22:54.000Z">
+<meta property="article:modified_time" content="2022-10-25T09:34:16.139Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="cAP">
+<meta property="article:tag" content="BASE">
+<meta property="article:tag" content="分布式事务">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/","path":"2022/10/25/分布式事务-Seata分布式事务框架/","title":"分布式事务-Seata分布式事务框架"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>分布式事务-Seata分布式事务框架 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Seata-%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">1. Seata 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Seata-%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E5%91%A2%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">Seata 如何处理呢？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="nav-number">1.2.</span> <span class="nav-text">1.3 核心组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-4-%E5%85%B7%E4%BD%93%E5%B7%A5%E4%BD%9C%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">1.4 具体工作过程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Seata-%E8%AF%A6%E7%BB%86%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.</span> <span class="nav-text">2. Seata 详细工作流程示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E4%B8%80%E9%98%B6%E6%AE%B5"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 一阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E4%BA%8C%E9%98%B6%E6%AE%B5-%E5%9B%9E%E6%BB%9A"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 二阶段 - 回滚</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%B0%8F%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">3. 小结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="分布式事务-Seata分布式事务框架 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分布式事务-Seata分布式事务框架
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:22:54 / 修改时间：17:34:16" itemprop="dateCreated datePublished" datetime="2022-10-25T17:22:54+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">分布式事务</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="1-Seata-概述"><a href="#1-Seata-概述" class="headerlink" title="1. Seata 概述"></a>1. <a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=Seata&spm=1001.2101.3001.7020">Seata</a> 概述</h2><p>Seata 是 Simple Extensible Autonomous Transaction Architecture 的简写，由 feascar 改名而来。</p>
+<p>Seata 是阿里开源的<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%88%86%E5%B8%83%E5%BC%8F&spm=1001.2101.3001.7020">分布式</a>事务框架，属于二阶段提交模式。</p>
+<p>目前<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=github&spm=1001.2101.3001.7020">github</a>上已经有 12267 颗星了，也很活跃，最新的提交时间很多都是几天前。</p>
+<p>首先我们回顾一下在单体应用中，例如一个业务调用了3个模块，他们都使用同一个数据源，是靠本地事务来保证事务一致性。</p>
+<p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/1.png" alt="在这里插入图片描述"></p>
+<p>但在<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%BE%AE%E6%9C%8D%E5%8A%A1&spm=1001.2101.3001.7020">微服务</a>架构中，这3个模块会变为3个独立的微服务，各自有自己的数据源，调用逻辑就变为：<br><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/2.png" alt="在这里插入图片描述"></p>
+<h3 id="Seata-如何处理呢？"><a href="#Seata-如何处理呢？" class="headerlink" title="Seata 如何处理呢？"></a>Seata 如何处理呢？</h3><p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/3.png" alt="在这里插入图片描述"><br>Business 是业务入口，在程序中会通过注解来说明他是一个全局事务，这时他的角色为 TM（事务管理者）。</p>
+<p>Business 会请求 TC（事务协调器，一个独立运行的服务），说明自己要开启一个全局事务，TC 会生成一个全局事务ID（XID），并返回给 Business。</p>
+<p>Business 得到 XID 后，开始调用微服务，例如调用 Storage。<br><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/4.png" alt="在这里插入图片描述"><br>和上面的图一样，方便查看，防止滚到到这儿时已经看不到上面的图片了）</p>
+<p>Storage 会收到 XID，知道自己的事务属于这个全局事务。Storage 执行自己的业务逻辑，操作本地数据库。</p>
+<p>Storage 会把自己的事务注册到 TC，作为这个 XID 下面的一个分支事务，并且把自己的事务执行结果也告诉 TC。</p>
+<p>此时 Storage 的角色是 RM（资源管理者），资源是指本地数据库。</p>
+<p>Order、Account 的执行逻辑与 Storage 一致。</p>
+<p>在各个微服务都执行完成后，TC 可以知道 XID 下各个分支事务的执行结果，TM（Business） 也就知道了。</p>
+<p>Business 如果发现各个微服务的本地事务都执行成功了，就请求 TC 对这个 XID 提交，否则回滚。</p>
+<p>TC 收到请求后，向 XID 下的所有分支事务发起相应请求。</p>
+<p>各个微服务收到 TC 的请求后，执行相应指令，并把执行结果上报 TC。</p>
+<p><strong>重要机制</strong></p>
+<p><strong>（1）全局事务的回滚是如何实现的呢？</strong></p>
+<p>Seata 有一个重要的机制：回滚日志。</p>
+<p>每个分支事务对应的数据库中都需要有一个回滚日志表 UNDO_LOG，在真正修改数据库记录之前，都会先记录修改前的记录值，以便之后回滚。</p>
+<p>在收到回滚请求后，就会根据 UNDO_LOG 生成回滚操作的 SQL 语句来执行。</p>
+<p>如果收到的是提交请求，就把 UNDO_LOG 中的相应记录删除掉。</p>
+<p><strong>（2）RM 是怎么自动和 TC 交互的？</strong></p>
+<p>是通过监控拦截JDBC实现的，例如监控到开启本地事务了，就会自动向 TC 注册、生成回滚日志、向 TC 汇报执行结果。</p>
+<p><strong>（3）二阶段回滚失败怎么办？</strong></p>
+<p>例如 TC 命令各个 RM 回滚的时候，有一个微服务挂掉了，那么所有正常的微服务也都不会执行回滚，当这个微服务重新正常运行后，TC 会重新执行全局回滚。</p>
+<h3 id="1-3-核心组件"><a href="#1-3-核心组件" class="headerlink" title="1.3 核心组件"></a>1.3 核心组件</h3><p>回顾一下其中的核心组件：</p>
+<p>事务协调器 TC<br>维护全局和分支事务的状态，指示全局提交或者回滚。</p>
+<p>事务管理者 TM<br>开启、提交或者回滚一个全局事务。</p>
+<p>资源管理者 RM<br>管理执行分支事务的那些资源，向TC注册分支事务、上报分支事务状态、控制分支事务的提交或者回滚。</p>
+<h3 id="1-4-具体工作过程"><a href="#1-4-具体工作过程" class="headerlink" title="1.4 具体工作过程"></a>1.4 具体工作过程</h3><p>再从宏观上梳理一下 Seata 的工作过程：<br><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/5.png" alt="在这里插入图片描述"><br>TM 请求 TC，开始一个新的全局事务，TC 会为这个全局事务生成一个 XID。<br>XID 通过微服务的调用链传递到其他微服务。<br>RM 把本地事务作为这个XID的分支事务注册到TC。<br>TM 请求 TC 对这个 XID 进行提交或回滚。<br>TC 指挥这个 XID 下面的所有分支事务进行提交、回滚。</p>
+<h2 id="2-Seata-详细工作流程示例"><a href="#2-Seata-详细工作流程示例" class="headerlink" title="2. Seata 详细工作流程示例"></a>2. Seata 详细工作流程示例</h2><p>下面我们通过一个分支事务的执行过程来了解 Seata 的工作流程。</p>
+<p>例如有一个业务表 product(id,name)，分支事务的业务逻辑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">update product set name = &#x27;GTS&#x27; where name = &#x27;TXC&#x27;;</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-1-一阶段"><a href="#2-1-一阶段" class="headerlink" title="2.1 一阶段"></a>2.1 一阶段</h3><p>（1）解析 SQL</p>
+<p>得到 SQL 的类型（UPDATE），表（product），条件（where name &#x3D; ‘TXC’）等相关的信息。</p>
+<p>（2）查询前镜像</p>
+<p>根据解析得到的条件信息，生成查询语句，定位数据。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">select id, name from product where name = &#x27;TXC&#x27;;</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>得到前镜像：<br><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/6.png" alt="在这里插入图片描述"></p>
+<p>（3）执行业务 SQL</p>
+<p>执行自己的业务逻辑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">update product set name = &#x27;GTS&#x27; where name = &#x27;TXC&#x27;;</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>把 name 改为了 GTS。</p>
+<p>（4）查询后镜像</p>
+<p>根据前镜像的结果，通过 主键 定位数据。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">select id, name from product where id = 1;</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>得到后镜像：</p>
+<p><img src="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/6.png" alt="在这里插入图片描述"><br>（5）插入回滚日志</p>
+<p>把前后镜像数据以及业务 SQL 相关的信息组成一条回滚日志记录，插入到 UNDO_LOG 表中。</p>
+<p>（6）提交前，向 TC 注册分支：申请 product 表中，主键值等于 1 的记录的 全局锁 。</p>
+<p>（7）本地事务提交：业务数据的更新和前面步骤中生成的 UNDO LOG 一并提交。</p>
+<p>（8）将本地事务提交的结果上报给 TC。</p>
+<h3 id="2-2-二阶段-回滚"><a href="#2-2-二阶段-回滚" class="headerlink" title="2.2 二阶段 - 回滚"></a>2.2 二阶段 - 回滚</h3><p>（1）收到 TC 的分支回滚请求，开启一个本地事务，执行如下操作。</p>
+<p>（2）通过 XID 和 Branch ID 查找到相应的 UNDO LOG 记录。</p>
+<p>（3）数据校验</p>
+<p>拿 UNDO LOG 中的后镜与当前数据进行比较，根据校验结果决定是否做回滚。</p>
+<p>（4）根据 UNDO LOG 中的前镜像和业务 SQL 的相关信息生成并执行回滚的语句：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">update product set name = &#x27;TXC&#x27; where id = 1;</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>5）提交本地事务</p>
+<p>并把本地事务的执行结果（即分支事务回滚的结果）上报给 TC。</p>
+<p><strong>二阶段 - 提交</strong></p>
+<p>（1）收到 TC 的分支提交请求，把请求放入一个异步任务的队列中，马上返回提交成功的结果给 TC。</p>
+<p>（2）异步任务阶段的分支提交请求，将异步和批量地删除相应 UNDO LOG 记录。</p>
+<h2 id="3-小结"><a href="#3-小结" class="headerlink" title="3. 小结"></a>3. 小结</h2><p>上面介绍的是 Seata 的 AT 模式，就是自动化事务，使用非常简单，对业务代码没有侵入性。</p>
+<p>不足的地方是目前文档比较少，网上的相关材料也不是很多，所以使用过程中遇到问题时可能就需要自己查看源码，分析原理。</p>
+<p>Seata 还支持 TCC 和 Saga 模式，但支持的主要方式是 AT。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/cAP/" rel="tag"># cAP</a>
+              <a href="/tags/BASE/" rel="tag"># BASE</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" rel="tag"># 分布式事务</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/Tomcat-%E4%B8%80%E4%B8%AATomcat%E6%9C%80%E5%A4%9A%E6%94%AF%E6%8C%81%E5%A4%9A%E5%B0%91%E7%94%A8%E6%88%B7%E7%9A%84%E5%B9%B6%E5%8F%91/" rel="prev" title="Tomcat-一个Tomcat最多支持多少用户的并发">
+                  <i class="fa fa-chevron-left"></i> Tomcat-一个Tomcat最多支持多少用户的并发
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-CAP-Base%E7%90%86%E8%AE%BA/" rel="next" title="分布式事务-CAP+Base理论">
+                  分布式事务-CAP+Base理论 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>

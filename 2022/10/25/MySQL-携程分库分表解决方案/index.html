@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="一、前言随着国际火车票业务的高速发展，订单量快速增长，单数据库瓶颈层面的问题逐渐显露，常规的数据库优化已无法达到期望的效果。同时，原先的底层数据库设计，也存在一些历史遗留问题，比如存在部分无用字段、表通过自增主键关联和各个应用直连数据库等问题。 为此，经过讨论后，我们决定对订单库进行分库分表，同时对订单表进行重构，进而从根本上解决这些问题。 二、问题挑战">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL-携程分库分表解决方案">
+<meta property="og:url" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="一、前言随着国际火车票业务的高速发展，订单量快速增长，单数据库瓶颈层面的问题逐渐显露，常规的数据库优化已无法达到期望的效果。同时，原先的底层数据库设计，也存在一些历史遗留问题，比如存在部分无用字段、表通过自增主键关联和各个应用直连数据库等问题。 为此，经过讨论后，我们决定对订单库进行分库分表，同时对订单表进行重构，进而从根本上解决这些问题。 二、问题挑战">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/18.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/19.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/20.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/21.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/22.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/23.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/24.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/25.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/26.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/27.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/28.png">
+<meta property="article:published_time" content="2022-10-25T07:50:55.000Z">
+<meta property="article:modified_time" content="2022-10-25T11:35:49.200Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="OLTP">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="分库分表">
+<meta property="article:tag" content="db">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/18.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/","path":"2022/10/25/MySQL-携程分库分表解决方案/","title":"MySQL-携程分库分表解决方案"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MySQL-携程分库分表解决方案 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">一、前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E9%97%AE%E9%A2%98%E6%8C%91%E6%88%98"><span class="nav-number">3.</span> <span class="nav-text">二、问题挑战</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#-1"><span class="nav-number">4.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%96%B9%E6%A1%88%E9%80%89%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">三、方案选型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#-2"><span class="nav-number">5.1.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%A6%82%E4%BD%95%E5%88%87%E5%88%86"><span class="nav-number">5.2.</span> <span class="nav-text">3.1 如何切分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-3"><span class="nav-number">5.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%88%86%E7%89%87%E9%94%AE%E9%80%89%E5%8F%96"><span class="nav-number">5.4.</span> <span class="nav-text">3.2 分片键选取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-4"><span class="nav-number">5.5.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%A6%82%E4%BD%95%E8%B7%AF%E7%94%B1"><span class="nav-number">5.6.</span> <span class="nav-text">3.3 如何路由</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#-5"><span class="nav-number">5.6.1.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%98%A0%E5%B0%84%E8%B7%AF%E7%94%B1"><span class="nav-number">5.6.2.</span> <span class="nav-text">映射路由</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#-6"><span class="nav-number">5.6.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E7%BB%84%E8%B7%AF%E7%94%B1"><span class="nav-number">5.6.4.</span> <span class="nav-text">分组路由</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#-7"><span class="nav-number">5.6.5.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E8%B7%AF%E7%94%B1"><span class="nav-number">5.6.6.</span> <span class="nav-text">哈希路由</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#-8"><span class="nav-number">5.6.7.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E7%BB%84%E5%93%88%E5%B8%8C%E8%B7%AF%E7%94%B1"><span class="nav-number">5.6.8.</span> <span class="nav-text">分组哈希路由</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-9"><span class="nav-number">5.7.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-%E6%8A%80%E6%9C%AF%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="nav-number">5.8.</span> <span class="nav-text">3.4 技术中间件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#-10"><span class="nav-number">5.8.1.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E7%8E%AF%E5%A2%83"><span class="nav-number">5.8.2.</span> <span class="nav-text">技术环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#-11"><span class="nav-number">5.8.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%93%E4%B8%9A%E7%A8%8B%E5%BA%A6"><span class="nav-number">5.8.4.</span> <span class="nav-text">专业程度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#-12"><span class="nav-number">5.8.5.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%88%90%E6%9C%AC"><span class="nav-number">5.8.6.</span> <span class="nav-text">使用成本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#-13"><span class="nav-number">5.8.7.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%90%E7%BB%B4%E6%88%90%E6%9C%AC"><span class="nav-number">5.8.8.</span> <span class="nav-text">运维成本</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#-14"><span class="nav-number">6.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E4%B8%9A%E5%8A%A1%E5%AE%9E%E8%B7%B5"><span class="nav-number">7.</span> <span class="nav-text">四、业务实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#-15"><span class="nav-number">7.1.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E6%96%B0%E8%A1%A8%E6%A8%A1%E5%9E%8B"><span class="nav-number">7.2.</span> <span class="nav-text">4.1 新表模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E6%9C%8D%E5%8A%A1%E6%94%B6%E5%8F%A3"><span class="nav-number">7.3.</span> <span class="nav-text">4.2 服务收口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-%E5%B9%B3%E6%BB%91%E8%BF%87%E6%B8%A1"><span class="nav-number">7.4.</span> <span class="nav-text">4.3 平滑过渡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-16"><span class="nav-number">7.5.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB"><span class="nav-number">7.6.</span> <span class="nav-text">4.4 数据迁移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-17"><span class="nav-number">7.7.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-%E5%AE%8C%E6%88%90%E6%95%88%E6%9E%9C"><span class="nav-number">7.8.</span> <span class="nav-text">4.5 完成效果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#-18"><span class="nav-number">8.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93"><span class="nav-number">9.</span> <span class="nav-text">五、常见问题总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#-19"><span class="nav-number">9.1.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%85%B8%E5%9E%8B%E9%97%AE%E9%A2%98"><span class="nav-number">9.2.</span> <span class="nav-text">5.1 分库分表典型问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-20"><span class="nav-number">9.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-API%E6%96%B9%E6%B3%95%E9%97%AE%E9%A2%98"><span class="nav-number">9.4.</span> <span class="nav-text">5.2 API方法问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-21"><span class="nav-number">9.5.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E5%9D%87%E5%8C%80%E9%97%AE%E9%A2%98"><span class="nav-number">9.6.</span> <span class="nav-text">5.3 均匀问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-22"><span class="nav-number">9.7.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-Group%E5%86%85%E8%B7%AF%E7%94%B1%E9%97%AE%E9%A2%98"><span class="nav-number">9.8.</span> <span class="nav-text">5.4 Group内路由问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#-23"><span class="nav-number">9.9.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-5-%E5%BC%82%E6%AD%A5%E5%8F%8C%E5%86%99%E9%97%AE%E9%A2%98"><span class="nav-number">9.10.</span> <span class="nav-text">5.5 异步双写问题</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MySQL-携程分库分表解决方案 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MySQL-携程分库分表解决方案
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 15:50:55 / 修改时间：19:35:49" itemprop="dateCreated datePublished" datetime="2022-10-25T15:50:55+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/MySQL/" itemprop="url" rel="index"><span itemprop="name">MySQL</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a><strong>一、前言</strong></h2><p>随着国际火车票业务的高速发展，订单量快速增长，单数据库瓶颈层面的问题逐渐显露，常规的数据库优化已无法达到期望的效果。同时，原先的底层数据库设计，也存在一些历史遗留问题，比如存在部分无用字段、表通过自增主键关联和各个应用直连数据库等问题。</p>
+<p>为此，经过讨论后，我们决定对订单库进行分库分表，同时对订单表进行重构，进而从根本上解决这些问题。</p>
+<h2 id><a href="#" class="headerlink" title></a></h2><h2 id="二、问题挑战"><a href="#二、问题挑战" class="headerlink" title="二、问题挑战"></a><strong>二、问题挑战</strong></h2><p>目标确定后，实践起来可不轻松，出现了很多的问题和挑战。这里列举一些典型问题，大致可以分为两大类：分库分表通用问题、具体业务关联问题。</p>
+<p><strong>分库分表通用问题</strong></p>
+<ul>
+<li>如何切分，垂直分还是水平分？分片的键，如何选取？</li>
+<li>如何根据键值路由到对应库、对应表？</li>
+<li>采用什么中间件，代理方式还是中间件的方式？</li>
+<li>跨库操作等问题，如跨库事务和跨库关联？</li>
+<li>数据扩容问题，后续如何进行扩容？</li>
+</ul>
+<p><strong>具体业务关联问题</strong></p>
+<ul>
+<li>各个应用直连数据如何解决？</li>
+<li>如何进行平滑过渡？</li>
+<li>历史数据如何恰当迁移？</li>
+</ul>
+<h2 id="-1"><a href="#-1" class="headerlink" title></a></h2><h2 id="三、方案选型"><a href="#三、方案选型" class="headerlink" title="三、方案选型"></a><strong>三、方案选型</strong></h2><h3 id="-2"><a href="#-2" class="headerlink" title></a></h3><h3 id="3-1-如何切分"><a href="#3-1-如何切分" class="headerlink" title="3.1 如何切分"></a><strong>3.1 如何切分</strong></h3><p>切分方式，一般分为垂直分库、垂直分表、水平分库和水平分表四种，如何选择，一般是根据自己的业务需求决定。</p>
+<p>我们的目标是要从根本上解决数据量大、单机性能问题等问题，垂直方式并不能满足需求，所以我们选取了水平分库+水平分表的切分方式。</p>
+<h3 id="-3"><a href="#-3" class="headerlink" title></a></h3><h3 id="3-2-分片键选取"><a href="#3-2-分片键选取" class="headerlink" title="3.2 分片键选取"></a><strong>3.2 分片键选取</strong></h3><p>一般是根据自己的实际业务，来选择字段来作为分片的键，同时可以结合考虑数据的热点问题 、分布问题。比如订单系统，不能根据国家字段进行分片，否则可能会出现某些国家很多的订单记录，某些国家几乎没有订单记录，进而数据分布不均。相对正确的方式，比如订单类系统，可以选择订单ID；会员系统，可以选择会员ID。</p>
+<h3 id="-4"><a href="#-4" class="headerlink" title></a></h3><h3 id="3-3-如何路由"><a href="#3-3-如何路由" class="headerlink" title="3.3 如何路由"></a><strong>3.3 如何路由</strong></h3><p>选定了分片的键之后，接下来需要探讨的问题，就是如何路由到具体的数据库和具体的表。以分片键路由到具体某一个数据库为例，常见的路由方式如下：</p>
+<h4 id="-5"><a href="#-5" class="headerlink" title></a></h4><h4 id="映射路由"><a href="#映射路由" class="headerlink" title="映射路由"></a><strong>映射路由</strong></h4><p>映射路由，即新增一个库，新建一个路由映射表，存储分片键值和对应的库之间的映射关系。比如，键值为 1001，映射到 db01 这个数据库，如下图所示：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/18.png" alt="图片"></p>
+<p>映射方式，优点是映射方式可任意调整，扩容简单，但是存在一个比较严重的不足，就是映射库中的映射表的数据量异常巨大。我们本来的目标是要实现分库分表的功能，可是现在，映射库映射表相当于回到了分库分表之前的状态。所以，我们在实践中，没有采取这种方式。</p>
+<h4 id="-6"><a href="#-6" class="headerlink" title></a></h4><h4 id="分组路由"><a href="#分组路由" class="headerlink" title="分组路由"></a><strong>分组路由</strong></h4><p>分组路由，即对分片的键值，进行分组，每组对应到一个具体的数据库。比如，键值为 1000到2000，则存储到 db01 这个数据库，如下图所示：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/19.png" alt="图片"></p>
+<p>分组方式，优点是扩容简单，实现简单，但是也存在一个比较严重的不足，是数据分布热点问题，比如在某一个时间内，分片键值为2001，则在将来一段时间内，所有的数据流量，全部打到某一个库（db02）。这个问题，在互联网环境下，也比较严重，比如在一些促销活动中，订单量会有一个明显的飙升，这时候各个数据库不能达到分摊流量的效果，只有一个库在接收流量，会回到分库分表之前的状态。所以，我们也没有采取这种方式。</p>
+<h4 id="-7"><a href="#-7" class="headerlink" title></a></h4><h4 id="哈希路由"><a href="#哈希路由" class="headerlink" title="哈希路由"></a><strong>哈希路由</strong></h4><p>哈希路由，即对分片的键值，进行哈希，然后根据哈希结果，对应到一个具体的数据库。比如，键值为 1000，对其取哈希的结果为 01，则存储到 db01 这个数据库，如下图所示：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/20.png" alt="图片"></p>
+<p>哈希方式，优点是分布均匀，无热点问题，但是反过来，数据扩容比较麻烦。因为在扩容过程中，需要调整哈希函数，随之带出一个数据迁移问题。互联网环境下，迁移过程中往往不能进行停服，所以就需要类似多库双写等方式进行过渡，比较麻烦。所以，在实践中也没有采取这种方式。</p>
+<h4 id="-8"><a href="#-8" class="headerlink" title></a></h4><h4 id="分组哈希路由"><a href="#分组哈希路由" class="headerlink" title="分组哈希路由"></a><strong>分组哈希路由</strong></h4><p>分组哈希路由，即对分片的键值，先进行分组，后再进行哈希。如下图所示：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/21.png" alt="图片"></p>
+<p>在实践中，我们结合了前面的几种方式，借鉴了他们的优点不足，而采用了此种方式。因为分组方式，能很方便的进行扩容，解决了数据扩容问题；哈希方式，能解决分布相对均匀，无单点数据库热点问题。</p>
+<h3 id="-9"><a href="#-9" class="headerlink" title></a></h3><h3 id="3-4-技术中间件"><a href="#3-4-技术中间件" class="headerlink" title="3.4 技术中间件"></a><strong>3.4 技术中间件</strong></h3><p>分库分表的中间件选取，在行业内的方案还是比较多的，公司也有自己的实现。根据实现方式的不同，可以分为代理和非代理方式，下面列举了一些业界常见的中间件，如下表（截至于2021-04-08）：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/22.png" alt="图片"></p>
+<p>我们为什么最终选择了 Sharding-Sphere 呢？主要从这几个因素考虑：</p>
+<h4 id="-10"><a href="#-10" class="headerlink" title></a></h4><h4 id="技术环境"><a href="#技术环境" class="headerlink" title="技术环境"></a><strong>技术环境</strong></h4><ul>
+<li>我们团队是Java体系下的，对Java中间件有一些偏爱</li>
+<li>更偏向于轻量级组件，可以深入研究的组件</li>
+<li>可能会需要一些个性定制化</li>
+</ul>
+<h4 id="-11"><a href="#-11" class="headerlink" title></a></h4><h4 id="专业程度"><a href="#专业程度" class="headerlink" title="专业程度"></a><strong>专业程度</strong></h4><ul>
+<li>取决于中间件由哪个团队进行维护，是否是名师打造，是否是行业标杆</li>
+<li>更新迭代频率，最好是更新相对频繁，维护较积极的</li>
+<li>流行度问题，偏向于流行度广、社区活跃的中间件</li>
+<li>性能问题，性能能满足我们的要求</li>
+</ul>
+<h4 id="-12"><a href="#-12" class="headerlink" title></a></h4><h4 id="使用成本"><a href="#使用成本" class="headerlink" title="使用成本"></a><strong>使用成本</strong></h4><ul>
+<li>学习成本、入门成本和定制改造成本</li>
+<li>弱浸入性，对业务能较少浸入</li>
+<li>现有技术栈下的迁移成本，我们当前技术栈是SSM体系下</li>
+</ul>
+<h4 id="-13"><a href="#-13" class="headerlink" title></a></h4><h4 id="运维成本"><a href="#运维成本" class="headerlink" title="运维成本"></a><strong>运维成本</strong></h4><ul>
+<li>高可用、高稳定性</li>
+<li>减少硬件资源，不希望再单独引入一个代理中间件，还要考虑运维成本</li>
+<li>丰富的埋点、完善的监控</li>
+</ul>
+<h2 id="-14"><a href="#-14" class="headerlink" title></a></h2><h2 id="四、业务实践"><a href="#四、业务实践" class="headerlink" title="四、业务实践"></a><strong>四、业务实践</strong></h2><p>在业务实践中，我们经历了从新库新表的设计，分库分表自建代理、服务收口、上游订单应用迁移，历史数据迁移等过程。</p>
+<h3 id="-15"><a href="#-15" class="headerlink" title></a></h3><h3 id="4-1-新表模型"><a href="#4-1-新表模型" class="headerlink" title="4.1 新表模型"></a><strong>4.1 新表模型</strong></h3><p>为了建立分库分表下的关联关系，和更加合理有效的结构，我们新申请了订单分库分表的几个库，设计了一套全新的表结构。表名以年份结尾、规范化表字段、适当增删了部分字段、不使用自增主键关联，采用业务唯一键进行关联等。</p>
+<p>表结构示例如下图：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/23.png" alt="图片"></p>
+<h3 id="4-2-服务收口"><a href="#4-2-服务收口" class="headerlink" title="4.2 服务收口"></a><strong>4.2 服务收口</strong></h3><p>自建了一个分库分表数据库的服务代理 Dal-Sharding。每一个需要操作订单库的服务，都要通过代理服务进行操作数据库，达到服务的一个收口效果。同时，屏蔽了分库分表的复杂性，规范数据库的基本增删改查方法。</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/24.png" alt="图片"></p>
+<h3 id="4-3-平滑过渡"><a href="#4-3-平滑过渡" class="headerlink" title="4.3 平滑过渡"></a><strong>4.3 平滑过渡</strong></h3><p>应用迁移过程中，为了保证应用的平滑过渡，我们新增了一些同步逻辑，来保证应用的顺利迁移，在应用迁移前后，对应用没有任何影响。未迁移的应用，可以读取到迁移后应用写入的订单数据；迁移后的应用，能读取到未迁移应用写入的订单数据。同时，统一实现了此逻辑，减少各个应用的迁移成本。</p>
+<p><strong>新老库双读</strong></p>
+<p>顾名思义，就是在读取的时候，两个库可能都要进行读取，即优先读取新库，如果能读到记录，直接返回；否则，再次读取老库记录，并返回结果。</p>
+<p>双读的基本过程如下：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/25.png" alt="图片"></p>
+<p>新老库双读，保证了应用迁移过程中读取的低成本，上游应用不需要关心数据来源于新的库还是老的库，只要关心数据的读取即可，减少了切换新库和分库分表的逻辑，极大的减少了迁移的工作量。</p>
+<p>实践过程中，我们通过切面实现双读逻辑，将双读逻辑放入到切面中进行，减小新库的读取逻辑的侵入，方便后面实现对双读逻辑的移除调整。</p>
+<p>同时，新增一些配置，比如可以控制到哪些表需要进行双读，那些表不需要双读等。</p>
+<p><strong>新老库双写</strong></p>
+<p>新老库双写，就是在写入新库成功后，异步写入到老库中。双写使得新老库都同时存在这些订单数据，尚未迁移通过代理服务操作数据库的应用得以正常的运作。</p>
+<p>双写的基本过程如下：</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/26.png" alt="图片"></p>
+<p>双写其实有较多的方案，比如基于数据库的日志，通过监听解析数据库日志实现同步；也可以通过切面，实现双写；还可以通过定时任务进行同步；另外，结合到我们自己的订单业务，我们还可以通过订单事件（比如创单成功、出票成功、退票成功等），进行双写，同步数据到老库中。</p>
+<p>目前，我们经过考虑，没有通过数据库日志来实现，因为这样相当于把逻辑下沉到了数据库层面，从实现上不够灵活，同时，可能还会涉及到一些权限、排期等问题。实践中，我们采取其他三种方式，互补形式，进行双写。异步切面双写，保证了最大的时效性；订单事件，保证了核心节点的一致性；定时任务，保证了最终的一致性。</p>
+<p>跟双读一样，我们也支持配置控制到哪些表需要进行双写，那些表不需要双写等。</p>
+<p><strong>过渡迁移</strong></p>
+<p>有了前面的双读双写作为基础，迁移相对容易实行，我们采取逐个迁移的方式，比如，按照服务、按照渠道和按照供应进行迁移，将迁移工作进行拆解，减少影响面，追求稳健。一般分为三步走方式：</p>
+<p>1）第一阶段，先在新对接的供应商中进行迁移新库，因为新上线的供应商，订单量最少，同时哪怕出现了问题，不至于影响到之前的业务。</p>
+<p>2）再次迁移量比较少的线上业务，此类订单，有一些量，但是追求稳定，不能因为切换新库而产生影响。所以，将此类业务放到了第二阶段中进行。</p>
+<p>3）最后一步是，将量较大的业务，逐渐迁移到新库中，此类业务，需要在在有前面的保证后，方能进行迁移，保证订单的正常进行。</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/27.png" alt="图片"></p>
+<h3 id="-16"><a href="#-16" class="headerlink" title></a></h3><h3 id="4-4-数据迁移"><a href="#4-4-数据迁移" class="headerlink" title="4.4 数据迁移"></a><strong>4.4 数据迁移</strong></h3><p>数据迁移，即将数据，从老库迁移到新库，是新老库切换的一个必经过程。迁移的常规思路，一般是每个表一个个进行迁移，结合业务，我们没有采取此做法，而是从订单维度进行迁移。</p>
+<p>举个例子：假如订单库有Order表、OrderStation表、OrderFare表三个表，我们没有采取一个一个表分别进行迁移，而是根据订单号，以每一个订单的信息，进行同步。</p>
+<p>大致过程如下：</p>
+<p>1）开启一个定时任务，查询订单列表，取得订单号等基本订单信息。</p>
+<p>2）根据这个订单号，去分别查询订单的其他信息，取得一个完整的订单信息。</p>
+<p>3）校验订单是否已经完成同步，之前完成同步了则直接跳过，否则继续执行下一个订单号。</p>
+<p>4）将老库的完整的订单信息，映射成新库的对应的模型。</p>
+<p>5）将新的订单信息，同步写入到新库各个表中。</p>
+<p>6）继续执行下一个订单号，直到所有的订单号都完全同步结束。</p>
+<p><img src="/2022/10/25/MySQL-%E6%90%BA%E7%A8%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/28.png" alt="图片"></p>
+<h3 id="-17"><a href="#-17" class="headerlink" title></a></h3><h3 id="4-5-完成效果"><a href="#4-5-完成效果" class="headerlink" title="4.5 完成效果"></a><strong>4.5 完成效果</strong></h3><p>订单库经过一个全新的重构，目前已经在线上稳定运行，效果显著，达到了我们想要的效果。</p>
+<ul>
+<li>服务收口，将分库分表逻辑，收口到了一个服务中；</li>
+<li>接口统一管理，统一对敏感字段进行加密；</li>
+<li>功能灵活，提供丰富的功能，支持定制化；</li>
+<li>分库分表路由透明，且基于主流技术，易于上手；</li>
+<li>完善的监控，支持到表维度的监控；</li>
+</ul>
+<h2 id="-18"><a href="#-18" class="headerlink" title></a></h2><h2 id="五、常见问题总结"><a href="#五、常见问题总结" class="headerlink" title="五、常见问题总结"></a><strong>五、</strong>常见问题总结</h2><h3 id="-19"><a href="#-19" class="headerlink" title></a></h3><h3 id="5-1-分库分表典型问题"><a href="#5-1-分库分表典型问题" class="headerlink" title="5.1 分库分表典型问题"></a><strong>5.1 分库分表典型问题</strong></h3><p><strong>问题1</strong>：如何进行跨库操作，关联查询，跨库事务？</p>
+<p><strong>回答：</strong>对于跨库操作，在订单主流程应用中，我们目前是禁止了比如跨库查询、跨库事务等操作的。对于跨库事务，因为根据订单号、创建年份路由，都是会路由到同一个数据库中，也不会存在跨库事务。同样对于跨库关联查询，也不会存在，往往都是根据订单来进行查询。同时，也可以适当进行冗余，比如存储车站编码的同时，多存储一个车站名称字段。</p>
+<p><strong>问题2</strong>：如何进行分页查询？</p>
+<p><strong>回答</strong>：目前在订单主流程应用中的分页查询，我们直接采用了Sharding-JDBC提供的最原始的分页方式，直接按照正常的分页SQL，来进行查询分页即可。理由：主流程订单服务，比如出票系统，往往都是查询前面几页的订单，直接查询即可，不会存在很深的翻页。当然，对于要求较高的分页查询，可以去实现二次查询，来实现更加高效的分页查询。</p>
+<p><strong>问题3</strong>：如何支持很复杂的统计查询？</p>
+<p><strong>回答</strong>：专门增加了一个宽表，来满足那些很复杂查询的需求，将常用的查询信息，全部落到此表中，进而可以快速得到这些复杂查询的结果。</p>
+<h3 id="-20"><a href="#-20" class="headerlink" title></a></h3><h3 id="5-2-API方法问题"><a href="#5-2-API方法问题" class="headerlink" title="5.2 API方法问题"></a><strong>5.2 API方法问题</strong></h3><p><strong>问题：</strong>服务收口后，如何满足业务各种不同的查询条件？</p>
+<p><strong>回答：</strong>我们的API方法，相对固定，一般查询类只有两个方法，根据订单号查询，和根据Condition查询条件进行查询。对于各种不同的查询条件，则通过新增Condition的字段属性来实现，而不会新增各种查询方法。</p>
+<h3 id="-21"><a href="#-21" class="headerlink" title></a></h3><h3 id="5-3-均匀问题"><a href="#5-3-均匀问题" class="headerlink" title="5.3 均匀问题"></a><strong>5.3 均匀问题</strong></h3><p><strong>问题：</strong>在不同group中，数据会存在分布不均匀，存在热点问题？</p>
+<p><strong>回答：</strong>是的，比如运行5年后，我们拓展成了3个group，每一个group中存在3个库，那么此时，读写最多的应该是第三个group。不过这种分布不均匀问题和热点问题，是可接受的，相当于前面的两个group，可以作为历史归档group，目前主要使用的group为第三个group。</p>
+<p>随着业务的发展，你可以进行调配，比如业务发展迅速，那么相对合理的分配，往往不会是每个group是3个库，更可能是应该是，越往后group内的库越多。同时，因为每个group内是存在多个库，与之前的某一个库的热点问题是存在本质差别，而不用担心将单数据库瓶颈问题，可以通过加库来实现扩展。</p>
+<h3 id="-22"><a href="#-22" class="headerlink" title></a></h3><h3 id="5-4-Group内路由问题"><a href="#5-4-Group内路由问题" class="headerlink" title="5.4 Group内路由问题"></a><strong>5.4 Group内路由问题</strong></h3><p><strong>问题：</strong>对于仅根据订单号查询，在group内的路由过程是读取group内所有的表吗？</p>
+<p><strong>回答：</strong>根据目前的设计，是的。目前是按年份分组，订单号不会存储其他信息，采用携程统一方式生成，也就是如果根据订单号查询，我们并不知道是存在于哪个表，则需要查询group内所有的表。对于此类问题，通常推荐做法是，可以适当增加因子，在订单号中，存储创建年份信息，这样就可以知道对应那个表了；也可以年份适当进行延伸，比如每5年一次分表，那么这样调整后，一个group内的表应该相对很少，可以极大加快查询效能。</p>
+<h3 id="-23"><a href="#-23" class="headerlink" title></a></h3><h3 id="5-5-异步双写问题"><a href="#5-5-异步双写问题" class="headerlink" title="5.5 异步双写问题"></a><strong>5.5 异步双写问题</strong></h3><p><strong>问题</strong>：为什么双写过程，采用了多种方式结合的方式？</p>
+<p><strong>回答</strong>：首先，切面方式，能最大限度满足订单同步的时效性。但是，在实践过程中，我们发现，异步切面双写，会存在多线程并发问题。因为在老库中，表的关联关系依赖于数据库的自增ID，依赖于表的插入顺序，会存在关联失败的情况。所以，单纯依靠切面同步还不够，还需要更加稳健的方式，即定时任务（订单事件是不可靠消息事件，即可能会存在丢失情况）的方式，来保证数据库的一致性。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+              <a href="/tags/OLTP/" rel="tag"># OLTP</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+              <a href="/tags/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" rel="tag"># 分库分表</a>
+              <a href="/tags/db/" rel="tag"># db</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MySQL-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8range-hash%E6%96%B9%E6%A1%88/" rel="prev" title="MySQL-分库分表range-hash方案">
+                  <i class="fa fa-chevron-left"></i> MySQL-分库分表range-hash方案
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/MySQL-%E9%98%BF%E9%87%8C%E5%B7%B4%E5%B7%B4%E4%B8%AD%E5%8F%B0%E6%88%98%E7%95%A5-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E4%B9%8B%E5%BC%82%E6%9E%84%E7%B4%A2%E5%BC%95%E8%A1%A8/" rel="next" title="MySQL-阿里巴巴中台战略-数据库分库分表之异构索引表">
+                  MySQL-阿里巴巴中台战略-数据库分库分表之异构索引表 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">15:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>
