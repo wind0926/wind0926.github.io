@@ -167,7 +167,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">90</span>
+          <span class="site-state-item-count">92</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -178,7 +178,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">70</span>
+        <span class="site-state-item-count">71</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -215,6 +215,223 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/31/LeetCode-%E7%AC%AC317%E5%9C%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/31/LeetCode-%E7%AC%AC317%E5%9C%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B/" class="post-title-link" itemprop="url">LeetCode-第317场力扣周赛</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-31 19:38:37 / 修改时间：22:37:04" itemprop="dateCreated datePublished" datetime="2022-10-31T19:38:37+08:00">2022-10-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/LeetCode/" itemprop="url" rel="index"><span itemprop="name">LeetCode</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>1.<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/average-value-of-even-numbers-that-are-divisible-by-three/">2455. 可被三整除的偶数的平均值</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">averageValue</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(nums==<span class="literal">null</span> || nums.length==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">int</span> count=<span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> chains=<span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(nums[i]%<span class="number">3</span>==<span class="number">0</span> &amp;&amp; nums[i]%<span class="number">2</span>==<span class="number">0</span>)&#123;</span><br><span class="line">                count++;</span><br><span class="line">                chains+=nums[i];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(count==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> chains/count;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>2.<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/most-popular-video-creator/">2456. 最流行的视频创作者</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> List&lt;List&lt;String&gt;&gt; <span class="title function_">mostPopularCreator</span><span class="params">(String[] creators, String[] ids, <span class="type">int</span>[] views)</span> &#123;</span><br><span class="line">        Map&lt;String, Long&gt; countMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        Map&lt;String, List&lt;Integer&gt;&gt; idMap = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; creators.length; i++) &#123;</span><br><span class="line">            countMap.put(creators[i], countMap.getOrDefault(creators[i], <span class="number">0L</span>) + views[i]);</span><br><span class="line">            List&lt;Integer&gt; list = idMap.getOrDefault(creators[i], <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;());</span><br><span class="line">            list.add(i);</span><br><span class="line">            idMap.put(creators[i], list);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">long</span> <span class="variable">maxView</span> <span class="operator">=</span> <span class="number">0L</span>;</span><br><span class="line">        <span class="keyword">for</span> (String key : countMap.keySet()) &#123;</span><br><span class="line">            maxView = Math.max(maxView, countMap.get(key));</span><br><span class="line">        &#125;</span><br><span class="line">        List&lt;List&lt;String&gt;&gt; res = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">        <span class="keyword">for</span> (String key : idMap.keySet()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!countMap.get(key).equals(maxView)) &#123;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            List&lt;Integer&gt; indexList = idMap.get(key);</span><br><span class="line">            <span class="type">int</span> <span class="variable">mView</span> <span class="operator">=</span> -<span class="number">1</span>;</span><br><span class="line">            <span class="type">int</span> <span class="variable">maxIndex</span> <span class="operator">=</span> -<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">for</span> (Integer index : indexList) &#123;</span><br><span class="line">                <span class="keyword">if</span> (views[index] &gt; mView) &#123;</span><br><span class="line">                    mView = views[index];</span><br><span class="line">                    maxIndex = index;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (views[index] == mView) &#123;</span><br><span class="line">                    maxIndex = ids[maxIndex].compareTo(ids[index]) &lt; <span class="number">0</span> ? maxIndex : index;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            res.add(<span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(Arrays.asList(key, ids[maxIndex])));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>3.<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/minimum-addition-to-make-integer-beautiful/">2457. 美丽整数的最小增量</a></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/31/LeetCode-%E7%AC%AC317%E5%9C%BA%E5%8A%9B%E6%89%A3%E5%91%A8%E8%B5%9B/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/30/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-HTTP%E9%98%9F%E5%A4%B4%E9%98%BB%E5%A1%9E/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/30/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-HTTP%E9%98%9F%E5%A4%B4%E9%98%BB%E5%A1%9E/" class="post-title-link" itemprop="url">计算机网络-HTTP队头阻塞</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-30 12:58:33 / 修改时间：13:06:46" itemprop="dateCreated datePublished" datetime="2022-10-30T12:58:33+08:00">2022-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>20k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>18 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="（译）Robin-Marx-QUIC-和-HTTP-x2F-3-队头阻塞的细节"><a href="#（译）Robin-Marx-QUIC-和-HTTP-x2F-3-队头阻塞的细节" class="headerlink" title="（译）Robin Marx: QUIC 和 HTTP&#x2F;3 队头阻塞的细节"></a>（译）Robin Marx: QUIC 和 HTTP&#x2F;3 队头阻塞的细节</h2><blockquote>
+<p>作者：<a href="https://link.zhihu.com/?target=https://twitter.com/programmingart">Robin Marx</a>，原文：<a href="https://link.zhihu.com/?target=https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/">Head-of-Line Blocking in QUIC and HTTP&#x2F;3: The Details</a>，GitHub：<a href="https://link.zhihu.com/?target=https://github.com/rmarx/holblocking-blogpost">rmarx&#x2F;holblocking-blogpost</a></p>
+</blockquote>
+<p>您可能已经听说，经过4年的工作，新的 HTTP&#x2F;3 和 QUIC 协议终于接近正式标准化。预览版现在可以在<a href="https://link.zhihu.com/?target=https://en.wikipedia.org/wiki/HTTP/3%23Implementations">服务器和浏览器中进行测试</a>。</p>
+<p>与 HTTP&#x2F;2 相比，HTTP&#x2F;3 有很大的性能改进，这主要是因为它将<a href="https://link.zhihu.com/?target=https://http3-explained.haxx.se/en/h3">底层传输协议从 TCP 改为基于 UDP 的 QUIC</a>。在这篇文章中，我们将深入了解其中的一项改进，即消除<strong>“队头阻塞”（Head-of-Line blocking, 简写：HOL blocking）</strong>问题。这很有用，因为我读过很多关于这实际上意味着什么以及它在现实中有多大帮助的误解。解决队头阻塞也是 HTTP&#x2F;3 和 QUIC 以及 HTTP&#x2F;2 背后的主要动机之一，因此它也为协议演进的原因提供了一个极好的视角。</p>
+<p>我将首先介绍队头阻塞问题，然后在整个 HTTP 历史中跟踪它的不同形式。我们还将研究它如何与其他系统交互，如优先级和拥塞控制。我们的目标是帮助人们对 HTTP&#x2F;3 的性能改进做出正确的判断，而这（剧透）可能不像<a href="https://link.zhihu.com/?target=https://knowyourmeme.com/memes/the-cake-is-a-lie">营销材料</a>中所说的那样令人惊讶。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/30/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-HTTP%E9%98%9F%E5%A4%B4%E9%98%BB%E5%A1%9E/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1016,214 +1233,8 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/" class="post-title-link" itemprop="url">计算机网络-计算机网络面试突击</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 19:54:34 / 修改时间：20:00:01" itemprop="dateCreated datePublished" datetime="2022-10-25T19:54:34+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>43k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>39 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h1 id="计算机网络面试突击"><a href="#计算机网络面试突击" class="headerlink" title="计算机网络面试突击"></a>计算机网络面试突击</h1><h2 id="一：各协议层以及它们的服务类型"><a href="#一：各协议层以及它们的服务类型" class="headerlink" title="一：各协议层以及它们的服务类型"></a>一：各协议层以及它们的服务类型</h2><h3 id="1-OSI-七层模型"><a href="#1-OSI-七层模型" class="headerlink" title="1. OSI 七层模型"></a>1. OSI 七层模型</h3><p><img src="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/1.png" alt="img"> OSI 模型全称为开放式通信系统互连参考模型，是国际标准化组织 ( ISO ) 提出的一个试图使各种计算机在世界范围内互连为网络的标准框架。 OSI 将计算机网络体系结构划分为七层，每一层实现各自的功能和协议，并完成与相邻层的接口通信。OSI 的服务定义详细说明了各层所提供的服务。某一层的服务就是该层及其下各层的一种能力，它通过接口提供给更高一层。各层所提供的服务与这些服务是怎么实现的无关。</p>
-<p>① 应用层</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-RPC%E5%92%8CHTTP%E5%8C%BA%E5%88%AB/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-RPC%E5%92%8CHTTP%E5%8C%BA%E5%88%AB/" class="post-title-link" itemprop="url">计算机网络-RPC和HTTP区别</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 19:40:06 / 修改时间：19:50:08" itemprop="dateCreated datePublished" datetime="2022-10-25T19:40:06+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>2.9k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>3 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>网上充斥着各类类似于这样的文章：rpc 比 http 快了多少倍？既然有了 http，为什么还要用 rpc 调用等等。遇到这类文章，说明对 http 和 rpc 是由理解误区的。</p>
-<p>　　这里再次重复强调一遍，通信协议不是 rpc 最重要的部分，不要被这类回答带偏。如果要了解 rpc 请更多的去了解服务治理(SOA)的一些基本策略，推荐去看看 dubbo 的相关文档。</p>
-<h3 id="详解"><a href="#详解" class="headerlink" title="详解"></a>详解</h3><p>　　rpc是远端过程调用，其调用协议通常包含：传输协议 和 序列化协议。</p>
-<p>　　<strong>传输协议</strong></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C-RPC%E5%92%8CHTTP%E5%8C%BA%E5%88%AB/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 </div>
@@ -1246,13 +1257,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">1m</span>
+    <span title="站点总字数">1.1m</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">15:52</span>
+    <span title="站点阅读时长">16:13</span>
   </span>
 </div>
 <div class="busuanzi-count">
