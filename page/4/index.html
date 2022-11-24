@@ -167,7 +167,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">93</span>
+          <span class="site-state-item-count">96</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -215,6 +215,323 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-II/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-II/" class="post-title-link" itemprop="url">负载均衡-II</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 18:53:59 / 修改时间：18:59:43" itemprop="dateCreated datePublished" datetime="2022-10-25T18:53:59+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" itemprop="url" rel="index"><span itemprop="name">负载均衡</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-II/1.png" alt="图片"></p>
+<h2 id="1写在前面"><a href="#1写在前面" class="headerlink" title="1写在前面"></a>1写在前面</h2><p>写本文的目的：</p>
+<ul>
+<li>对负载均衡的理解零零散散，不成体系。</li>
+</ul>
+<p>阅读这篇文章需要的条件：</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-II/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/" class="post-title-link" itemprop="url">负载均衡-I</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 18:53:52 / 修改时间：18:56:53" itemprop="dateCreated datePublished" datetime="2022-10-25T18:53:52+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" itemprop="url" rel="index"><span itemprop="name">负载均衡</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><strong>序言</strong></p>
+<p> LB,SLB,ALB，GSLB,CDN，傻傻分不清楚，听风看雨。。。毒鸡汤看多了，我快掩饰不住我的悲伤了。。。</p>
+<p> <a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/clb?from=10680">负载均衡</a>，碰到的太多，使用的场景也很多，无论你是传统行业，还是互联网行业，魂牵梦绕的技术，所以谈谈其发展。</p>
+<p><strong>前世今生</strong></p>
+<p> 当业务量小的时候，每天访问的人数就那么几个的时候，我们用一台服务器就够了，上面部署上开发写的应用，部署上<a target="_blank" rel="noopener" href="https://cloud.tencent.com/solution/database?from=10680">数据库</a>服务，再加一个前端程序。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-I/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/Redis-%E6%90%BA%E7%A8%8B%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E5%92%8C%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E7%BC%93%E5%AD%98%E5%AE%9E%E8%B7%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/Redis-%E6%90%BA%E7%A8%8B%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E5%92%8C%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E7%BC%93%E5%AD%98%E5%AE%9E%E8%B7%B5/" class="post-title-link" itemprop="url">Redis-携程最终一致和强一致性缓存实践</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:39:45 / 修改时间：18:51:33" itemprop="dateCreated datePublished" datetime="2022-10-25T17:39:45+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Redis/" itemprop="url" rel="index"><span itemprop="name">Redis</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="携程最终一致和强一致性缓存实践"><a href="#携程最终一致和强一致性缓存实践" class="headerlink" title="携程最终一致和强一致性缓存实践"></a>携程最终一致和强一致性缓存实践</h1><h1 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a><strong>一、前言</strong></h1><p>​    </p>
+<p>携程金融从成立至今，整体架构经历了从0到1再到10的变化，其中有多个场景使用了缓存来提升服务质量。从系统层面看，使用缓存的目的无外乎缓解DB压力（主要是读压力），提升服务响应速度。引入缓存，就不可避免地引入了缓存与业务DB数据的一致性问题，而不同的业务场景，对数据一致性的要求也不同。本文将从以下两个场景介绍我们的一些缓存实践方案：</p>
+<ul>
+<li>最终一致性分布式缓存场景</li>
+<li>强一致性分布式缓存场景</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/Redis-%E6%90%BA%E7%A8%8B%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E5%92%8C%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E7%BC%93%E5%AD%98%E5%AE%9E%E8%B7%B5/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -958,330 +1275,6 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/" class="post-title-link" itemprop="url">SystemDesign-弹幕系统设计</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 17:10:17 / 修改时间：17:12:08" itemprop="dateCreated datePublished" datetime="2022-10-25T17:10:17+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/SystemDesign/" itemprop="url" rel="index"><span itemprop="name">SystemDesign</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1.8k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>2 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>直播业务现在特别火爆，也给人们的互动方式带来了很多新的改变，比如刷礼物、弹幕、排行榜等等。面对巨大的流量规模，直播技术的发展也备受关注。作为一个技术爱好者，相信你也会对直播的技术比较感兴趣，于是我去翻了几篇文章，了解了直播的技术方案，发现涉及到的技术细节太多，有部分已经是知识盲区，如<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E9%9F%B3%E9%A2%91&spm=1001.2101.3001.7020">音频</a>、视频的编码传输等。</p>
-<p>　　直播中弹幕是一个非常亮眼和重要的功能，相比于秒杀架构，直播弹幕系统也有很多有趣的知识可以挖掘，一起来 YY 下如何设计一个直播弹幕系统，不对的地方还请有经验的大佬指出。</p>
-<p>　　直播弹幕是一个读写 QPS 要求都很高，假设一个直播间有 100w 用户同时在线观看，假设弹幕的提交频率为有 10000条&#x2F;秒，那么需要每秒同时推送给在线用户的次数为 100w * 10000。由此可见，读请求的吞吐量需要远大于写请求，这点类似于 IM 实时聊天。</p>
-<p>　　架构设计考虑以下几个场景：</p>
-<p>　　支持直播弹幕回放用户进入直播间可以推送最新几秒的弹幕数据长连模式和短连模式可以做降级切换</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/SystemDesign-%E5%BC%B9%E5%B9%95%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/SpringCloud-%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E5%8E%9F%E7%90%86%E5%92%8C%E9%80%89%E5%9E%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/SpringCloud-%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E5%8E%9F%E7%90%86%E5%92%8C%E9%80%89%E5%9E%8B/" class="post-title-link" itemprop="url">SpringCloud-注册中心原理和选型</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 17:05:47 / 修改时间：17:08:30" itemprop="dateCreated datePublished" datetime="2022-10-25T17:05:47+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/SpringCloud/" itemprop="url" rel="index"><span itemprop="name">SpringCloud</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>9.9k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>9 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h1 id="注册中心原理和选型：Zookeeper、Eureka、Nacos、Consul和Etcd"><a href="#注册中心原理和选型：Zookeeper、Eureka、Nacos、Consul和Etcd" class="headerlink" title="注册中心原理和选型：Zookeeper、Eureka、Nacos、Consul和Etcd"></a>注册中心原理和选型：Zookeeper、Eureka、Nacos、Consul和Etcd</h1><p><img src="/2022/10/25/SpringCloud-%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E5%8E%9F%E7%90%86%E5%92%8C%E9%80%89%E5%9E%8B/1.png" alt="图片"></p>
-<blockquote>
-<p>讲解5种常用的注册中心，对比其流程和原理，无论是面试还是技术选型，都非常有帮助。</p>
-</blockquote>
-<p>经过近2周的学习，原来注册中心除了ETCD和Zookeeper，常用的还有Eureka、Nacos、Consul，下面我们就对这些常用的注册中心，初探它们的异同，便于后续技术选型。</p>
-<p>全文接近 <strong>8千字</strong>，有点长，<strong>建议先收藏，再慢慢看</strong>，下面是文章目录：</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/SpringCloud-%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E5%8E%9F%E7%90%86%E5%92%8C%E9%80%89%E5%9E%8B/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/" class="post-title-link" itemprop="url">spring自动注入</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 16:48:20 / 修改时间：17:04:46" itemprop="dateCreated datePublished" datetime="2022-10-25T16:48:20+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>11k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>10 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <blockquote>
-<p>比如提到spring的自动注入作为一个java程序员肯定自信无比了解；但是笔者要说的自动注入可能会和你理解有很大出入。<br>首先搞明白什么是自动注入，自动注入也可以叫做自动装配（springboot也有一个自动装配但是我认为翻译的不够准确，springboot的应该叫做自动配置和这里说的自动注入是两回事，笔者不是什么大牛或者权威；所以读者如果你坚持认为springboot也叫自动装配那也无可厚非，只是在这篇文章里面所谓的自动注入就是自动装配，关于springboot的自动配置我以后更新文章再来说）；<br>自动注入需要相对于手动装配来说；在spring应用程序当中假设你的A类依赖了B类，需要在A类当中提供一个B类的属性，再加上setter，继而在xml当中配置、描述一下这两个类之间的依赖关系。如果做完当容器初始化过程中会实例化A，在实例化A的过程中会填充属性，由于在xml中已经配置、描述好两者的关系，故而spring会把B给A装配上；这种由程序员自己配置、描述好依赖关系的写法叫做手动装配；看个例子吧；</p>
-</blockquote>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.luban.app;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">	B b;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setB</span><span class="params">(B b)</span> &#123;</span><br><span class="line">		<span class="built_in">this</span>.b = b;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> com.luban.app;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span>?&gt;</span><br><span class="line">&lt;beans xmlns=<span class="string">&quot;http://www.springframework.org/schema/beans&quot;</span></span><br><span class="line">       xmlns:xsi=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span><br><span class="line">       xsi:schemaLocation=<span class="string">&quot;http://www.springframework.org/schema/beans</span></span><br><span class="line"><span class="string">       http://www.springframework.org/schema/beans/spring-beans.xsd&quot;</span>&gt;</span><br><span class="line">&lt;bean id=<span class="string">&quot;a&quot;</span> class=<span class="string">&quot;com.luban.app.A&quot;</span> &gt;</span><br><span class="line">		&lt;!-- 由程序员手动指定的依赖关系 称为手动装配--&gt;</span><br><span class="line">		&lt;property name=<span class="string">&quot;b&quot;</span>&gt;</span><br><span class="line">			&lt;ref bean=<span class="string">&quot;b&quot;</span> /&gt;</span><br><span class="line">		&lt;/property&gt;</span><br><span class="line">	&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">	&lt;bean id=<span class="string">&quot;b&quot;</span>  class=<span class="string">&quot;com.luban.app.B&quot;</span>&gt;</span><br><span class="line">	&lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;	</span><br></pre></td></tr></table></figure>
-
-
-<blockquote>
-<p>但是实际开发中手动装配的场景比较少(比如在缺少源码的情况下可能会使用这种手动装配情况)；<br>关于依赖注入的资料可以参考官网<br><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-dependencies">https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-dependencies</a><br>这一章节提到了一个非常重要的知识点，也是一个常见的spring面试题目。spring有几种依赖注入方式？那么这个问题应该怎么回答呢？</p>
-</blockquote>
-<p><img src="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/1.png" alt="在这里插入图片描述"></p>
-<blockquote>
-<p>官网的意思是DI(依赖注入)一共有两种主要的变体（注意会考），分别是基于构造方法的依赖注入和基于setter（setXxxx(…)）的依赖注入，不管是手动装配还是自动装配都是基于这两种方式或者变体方式来的；但是这里一定要回答到主要和变体两个名词，因为有的注入方式就不是这两种，而是这两种其中一种的变体方式；比如在一个类的属性上面加@Autowired，这种方式注入属性的方式就是利用了java的反射知识，field.set(value,targetObject);关于这个我在后面的文章中对spring源码解析的时候会说明@Autowired的原理；所以@Autowired这种注入的方式是setter注入方式的一种变体<br>但是这里需要说明的是所谓的setter其实和属性无关，什么意思呢？一般的setter方法会对应一个属性，但是spring的基于setter的注入方式是不需要属性的，仅仅只需要一个setter方法，下面这个例子来说明这个问题</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/spring%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
     <a class="extend prev" rel="prev" href="/page/3/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/5/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
@@ -1312,7 +1305,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">16:16</span>
+    <span title="站点阅读时长">16:28</span>
   </span>
 </div>
 <div class="busuanzi-count">
