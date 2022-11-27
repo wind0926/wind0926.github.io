@@ -167,18 +167,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">96</span>
+          <span class="site-state-item-count">97</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-count">23</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">72</span>
+        <span class="site-state-item-count">73</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -215,6 +215,112 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/Tomcat-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/Tomcat-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/" class="post-title-link" itemprop="url">Tomcat-架构解析</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:13:32 / 修改时间：17:16:54" itemprop="dateCreated datePublished" datetime="2022-10-25T17:13:32+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/tomcat/" itemprop="url" rel="index"><span itemprop="name">tomcat</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>27k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>25 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="Tomcat-架构原理解析到架构设计借鉴"><a href="#Tomcat-架构原理解析到架构设计借鉴" class="headerlink" title="Tomcat 架构原理解析到架构设计借鉴"></a>Tomcat 架构原理解析到架构设计借鉴</h1><blockquote>
+<p>Tomcat 发展这么多年，已经比较成熟稳定。在如今『追新求快』的时代，Tomcat 作为 Java Web 开发必备的工具似乎变成了『熟悉的陌生人』，难道说如今就没有必要深入学习它了么？学习它我们又有什么收获呢？</p>
+</blockquote>
+<p><strong>静下心来，细细品味经典的开源作品</strong> 。提升我们的「内功」，具体来说就是学习大牛们如何设计、架构一个中间件系统，并且让这些经验为我所用。</p>
+<p>美好的事物往往是整洁而优雅的。但这并不等于简单，而是要将复杂的系统分解成一个个小模块，并且各个模块的职责划分也要清晰合理。</p>
+<p>与此相反的是凌乱无序，比如你看到城中村一堆互相纠缠在一起的电线，可能会感到不适。维护的代码一个类几千行、一个方法好几百行。方法之间相互耦合糅杂在一起，你可能会说 what the f*k！</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/Tomcat-%E6%9E%B6%E6%9E%84%E8%A7%A3%E6%9E%90/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1173,111 +1279,6 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/MySQL-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8range-hash%E6%96%B9%E6%A1%88/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/MySQL-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8range-hash%E6%96%B9%E6%A1%88/" class="post-title-link" itemprop="url">MySQL-分库分表range-hash方案</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 15:50:40 / 修改时间：19:35:10" itemprop="dateCreated datePublished" datetime="2022-10-25T15:50:40+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/MySQL/" itemprop="url" rel="index"><span itemprop="name">MySQL</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>3.4k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>3 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>中大型项目中，一旦遇到数据量比较大，小伙伴应该都知道就应该对数据进行拆分了。有垂直和水平两种。</p>
-<p>垂直拆分比较简单，也就是本来一个数据库，数据量大之后，从业务角度进行拆分多个库。如下图，独立的拆分出订单库和用户库。</p>
-<p><img src="/2022/10/25/MySQL-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8range-hash%E6%96%B9%E6%A1%88/1.png" alt="图片"></p>
-<p>水平拆分的概念，是同一个业务数据量大之后，进行水平拆分。</p>
-<p><img src="/2022/10/25/MySQL-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8range-hash%E6%96%B9%E6%A1%88/2.png" alt="图片"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/MySQL-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8range-hash%E6%96%B9%E6%A1%88/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
     <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/6/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
@@ -1308,7 +1309,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">16:28</span>
+    <span title="站点阅读时长">16:40</span>
   </span>
 </div>
 <div class="busuanzi-count">

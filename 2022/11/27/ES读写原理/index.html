@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="1.基本概念索引（Index）ES将数据存储于一个或多个索引中，索引是具有类似特性的文档的集合。类比传统的关系型数据库领域来说，索引相当于SQL中的一个数据库，或者一个数据存储方案(schema)。索引由其名称(必须为全小写字符)进行标识，并通过引用此名称完成文档的创建、搜索、更新及删除操作。一个ES集群中可以按需创建任意数目的索引。 类型（Type）类型是索引内部的逻辑分区(category&amp;#">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ES读写原理">
+<meta property="og:url" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="1.基本概念索引（Index）ES将数据存储于一个或多个索引中，索引是具有类似特性的文档的集合。类比传统的关系型数据库领域来说，索引相当于SQL中的一个数据库，或者一个数据存储方案(schema)。索引由其名称(必须为全小写字符)进行标识，并通过引用此名称完成文档的创建、搜索、更新及删除操作。一个ES集群中可以按需创建任意数目的索引。 类型（Type）类型是索引内部的逻辑分区(category&amp;#">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/8.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/9.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/10.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/11.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/12.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/13.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/14.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/15.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/16.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/17.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/18.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/19.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/20.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/50.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/21.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/51.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/22.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/23.png">
+<meta property="og:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/24.png">
+<meta property="article:published_time" content="2022-11-27T06:10:58.000Z">
+<meta property="article:modified_time" content="2022-11-27T06:20:05.539Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="Elasticsearch">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/","path":"2022/11/27/ES读写原理/","title":"ES读写原理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ES读写原理 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">1.基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%EF%BC%88Index%EF%BC%89"><span class="nav-number">1.0.1.</span> <span class="nav-text">索引（Index）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B1%BB%E5%9E%8B%EF%BC%88Type%EF%BC%89"><span class="nav-number">1.0.2.</span> <span class="nav-text">类型（Type）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%EF%BC%88Document%EF%BC%89"><span class="nav-number">1.0.3.</span> <span class="nav-text">文档（Document）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#document%E8%B7%AF%E7%94%B1%E5%8E%9F%E7%90%86"><span class="nav-number">1.0.3.1.</span> <span class="nav-text">document路由原理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%EF%BC%88Inverted-Index%EF%BC%89"><span class="nav-number">1.0.4.</span> <span class="nav-text">倒排索引（Inverted Index）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%EF%BC%9F"><span class="nav-number">1.0.4.1.</span> <span class="nav-text">什么是倒排索引？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Term-Dictionary"><span class="nav-number">1.0.4.2.</span> <span class="nav-text">Term Dictionary</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Term-Index"><span class="nav-number">1.0.4.3.</span> <span class="nav-text">Term Index</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E6%8A%80%E5%B7%A7"><span class="nav-number">1.0.4.4.</span> <span class="nav-text">压缩技巧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Roaring-bitmaps"><span class="nav-number">1.0.4.5.</span> <span class="nav-text">Roaring bitmaps</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%81%94%E5%90%88%E7%B4%A2%E5%BC%95"><span class="nav-number">1.0.4.6.</span> <span class="nav-text">联合索引</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8A%82%E7%82%B9%EF%BC%88Node%EF%BC%89"><span class="nav-number">1.0.5.</span> <span class="nav-text">节点（Node）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%89%87%EF%BC%88Shard%EF%BC%89"><span class="nav-number">1.0.6.</span> <span class="nav-text">分片（Shard）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-%E5%86%99%E6%95%B0%E6%8D%AE"><span class="nav-number">2.</span> <span class="nav-text">2.写数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86"><span class="nav-number">2.0.1.</span> <span class="nav-text">原理解析预备知识</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#3-segment-%E5%90%88%E5%B9%B6"><span class="nav-number">3.</span> <span class="nav-text">3.segment 合并</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#4-%E5%88%A0%E9%99%A4%E5%92%8C%E6%9B%B4%E6%96%B0"><span class="nav-number">4.</span> <span class="nav-text">4.删除和更新</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#5-%E6%9F%A5%E8%AF%A2"><span class="nav-number">5.</span> <span class="nav-text">5.查询</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2%E9%98%B6%E6%AE%B5"><span class="nav-number">5.0.1.</span> <span class="nav-text">查询阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%96%E5%9B%9E%E9%98%B6%E6%AE%B5"><span class="nav-number">5.0.2.</span> <span class="nav-text">取回阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%80%A7%E8%AE%A1%E7%AE%97"><span class="nav-number">5.0.3.</span> <span class="nav-text">相关性计算</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#6-filter%E6%89%A7%E8%A1%8C%E5%8E%9F%E7%90%86"><span class="nav-number">6.</span> <span class="nav-text">6.filter执行原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%881%EF%BC%89%E5%9C%A8%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E4%B8%AD%E6%9F%A5%E6%89%BE%E6%90%9C%E7%B4%A2%E4%B8%B2%EF%BC%8C%E8%8E%B7%E5%8F%96document-list"><span class="nav-number">6.0.1.</span> <span class="nav-text">（1）在倒排索引中查找搜索串，获取document list</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%882%EF%BC%89%E4%B8%BA%E6%AF%8F%E4%B8%AA%E5%9C%A8%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E4%B8%AD%E6%90%9C%E7%B4%A2%E5%88%B0%E7%9A%84%E7%BB%93%E6%9E%9C%EF%BC%8C%E6%9E%84%E5%BB%BA%E4%B8%80%E4%B8%AAbitset"><span class="nav-number">6.0.2.</span> <span class="nav-text">（2）为每个在倒排索引中搜索到的结果，构建一个bitset</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%883%EF%BC%89%E9%81%8D%E5%8E%86%E6%AF%8F%E4%B8%AA%E8%BF%87%E6%BB%A4%E6%9D%A1%E4%BB%B6%E5%AF%B9%E5%BA%94%E7%9A%84bitset%EF%BC%8C%E4%BC%98%E5%85%88%E4%BB%8E%E6%9C%80%E7%A8%80%E7%96%8F%E7%9A%84%E5%BC%80%E5%A7%8B%E6%90%9C%E7%B4%A2%EF%BC%8C%E6%9F%A5%E6%89%BE%E6%BB%A1%E8%B6%B3%E6%89%80%E6%9C%89%E6%9D%A1%E4%BB%B6%E7%9A%84document"><span class="nav-number">6.0.3.</span> <span class="nav-text">（3）遍历每个过滤条件对应的bitset，优先从最稀疏的开始搜索，查找满足所有条件的document</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%884%EF%BC%89caching-bitset"><span class="nav-number">6.0.4.</span> <span class="nav-text">（4）caching bitset</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#filter%E6%AF%94query%E5%A5%BD%E7%9A%84%E5%8E%9F%E5%9B%A0%E9%99%A4%E4%BA%86%E4%B8%8D%E8%AE%A1%E7%AE%97%E7%9B%B8%E5%85%B3%E5%BA%A6%E5%88%86%E6%95%B0%E4%BB%A5%E5%A4%96%E8%BF%98%E6%9C%89%E8%BF%99%E4%B8%AAcaching-bitset%E3%80%82%E6%89%80%E4%BB%A5filter%E6%80%A7%E8%83%BD%E4%BC%9A%E5%BE%88%E9%AB%98%E3%80%82"><span class="nav-number">6.0.4.1.</span> <span class="nav-text">filter比query好的原因除了不计算相关度分数以外还有这个caching bitset。所以filter性能会很高。</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%885%EF%BC%89filter%E5%A4%A7%E9%83%A8%E5%88%86%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8C%E6%98%AF%E5%9C%A8query%E4%B9%8B%E5%89%8D%E6%89%A7%E8%A1%8C%E7%9A%84%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%B0%BD%E5%8F%AF%E8%83%BD%E8%BF%87%E6%BB%A4%E6%8E%89%E5%A4%9A%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">6.0.5.</span> <span class="nav-text">（5）filter大部分的情况下，是在query之前执行的，可以尽可能过滤掉多的数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%886%EF%BC%89%E5%A6%82%E6%9E%9Cdocument%E6%9C%89%E6%96%B0%E5%A2%9E%E5%92%8C%E4%BF%AE%E6%94%B9%EF%BC%8C%E9%82%A3%E4%B9%88caching-bitset%E4%BC%9A%E8%A2%AB%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0"><span class="nav-number">6.0.6.</span> <span class="nav-text">（6）如果document有新增和修改，那么caching bitset会被自动更新</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%EF%BC%887%EF%BC%89%E4%BB%A5%E5%90%8E%E5%8F%AA%E8%A6%81%E6%9C%89%E7%9B%B8%E5%90%8C%E7%9A%84filter%E6%9D%A1%E4%BB%B6%E7%9A%84%E6%9F%A5%E8%AF%A2%E8%AF%B7%E6%B1%82%E6%89%93%E8%BF%87%E6%9D%A5%EF%BC%8C%E5%B0%B1%E4%BC%9A%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8%E8%BF%99%E4%B8%AA%E8%BF%87%E6%BB%A4%E6%9D%A1%E4%BB%B6%E5%AF%B9%E5%BA%94%E7%9A%84bitset"><span class="nav-number">6.0.7.</span> <span class="nav-text">（7）以后只要有相同的filter条件的查询请求打过来，就会直接使用这个过滤条件对应的bitset</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#7-%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98"><span class="nav-number">7.</span> <span class="nav-text">7.常见面试题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%A2%E8%AF%95%E9%A2%98"><span class="nav-number">7.0.1.</span> <span class="nav-text">面试题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%A2%E8%AF%95%E5%AE%98%E5%BF%83%E7%90%86%E5%88%86%E6%9E%90"><span class="nav-number">7.0.2.</span> <span class="nav-text">面试官心理分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9D%A2%E8%AF%95%E9%A2%98%E5%89%96%E6%9E%90"><span class="nav-number">7.0.3.</span> <span class="nav-text">面试题剖析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#es-%E6%90%9C%E7%B4%A2%E6%95%B0%E6%8D%AE%E8%BF%87%E7%A8%8B"><span class="nav-number">7.0.3.1.</span> <span class="nav-text">es 搜索数据过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%99%E6%95%B0%E6%8D%AE%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86"><span class="nav-number">7.0.3.2.</span> <span class="nav-text">写数据底层原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A0%E9%99%A4-x2F-%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86"><span class="nav-number">7.0.3.3.</span> <span class="nav-text">删除&#x2F;更新数据底层原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%95%E5%B1%82-lucene"><span class="nav-number">7.0.3.4.</span> <span class="nav-text">底层 lucene</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95"><span class="nav-number">7.0.3.5.</span> <span class="nav-text">倒排索引</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">73</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ES读写原理 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ES读写原理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-11-27 14:10:58 / 修改时间：14:20:05" itemprop="dateCreated datePublished" datetime="2022-11-27T14:10:58+08:00">2022-11-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Elasticsearch/" itemprop="url" rel="index"><span itemprop="name">Elasticsearch</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>13k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>12 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="1-基本概念"><a href="#1-基本概念" class="headerlink" title="1.基本概念"></a>1.基本概念</h1><h3 id="索引（Index）"><a href="#索引（Index）" class="headerlink" title="索引（Index）"></a>索引（Index）</h3><p>ES将数据存储于一个或多个索引中，索引是具有类似特性的文档的集合。类比传统的关系型数据库领域来说，索引相当于SQL中的一个数据库，或者一个数据存储方案(schema)。索引由其名称(必须为全小写字符)进行标识，并通过引用此名称完成文档的创建、搜索、更新及删除操作。一个ES集群中可以按需创建任意数目的索引。</p>
+<h3 id="类型（Type）"><a href="#类型（Type）" class="headerlink" title="类型（Type）"></a>类型（Type）</h3><p>类型是索引内部的<strong>逻辑</strong>分区(category&#x2F;partition)，其意义完全取决于用户需求。因此，一个索引内部可定义一个或多个类型(type)。一般来说，类型就是为那些拥有相同的域的文档做的预定义。例如，在索引中，可以定义一个用于存储用户数据的类型，一个存储日志数据的类型，以及一个存储评论数据的类型。类比传统的关系型数据库领域来说，类型相当于 “表” 。</p>
+<p>Elasticsearch 为何要在 7.X版本中 去除type的概念</p>
+<ul>
+<li><strong>背景说明</strong></li>
+</ul>
+<p>​      Elasticsearch是一个基于<a target="_blank" rel="noopener" href="https://lucene.apache.org/core/">Apache Lucene(TM)</a>的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。</p>
+<p>​      Elasticsearch 是一种NoSQL数据库（非关系型数据库），和常规的关系型数据库（比如：MySQL，Oralce等）的基本概念，对应关系如下：</p>
+<p>​      Elasticsearch：<strong>index</strong>  –&gt; <strong>type</strong>   –&gt;  <strong>doc</strong>  –&gt; <strong>field</strong></p>
+<p>​      MySQL:      数据库 –&gt;  数据表 –&gt;  行   –&gt; 列</p>
+<p>​      因为关系型数据库比非关系型数据库的概念提出的早，而且很成熟，应用广泛。</p>
+<p>​     所以，后来很多NoSQL（包括：MongoDB，Elasticsearch等）都参考并延用了传统关系型数据库的基本概念。</p>
+<p>​     一个客观的现象和事实如下：</p>
+<p>​     Elasticsearch 官网提出的近期版本对 type 概念的演变情况如下：</p>
+<p>​     在 <strong>5.X</strong> 版本中，<strong>一个 index</strong> 下<strong>可以创建****多个 type</strong>；</p>
+<p>​     在 <strong>6.X</strong> 版本中，<strong>一个 index</strong> 下<strong>只能存在一个 type</strong>；</p>
+<p>​     在 <strong>7.X</strong> 版本中，直接<strong>去除了 type</strong> 的概念，就是说 <strong>index 不再会有 type</strong>。 </p>
+<ul>
+<li><p>原因</p>
+<p>因为 Elasticsearch 设计初期，是直接查考了关系型数据库的设计模式，存在了 type（数据表）的概念。</p>
+<p>但是，其<strong>搜索引擎</strong>是<strong>基于 Lucene</strong> 的，这种 “<strong>基因</strong>” 决定了 type 是多余的。 Lucene 的<strong>全文检索功能</strong>之所以快，是因为 <strong>倒排索引</strong> 的存在。</p>
+<p>而这种 倒排索引 的生成是基于 index 的，而并非 type。多个type 反而会减慢搜索的速度。</p>
+<p>为了保持 Elasticsearch “<strong>一切为了搜索</strong>” 的宗旨，适当的做些改变（去除 type）也是无可厚非的，也是值得的。</p>
+<p>为何不是在 6.X 版本开始就直接去除 type，而是要逐步去除type？</p>
+<p>因为历史原因，前期 Elasticsearch 支持一个 index 下存在多个 type的，而且，有很多项目在使用 Elasticsearch 作为数据库。</p>
+<p>如果直接去除 type 的概念，不仅是<strong>很多应用 Elasticsearch 的项目</strong>将<strong>面临 业务、功能和代码的大改</strong>，</p>
+<p>而且对于 <strong>Elasticsearch 官方</strong>来说，<strong>也是一个巨大的挑战</strong>（这个是伤筋动骨的大手术，很多涉及到 type 源码是要修改的）。</p>
+<p>所以，权衡利弊，采取<strong>逐步过渡</strong>的方式，最终，推迟到 7.X 版本才完成 “<strong>去除 type</strong>” 这个 <strong>革命性的变革</strong>。</p>
+</li>
+</ul>
+<h3 id="文档（Document）"><a href="#文档（Document）" class="headerlink" title="文档（Document）"></a>文档（Document）</h3><p>文档是索引和搜索的原子单位，它是包含了一个或多个域（Field）的容器，基于JSON格式进行表示。文档由一个或多个域组成，每个域拥有一个名字及一个或多个值，有多个值的域通常称为 “多值域” 。每个文档可以存储不同的域集，但同一类型下的文档至应该有某种程度上的相似之处。</p>
+<ul>
+<li><h4 id="document路由原理"><a href="#document路由原理" class="headerlink" title="document路由原理"></a>document路由原理</h4></li>
+</ul>
+<p>​     ①路由算法：shard &#x3D; hash(routing) % number_of_primary_shards<br>​     ②决定一个document在哪个shard上，最重要的一个值就是routing值，默认是_id，也可手动指定，相同的routing值，每次过来，从hash函数中，产出的hash值一定是相同的<br>​     例：手动指定一个routing value，比如 put &#x2F;index&#x2F;type&#x2F;id?routing&#x3D;user_id<br>​     ③这就是primary shard数量不可变的原因。</p>
+<h3 id="倒排索引（Inverted-Index）"><a href="#倒排索引（Inverted-Index）" class="headerlink" title="倒排索引（Inverted Index）"></a>倒排索引（Inverted Index）</h3><p>每一个文档都对应一个ID。倒排索引会按照指定语法对每一个文档进行分词，然后维护一张表，列举所有文档中出现的terms以及它们出现的文档ID和出现频率。搜索时同样会对关键词进行同样的分词分析，然后查表得到结果。</p>
+<h4 id="什么是倒排索引？"><a href="#什么是倒排索引？" class="headerlink" title="什么是倒排索引？"></a>什么是倒排索引？</h4><p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314165702664-1410240529.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/1.png" alt="img"></a></p>
+<p>假设有下列几条数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ID    Name    Age    Sex</span><br><span class="line">1     Kate    24     Female</span><br><span class="line">2     John    24     Male</span><br><span class="line">3     Bill    29     Male</span><br></pre></td></tr></table></figure>
+
+
+
+<p>ID是Elasticsearch自建的文档id，那么Elasticsearch建立的索引如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Name:</span><br><span class="line">Term Posting List</span><br><span class="line">Kate 1</span><br><span class="line">John 2</span><br><span class="line">Bill 3</span><br><span class="line"></span><br><span class="line">Age:</span><br><span class="line">Term Posting List</span><br><span class="line">24 [1,2]</span><br><span class="line">29 3</span><br><span class="line"></span><br><span class="line">Sex:</span><br><span class="line">Term Posting List</span><br><span class="line">Female 1</span><br><span class="line">Male [2,3]</span><br></pre></td></tr></table></figure>
+
+<p>Elasticsearch分别为每个field都建立了一个倒排索引，Kate, John, 24, Female这些叫term，而 [1,2] 就是Posting List。Posting list就是一个int的数组，存储了所有符合某个term的文档id。通过posting list这种索引方式可以很快进行查找，比如要找age&#x3D;24的人。</p>
+<h4 id="Term-Dictionary"><a href="#Term-Dictionary" class="headerlink" title="Term Dictionary"></a>Term Dictionary</h4><p>Elasticsearch为了能快速找到某个term，将所有的term排序，二分法查找term，logN的查找效率，就像通过字典查找一样，这就是Term Dictionary。类似于传统数据库的B-Tree的，但是Term Dictionary较B-Tree的查询快。</p>
+<h4 id="Term-Index"><a href="#Term-Index" class="headerlink" title="Term Index"></a>Term Index</h4><p>B-Tree通过减少磁盘寻道次数来提高查询性能，Elasticsearch也是采用同样的思路，直接通过内存查找term，不读磁盘，但是如果term太多，term dictionary也会很大，放内存不现实，于是有了<strong>Term Index</strong>，就像字典里的索引页一样，A开头的有哪些term，分别在哪页，term index其实是一颗 (trie) 前缀树：<a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314171955461-1909418546.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/2.png" alt="img"></a></p>
+<p>这棵树不会包含所有的term，它包含的是term的一些前缀。通过term index可以快速地定位到term dictionary的某个offset，然后从这个位置再往后顺序查找。</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314172113702-1908039906.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/3.png" alt="img"></a></p>
+<p>所以term index不需要存下所有的term，而仅仅是他们的一些前缀与Term Dictionary的block之间的映射关系，再结合FST(Finite State Transducers)的压缩技术，可以使term index缓存到内存中。从term index查到对应的term dictionary的block位置之后，再去磁盘上找term，大大减少了磁盘随机读的次数。</p>
+<p>假设我们现在要将mop, moth, pop, star, stop, top (term index里的term前缀) 映射到序号：0，1，2，3，4，5 (term dictionary的block位置)。最简单的做法就是定义个Map，大家找到自己的位置取值即可，但从内存占用少的角度考虑，FST更节省空间。</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314172623947-985051386.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/4.png" alt="img"></a></p>
+<p>⭕️ 表示一种状态</p>
+<p>–&gt; 表示状态的变化过程，上面的字母&#x2F;数字表示状态变化和权重</p>
+<p>将单词分成单个字母通过⭕️和–&gt;表示出来，0权重不显示。如果⭕️后面出现分支，就标记权重，最后整条路径上的权重加起来就是这个单词对应的序号。</p>
+<p>FST以字节的方式存储所有的term，这种压缩方式可以有效的缩减存储空间，使得term index足以放进内存，但这种方式也会导致查找时需要更多的CPU资源。</p>
+<h4 id="压缩技巧"><a href="#压缩技巧" class="headerlink" title="压缩技巧"></a>压缩技巧</h4><p>Elasticsearch里除了上面说到用FST压缩term index外，对posting list也有压缩技巧。如果Elasticsearch需要对人的性别进行索引，如果有上千万个人，而性别只分男&#x2F;女，每个posting list都会有至少百万个文档id。Elasticsearch采用一定的压缩算法对这些文档id进行压缩：</p>
+<p><strong>增量编码压缩，将大数变小数，按字节存储</strong></p>
+<p>首先，Elasticsearch要求posting list是有序的(为了提高搜索的性能)，这样做的好处是方便压缩，看下面这个图例：</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314173359437-1665737725.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/5.png" alt="img"></a></p>
+<p>原理就是通过增量，将原来的大数变成小数仅存储增量值，再精打细算按bit排好队，最后通过字节存储，而不是用int(4个字节)来存储。</p>
+<h4 id="Roaring-bitmaps"><a href="#Roaring-bitmaps" class="headerlink" title="Roaring bitmaps"></a>Roaring bitmaps</h4><p>Roaring bitmaps基于bitmap。Bitmap是一种数据结构，假设某个posting list：[1,3,4,7,10]，其对应的bitmap就是：[1,0,1,1,0,0,1,0,0,1]。<br>用0&#x2F;1表示某个值是否存在，存在的值对应的bit值是1，即一个字节 (8位) 可以代表8个文档id，旧版本 (5.0之前) 的Lucene就是用这样的方式来压缩的，但这样的压缩方式仍然不够高效，如果有1亿个文档，那么需要12.5MB的存储空间，这仅仅是对应一个索引字段。于是衍生出了Roaring bitmaps这样更高效的数据结构。<br>将posting list按照65535为界限分块 (block) ，比如第一块所包含的文档id范围在0<del>65535之间，第二块的id范围是65536</del>131071，以此类推。再用&lt;商，余数&gt;的组合表示每一组id，这样每组里的id范围都在0~65535内了。</p>
+<p>Bitmap的缺点是存储空间随着文档个数线性增长，Roaring bitmaps利用了某些指数特性来规避这一点：</p>
+<p>”为什么是以65535为界限?”</p>
+<p>65535&#x3D;2^16-1，正好是2个字节能表示的最大数，一个short的存储单位，注意到上图里的最后一行“If a block has more than 4096 values, encode as a bit set, and otherwise as a simple array using 2 bytes per value”，如果是较大的 (block) 块，用 bitset 存，小块用一个 short[] 存储。</p>
+<p>那为什么用4096来区分采用数组还是bitmap的阀值呢？</p>
+<p>这个是从内存大小考虑的，当block块里元素超过4096后，用bitmap更省空间： 采用bitmap需要的空间是恒定的: 65536&#x2F;8 &#x3D; 8192bytes 而如果采用short[]，所需的空间是: 2*N(N为数组元素个数) N&#x3D;4096刚好是边界：</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314174049355-1375337022.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/6.png" alt="img"></a></p>
+<h4 id="联合索引"><a href="#联合索引" class="headerlink" title="联合索引"></a>联合索引</h4><p>上述都是单field索引，如果是多个field索引的联合查询，倒排索引如何满足快速查询的要求呢？</p>
+<p>利用跳表(Skip list)的数据结构快速做“与”运算，或者利用上面提到的bitset按位“与”。先看看跳表的数据结构：</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314174226837-1903703069.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/7.png" alt="img"></a></p>
+<p>将一个有序链表level0，挑出其中几个元素到level1及level2，每个level越往上，选出来的指针元素越少，查找时依次从高level往低查找，比如55，先找到level2的31，再找到level1的47，最后找到55，一共3次查找，查找效率和2叉树的效率相当，但也是用了一定的空间冗余来换取的。<br>假设有下面三个posting list需要联合索引：</p>
+<p><a target="_blank" rel="noopener" href="https://img2018.cnblogs.com/blog/1604064/201903/1604064-20190314174438262-632524717.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/8.png" alt="img"></a></p>
+<p>如果使用跳表，对最短的posting list中的每个id，逐个在另外两个posting list中查找看是否存在，最后得到交集的结果。如果使用bitset，就很直观了，直接按位与，得到的结果就是最后的交集。</p>
+<h3 id="节点（Node）"><a href="#节点（Node）" class="headerlink" title="节点（Node）"></a>节点（Node）</h3><p>一个运行中的 Elasticsearch 实例称为一个节点，而集群是由一个或者多个拥有相同 <strong>cluster.name</strong> 配置的节点组成， 它们共同承担数据和负载的压力。</p>
+<p>ES集群中的节点有三种不同的类型：</p>
+<ul>
+<li>主节点：负责管理集群范围内的所有变更，例如增加、删除索引，或者增加、删除节点等。 主节点并不需要涉及到文档级别的变更和搜索等操作。可以通过属性node.master进行设置。</li>
+<li>数据节点：存储数据和其对应的倒排索引。默认每一个节点都是数据节点（包括主节点），可以通过node.data属性进行设置。</li>
+<li>协调节点：如果node.master和node.data属性均为false，则此节点称为协调节点，用来响应客户请求，均衡每个节点的负载。</li>
+</ul>
+<h3 id="分片（Shard）"><a href="#分片（Shard）" class="headerlink" title="分片（Shard）"></a>分片（Shard）</h3><p>一个索引中的数据保存在多个分片中，相当于水平分表。一个分片便是一个Lucene 的实例，它本身就是一个完整的搜索引擎。我们的文档被存储和索引到分片内，但是应用程序是直接与索引而不是与分片进行交互。</p>
+<p>ES实际上就是利用分片来实现分布式。分片是数据的容器，文档保存在分片内，分片又被分配到集群内的各个节点里。 当你的集群规模扩大或者缩小时， ES会自动的在各节点中迁移分片，使得数据仍然均匀分布在集群里。</p>
+<p>一个分片可以是主分片或者副本分片。 索引内任意一个文档都归属于一个主分片，所以主分片的数目决定着索引能够保存的最大数据量。一个副本分片只是一个主分片的拷贝。<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/_add-an-index.html#id-1.4.4.9.7.1"> </a>副本分片作为硬件故障时保护数据不丢失的冗余备份，并为搜索和返回文档等读操作提供服务。</p>
+<p>如果当前插入大量数据，那么会对es集群造成一定的压力，所以在插入大量数据前，也就是在建立索引的时候，我们最好把副本数设置为0；<strong>等数据建立完索引之后，在手动的将副本数更改到2，这样可以提高数据的索引效率</strong></p>
+<p>在索引建立的时候就已经确定了主分片数，但是副本分片数可以随时修改。默认情况下，一个索引会有5个主分片，而其副本可以有任意数量。</p>
+<p>主分片和副本分片的状态决定了集群的健康状态。每一个节点上都只会保存主分片或者其对应的一个副本分片，相同的副本分片不会存在于同一个节点中。如果集群中只有一个节点，则副本分片将不会被分配，此时集群健康状态为yellow，存在丢失数据的风险。</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_0204.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/9.png" alt="拥有三个节点的集群"></a></p>
+<p> 3个节点，3个主分片，1份副本</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_0205.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/10.png" alt="拥有2份副本分片3个节点的集群"></a></p>
+<p>增加一份副本</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_0206.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/11.png" alt="关闭了一个节点后的集群"></a></p>
+<p> 其中一个节点出现故障</p>
+<p>实际上，每一个分片还会进一步拆分为分段（Segment）。这是ES写入文档所采用的机制决定的。</p>
+<h1 id="2-写数据"><a href="#2-写数据" class="headerlink" title="2.写数据"></a>2.写数据</h1><h3 id="原理解析预备知识"><a href="#原理解析预备知识" class="headerlink" title="原理解析预备知识"></a>原理解析预备知识</h3><ul>
+<li><strong>index</strong>：类似数据库，是存储、索引数据的地方。</li>
+<li><strong>shard</strong>：index 由 shard 组成，一个 primary shard，其他是 replica shard。</li>
+<li><strong>segment</strong>：shard 包含 segment，segment 中是倒排索引，它是不可变的；segment 内的文档数量的上限是 <code>2^31</code>。</li>
+<li><strong>倒排索引</strong>：倒排索引是 Lucene 中用于使数据可搜索的数据结构。</li>
+<li><strong>translog</strong>：记录文档索引和删除操作的日志。Lucene 在每次 commit 之后把数据持久化到磁盘，但是 commit 操作代价很大，所以不能在每次数据变更之后执行 commit。Elasticsearch 为防止宕机造成数据丢失，每次写入数据时会同步写到 <code>buffer</code> 和 <code>translog</code>，在 flush 操作时把数据持久化。</li>
+<li><strong>commit point</strong>：列出所有已知 segment 的文件。</li>
+</ul>
+<p>当用户向一个节点提交了一个索引新文档的请求，节点会计算新文档应该加入到哪个分片（shard）中。每个节点都存储有每个分片存储在哪个节点的信息，因此协调节点会将请求发送给对应的节点。注意这个请求会发送给主分片，等主分片完成索引，会并行将请求发送到其所有副本分片，保证每个分片都持有最新数据。</p>
+<p>每次写入新文档时，都会先写入内存 <code>buffer</code>（这时数据是搜索不到的），同时将数据写入 <code>translog</code> 日志文件。</p>
+<p><a target="_blank" rel="noopener" href="https://jyjsjd.github.io/assets/img/elasticsearch/buffer.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/12.png" alt="buffer.png"></a></p>
+<ul>
+<li>es每隔1秒（可配置）或者 <code>buffer</code> 快满时执行一次刷新（refresh）操作，将 <code>buffer</code> 数据 refresh 到 <code>os cache</code> 即操作系统缓存。这时数据就可以被搜索到了：</li>
+<li>buffer 的文档被写入到一个新的 segment 中（这1秒时间内写入内存的新文档都会被写入一个文件系统缓存（filesystem cache）中，并构成一个分段（segment））；</li>
+<li>segment 被打开以供搜索（此时这个segment里的文档可以被搜索到，但是尚未写入硬盘，即如果此时发生断电，则这些文档可能会丢失）；</li>
+<li>内存 buffer 清空。</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://jyjsjd.github.io/assets/img/elasticsearch/refresh.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/13.png" alt="refresh.png"></a></p>
+<ul>
+<li>不断有新的文档写入，则这一过程将不断重复执行。每隔一秒将生成一个新的segment，当 <code>translog</code> 越来越大达到一定长度的时候，就会触发 flush 操作（flush 完成了 Lucene 的 <code>commit</code> 操作）</li>
+<li>第一步将 <code>buffer</code> 中现有数据 <code>refresh</code> 到 <code>os cache</code> 中去，清空 <code>buffer</code>；</li>
+<li>然后，将一个 <code>commit point</code> 写入磁盘文件，同时强行将 <code>os cache</code> 中目前所有的数据都 fsync 到磁盘文件中去；</li>
+<li>最后清空现有 <code>translog</code> 日志文件并生成新的translog。</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://jyjsjd.github.io/assets/img/elasticsearch/flush.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/14.png" alt="flush.png"></a></p>
+<p>​                     执行fsync后segment写入磁盘，清空内存和translog</p>
+<p>由上面的流程可以看出，在两次fsync操作之间，存储在内存和文件系统缓存中的文档是不安全的，一旦出现断电这些文档就会丢失。所以ES引入了translog来记录两次fsync之间所有的操作，这样机器从故障中恢复或者重新启动，ES便可以根据translog进行还原。</p>
+<p>当然，translog本身也是文件，存在于内存当中，如果发生断电一样会丢失。因此，ES会在每隔5秒时间或是一次写入请求完成后将translog写入磁盘。可以认为一个对文档的操作一旦写入磁盘便是安全的可以复原的，因此只有在当前操作记录被写入磁盘，ES才会将操作成功的结果返回发送此操作请求的客户端。</p>
+<h1 id="3-segment-合并"><a href="#3-segment-合并" class="headerlink" title="3.segment 合并"></a>3.segment 合并</h1><p><code>buffer</code> 每 <code>refresh</code> 一次，就会产生一个 <code>segment</code>（默认情况下是 1 秒钟产生一个），这样 <code>segment</code> 会越来越多，此时会定期执行 merge。</p>
+<ul>
+<li>将多个 <code>segment</code> 合并成一个，并将新的 <code>segment</code> 写入磁盘；</li>
+<li>新增一个 <code>commit point</code>，标识所有新的 <code>segment</code>；</li>
+<li>新的 <code>segment</code> 被打开供搜索使用；</li>
+<li>删除旧的 <code>segment</code>。</li>
+</ul>
+<p>对于一个分片进行查询请求，将会轮流查询分片中的所有segment，这将降低搜索的效率。因此ES会自动启动合并segment的工作，将一部分相似大小的segment合并成一个新的大segment。合并的过程实际上是创建了一个新的segment，当新segment被写入磁盘，所有被合并的旧segment被清除。</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_1110.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/15.png" alt="Two commited segments and one uncommited segment in the process of being merged into a bigger segment"></a></p>
+<p>合并segment</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_1111.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/16.png" alt="img"></a></p>
+<p>合并完成后删除旧segment，新segment可供搜索</p>
+<p>整个过程如图：</p>
+<p><a target="_blank" rel="noopener" href="https://jyjsjd.github.io/assets/img/elasticsearch/write.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/17.png" alt="write.png"></a></p>
+<p>注：这个的同时写入os cache指的是日志信息</p>
+<h1 id="4-删除和更新"><a href="#4-删除和更新" class="headerlink" title="4.删除和更新"></a>4.删除和更新</h1><p>由于 <code>segment</code> 是不可变的，索引删除的时候既不能把文档从 <code>segment</code> 删除，也不能修改 <code>segment</code> 反映文档的更新。</p>
+<ul>
+<li>删除操作，会生成一个 <code>.del</code> 文件，<code>commit point</code> 会包含这个 <code>.del</code> 文件。<code>.del</code> 文件将文档标识为 <code>deleted</code> 状态，在结果返回前从结果集中删除。</li>
+<li>更新操作，会将原来的文档标识为 <code>deleted</code> 状态，然后新写入一条数据。查询时两个文档有可能都被索引到，但是被标记为删除的文档会被从结果集删除。</li>
+</ul>
+<h1 id="5-查询"><a href="#5-查询" class="headerlink" title="5.查询"></a>5.查询</h1><p>查询的过程大体上分为查询（query）和取回（fetch）两个阶段。这个节点的任务是广播查询请求到所有相关分片，并将它们的响应整合成全局排序后的结果集合，这个结果集合会返回给客户端。</p>
+<h3 id="查询阶段"><a href="#查询阶段" class="headerlink" title="查询阶段"></a>查询阶段</h3><p>当一个节点接收到一个搜索请求，则这个节点就变成了协调节点。</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_0901.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/18.png" alt="查询过程分布式搜索"></a></p>
+<p>图10、查询过程分布式搜索</p>
+<p>第一步是广播请求到索引中每一个节点的分片拷贝。 查询请求可以被某个主分片或某个副本分片处理，协调节点将在之后的请求中轮询所有的分片拷贝来分摊负载。</p>
+<p>每个分片将会在本地构建一个优先级队列。如果客户端要求返回结果排序中从第from名开始的数量为size的结果集，则每个节点都需要生成一个from+size大小的结果集，因此优先级队列的大小也是from+size。分片仅会返回一个轻量级的结果给协调节点，包含结果集中的每一个文档的ID和进行排序所需要的信息。</p>
+<p>协调节点会将所有分片的结果汇总，并进行全局排序，得到最终的查询排序结果。此时查询阶段结束。</p>
+<h3 id="取回阶段"><a href="#取回阶段" class="headerlink" title="取回阶段"></a>取回阶段</h3><p>查询过程得到的是一个排序结果，标记出哪些文档是符合搜索要求的，此时仍然需要获取这些文档返回客户端。</p>
+<p>协调节点会确定实际需要返回的文档，并向含有该文档的分片发送get请求；分片获取文档返回给协调节点；协调节点将结果返回给客户端。</p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/images/elas_0902.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/19.png" alt="分布式搜索的取回阶段"></a></p>
+<p>图11、分布式搜索的取回阶段</p>
+<h3 id="相关性计算"><a href="#相关性计算" class="headerlink" title="相关性计算"></a>相关性计算</h3><p>在搜索过程中对文档进行排序，需要对每一个文档进行打分，判别文档与搜索条件的相关程度。在旧版本的ES中默认采用TF&#x2F;IDF（term frequency&#x2F;inverse document frequency）算法对文档进行打分。</p>
+<p>查询的时候操作系统会将磁盘文件里的数据自动缓存到 <code>filesystem cache</code>。Elasticsearch 严重依赖于底层的 <code>filesystem cache</code>，如果给 <code>filesystem cache</code> 很大，可以容纳所有的 <code>index</code>、<code>segment</code> 等文件，那么搜索的时候就基本都是走内存的，性能会非常高；反之，搜索速度并不会很快。</p>
+<p><a target="_blank" rel="noopener" href="https://jyjsjd.github.io/assets/img/elasticsearch/read.png"><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/20.png" alt="read.png"></a></p>
+<h1 id="6-filter执行原理"><a href="#6-filter执行原理" class="headerlink" title="6.filter执行原理"></a>6.filter执行原理</h1><p>当一个filter搜索请求打到Elasticsearch的时候，ES会进行下面的操作：</p>
+<h3 id="（1）在倒排索引中查找搜索串，获取document-list"><a href="#（1）在倒排索引中查找搜索串，获取document-list" class="headerlink" title="（1）在倒排索引中查找搜索串，获取document list"></a>（1）在倒排索引中查找搜索串，获取document list</h3><p>以date来举例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">word         doc1    doc2    doc3</span><br><span class="line">2019-01-01    *       *</span><br><span class="line">2019-02-02            *        *</span><br><span class="line">2019-03-03    *       *        *</span><br></pre></td></tr></table></figure>
+
+<p>filter: 2019-02-02<br>在倒排索引中寻找，我们发现2019-02-02对应的document list是doc2、doc3</p>
+<h3 id="（2）为每个在倒排索引中搜索到的结果，构建一个bitset"><a href="#（2）为每个在倒排索引中搜索到的结果，构建一个bitset" class="headerlink" title="（2）为每个在倒排索引中搜索到的结果，构建一个bitset"></a>（2）为每个在倒排索引中搜索到的结果，构建一个bitset</h3><p>这一步是非常重要的，使用找到的doc list，构建一个bitset，即一个二进制的数组，数组的每个元素都是0或1，用来标识一个doc对一个filter条件是否匹配，如果匹配的话值就是1，不匹配值就是0。<br>所以上面的filter的bitset的结果就是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0,1,1]</span><br></pre></td></tr></table></figure>
+
+<p>doc1：不匹配这个filter的<br>doc2和doc3：匹配这个filter的</p>
+<p>注：尽可能用简单的数据结构去实现复杂的功能，可以节省内存空间，提升性能。</p>
+<h3 id="（3）遍历每个过滤条件对应的bitset，优先从最稀疏的开始搜索，查找满足所有条件的document"><a href="#（3）遍历每个过滤条件对应的bitset，优先从最稀疏的开始搜索，查找满足所有条件的document" class="headerlink" title="（3）遍历每个过滤条件对应的bitset，优先从最稀疏的开始搜索，查找满足所有条件的document"></a>（3）遍历每个过滤条件对应的bitset，优先从最稀疏的开始搜索，查找满足所有条件的document</h3><p>由于一次性可以在一个search请求中发出多个filter条件，那么就会产生多个bitset，遍历每个filter条件对应的bitset优先从最稀疏的开始遍历</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[0,0,0,0,0,0,0,1]  比较稀疏的bitset</span><br><span class="line">[1,0,1,1,0,1,0,1]</span><br></pre></td></tr></table></figure>
+
+<p>这里主要是因为先遍历比较稀疏的bitset，就可以先过滤掉尽可能多的数据</p>
+<h3 id="（4）caching-bitset"><a href="#（4）caching-bitset" class="headerlink" title="（4）caching bitset"></a>（4）caching bitset</h3><p>caching bitset会跟踪query，在最近256个query中超过一定次数的过滤条件，缓存其bitset。对于小segment（&lt;1000 或&lt;3%），不缓存bitset。这样下次如果在有这个条件过来的时候，就不用重新扫描倒排索引，反复生成bitset，可以大幅度提升性能。</p>
+<p>说明：<br>1、在最近的256个filter中，有某个filter超过了一定次数，这个次数不固定，那么elasticsearch就会缓存这个filter对应的bitset<br>2、filter针对小的segment获取到的结果，是可以不缓存的，segment记录数小于1000，或者segment大小小于index总大小的3%。因为此时segment数据量很小，哪怕是扫描也是很快的；segment会在后台自动合并，小segment很快会跟其它小segment合并成大segment，此时缓存就没有什么意思了，segment很快会消失。</p>
+<h4 id="filter比query好的原因除了不计算相关度分数以外还有这个caching-bitset。所以filter性能会很高。"><a href="#filter比query好的原因除了不计算相关度分数以外还有这个caching-bitset。所以filter性能会很高。" class="headerlink" title="filter比query好的原因除了不计算相关度分数以外还有这个caching bitset。所以filter性能会很高。"></a>filter比query好的原因除了不计算相关度分数以外还有这个caching bitset。所以filter性能会很高。</h4><h3 id="（5）filter大部分的情况下，是在query之前执行的，可以尽可能过滤掉多的数据"><a href="#（5）filter大部分的情况下，是在query之前执行的，可以尽可能过滤掉多的数据" class="headerlink" title="（5）filter大部分的情况下，是在query之前执行的，可以尽可能过滤掉多的数据"></a>（5）filter大部分的情况下，是在query之前执行的，可以尽可能过滤掉多的数据</h3><p>query: 会计算每个doc的相关度分数，还会根据这个相关度分数去做排序<br>filter: 只是简单过滤出想要的数据，不计算相关度分数，也不排序</p>
+<h3 id="（6）如果document有新增和修改，那么caching-bitset会被自动更新"><a href="#（6）如果document有新增和修改，那么caching-bitset会被自动更新" class="headerlink" title="（6）如果document有新增和修改，那么caching bitset会被自动更新"></a>（6）如果document有新增和修改，那么caching bitset会被自动更新</h3><p>这个过程是ES内部做的，比如之前的bitset是[0,0,0,1]。那么现在插入一条数据或是更新了一条数据doc5，而且doc5也在缓存的bitset[0,0,0,1]的filter查询条件中，那么ES会自动更新这个bitset，变为[0,0,0,1,1]</p>
+<h3 id="（7）以后只要有相同的filter条件的查询请求打过来，就会直接使用这个过滤条件对应的bitset"><a href="#（7）以后只要有相同的filter条件的查询请求打过来，就会直接使用这个过滤条件对应的bitset" class="headerlink" title="（7）以后只要有相同的filter条件的查询请求打过来，就会直接使用这个过滤条件对应的bitset"></a>（7）以后只要有相同的filter条件的查询请求打过来，就会直接使用这个过滤条件对应的bitset</h3><p>这样查询性能就会很高，一些热的filter查询，就会被cache住。</p>
+<h1 id="7-常见面试题"><a href="#7-常见面试题" class="headerlink" title="7.常见面试题"></a>7.常见面试题</h1><h3 id="面试题"><a href="#面试题" class="headerlink" title="面试题"></a>面试题</h3><p>es 写入数据的工作原理是什么啊？es 查询数据的工作原理是什么啊？底层的 lucene 介绍一下呗？倒排索引了解吗？</p>
+<h3 id="面试官心理分析"><a href="#面试官心理分析" class="headerlink" title="面试官心理分析"></a>面试官心理分析</h3><p>问这个，其实面试官就是要看看你了解不了解 es 的一些基本原理，因为用 es 无非就是写入数据，搜索数据。你要是不明白你发起一个写入和搜索请求的时候，es 在干什么，那你真的是……</p>
+<p>对 es 基本就是个黑盒，你还能干啥？你唯一能干的就是用 es 的 api 读写数据了。要是出点什么问题，你啥都不知道，那还能指望你什么呢？</p>
+<h3 id="面试题剖析"><a href="#面试题剖析" class="headerlink" title="面试题剖析"></a>面试题剖析</h3><p><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/50.png" alt="图片"></p>
+<p><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/21.png" alt="图片"></p>
+<p><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/51.png" alt="图片"></p>
+<h4 id="es-搜索数据过程"><a href="#es-搜索数据过程" class="headerlink" title="es 搜索数据过程"></a>es 搜索数据过程</h4><p>es 最强大的是做全文检索，就是比如你有三条数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">java真好玩儿啊</span><br><span class="line">java好难学啊</span><br><span class="line">j2ee特别牛</span><br></pre></td></tr></table></figure>
+
+<p>你根据 java 关键词来搜索，将包含 java的 document 给搜索出来。es 就会给你返回：java真好玩儿啊，java好难学啊。</p>
+<ul>
+<li>客户端发送请求到一个 coordinate node。</li>
+<li>协调节点将搜索请求转发到所有的 shard 对应的 primary shard 或 replica shard，都可以。</li>
+<li>query phase：每个 shard 将自己的搜索结果（其实就是一些 doc id）返回给协调节点，由协调节点进行数据的合并、排序、分页等操作，产出最终结果。</li>
+<li>fetch phase：接着由协调节点根据 doc id 去各个节点上拉取实际的 document 数据，最终返回给客户端。</li>
+</ul>
+<h4 id="写数据底层原理"><a href="#写数据底层原理" class="headerlink" title="写数据底层原理"></a>写数据底层原理</h4><p><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/22.png" alt="图片"></p>
+<p>先写入内存 buffer，在 buffer 里的时候数据是搜索不到的；同时将数据写入 translog 日志文件。</p>
+<p>如果 buffer 快满了，或者到一定时间，就会将内存 buffer 数据 refresh 到一个新的 segment file 中，但是此时数据不是直接进入 segment file 磁盘文件，而是先进入 os cache 。这个过程就是 refresh。</p>
+<p>每隔 1 秒钟，es 将 buffer 中的数据写入一个新的 segment file，每秒钟会产生一个新的磁盘文件 segment file，这个 segment file 中就存储最近 1 秒内 buffer 中写入的数据。</p>
+<p>但是如果 buffer 里面此时没有数据，那当然不会执行 refresh 操作，如果buffer里面有数据，默认 1 秒钟执行一次 refresh 操作，刷入一个新的 segment file 中。</p>
+<p>操作系统里面，磁盘文件其实都有一个东西，叫做 os cache，即操作系统缓存，就是说数据写入磁盘文件之前，会先进入 os cache，先进入操作系统级别的一个内存缓存中去。只要 buffer 中的数据被 refresh 操作刷入 os cache中，这个数据就可以被搜索到了。</p>
+<p>为什么叫 es 是准实时的？NRT，全称 near real-time。默认是每隔 1 秒 refresh 一次的，所以 es 是准实时的，因为写入的数据 1 秒之后才能被看到。可以通过 es 的 restful api 或者 java api，手动执行一次 refresh 操作，就是手动将 buffer 中的数据刷入 os cache中，让数据立马就可以被搜索到。只要数据被输入 os cache 中，buffer 就会被清空了，因为不需要保留 buffer 了，数据在 translog 里面已经持久化到磁盘去一份了。</p>
+<p>重复上面的步骤，新的数据不断进入 buffer 和 translog，不断将 buffer 数据写入一个又一个新的 segment file 中去，每次 refresh 完 buffer 清空，translog保留。随着这个过程推进，translog 会变得越来越大。当 translog 达到一定长度的时候，就会触发 commit 操作。</p>
+<p>commit 操作发生第一步，就是将 buffer 中现有数据 refresh 到 os cache 中去，清空 buffer。然后，将一个 commit point 写入磁盘文件，里面标识着这个 commit point 对应的所有 segment file，同时强行将 os cache 中目前所有的数据都 fsync 到磁盘文件中去。最后清空 现有 translog 日志文件，重启一个 translog，此时 commit 操作完成。</p>
+<p>这个 commit 操作叫做 flush。默认 30 分钟自动执行一次 flush，但如果 translog 过大，也会触发 flush。flush 操作就对应着 commit 的全过程，我们可以通过 es api，手动执行 flush 操作，手动将 os cache 中的数据 fsync 强刷到磁盘上去。</p>
+<p>translog 日志文件的作用是什么？你执行 commit 操作之前，数据要么是停留在 buffer 中，要么是停留在 os cache 中，无论是 buffer 还是 os cache 都是内存，一旦这台机器死了，内存中的数据就全丢了。所以需要将数据对应的操作写入一个专门的日志文件 translog 中，一旦此时机器宕机，再次重启的时候，es 会自动读取 translog 日志文件中的数据，恢复到内存 buffer 和 os cache 中去。</p>
+<p>translog 其实也是先写入 os cache 的，默认每隔 5 秒刷一次到磁盘中去，所以默认情况下，可能有 5 秒的数据会仅仅停留在 buffer 或者 translog 文件的 os cache 中，如果此时机器挂了，会丢失 5 秒钟的数据。但是这样性能比较好，最多丢 5 秒的数据。也可以将 translog 设置成每次写操作必须是直接 fsync 到磁盘，但是性能会差很多。</p>
+<p>实际上你在这里，如果面试官没有问你 es 丢数据的问题，你可以在这里给面试官炫一把，你说，其实 es 第一是准实时的，数据写入 1 秒后可以搜索到；可能会丢失数据的。有 5 秒的数据，停留在 buffer、translog os cache、segment file os cache 中，而不在磁盘上，此时如果宕机，会导致 5 秒的数据丢失。</p>
+<blockquote>
+<p>数据写入 segment file 之后，同时就建立好了倒排索引。</p>
+</blockquote>
+<h4 id="删除-x2F-更新数据底层原理"><a href="#删除-x2F-更新数据底层原理" class="headerlink" title="删除&#x2F;更新数据底层原理"></a>删除&#x2F;更新数据底层原理</h4><p>如果是删除操作，commit 的时候会生成一个 .del 文件，里面将某个 doc 标识为 deleted 状态，那么搜索的时候根据 .del 文件就知道这个 doc 是否被删除了。</p>
+<p>如果是更新操作，就是将原来的 doc 标识为 deleted 状态，然后新写入一条数据。</p>
+<p>buffer 每次 refresh 一次，就会产生一个 segment file，所以默认情况下是 1 秒钟一个 segment file，这样下来 segment file 会越来越多，此时会定期执行 merge。每次 merge 的时候，会将多个 segment file 合并成一个，同时这里会将标识为 deleted 的 doc 给物理删除掉，然后将新的 segment file 写入磁盘，这里会写一个 commit point，标识所有新的 segment file，然后打开 segment file 供搜索使用，同时删除旧的 segment file。</p>
+<h4 id="底层-lucene"><a href="#底层-lucene" class="headerlink" title="底层 lucene"></a>底层 lucene</h4><p>简单来说，lucene 就是一个 jar 包，里面包含了封装好的各种建立倒排索引的算法代码。我们用 Java 开发的时候，引入 lucene jar，然后基于 lucene 的 api 去开发就可以了。</p>
+<p>通过 lucene，我们可以将已有的数据建立索引，lucene 会在本地磁盘上面，给我们组织索引的数据结构。</p>
+<h4 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h4><p>在搜索引擎中，每个文档都有一个对应的文档 ID，文档内容被表示为一系列关键词的集合。例如，文档 1 经过分词，提取了 20 个关键词，每个关键词都会记录它在文档中出现的次数和出现位置。</p>
+<p>那么，倒排索引就是关键词到文档 ID 的映射，每个关键词都对应着一系列的文件，这些文件中都出现了关键词。</p>
+<p>举个栗子。</p>
+<p>有以下文档：</p>
+<p><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/23.png" alt="图片"></p>
+<p>对文档进行分词之后，得到以下倒排索引。</p>
+<p><img src="/2022/11/27/ES%E8%AF%BB%E5%86%99%E5%8E%9F%E7%90%86/24.png" alt="图片"></p>
+<p>另外，实用的倒排索引还可以记录更多的信息，比如文档频率信息，表示在文档集合中有多少个文档包含某个单词。</p>
+<p>那么，有了倒排索引，搜索引擎可以很方便地响应用户的查询。比如用户输入查询 Facebook，搜索系统查找倒排索引，从中读出包含这个单词的文档，这些文档就是提供给用户的搜索结果。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Elasticsearch/" rel="tag"># Elasticsearch</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/11/24/%E7%8E%8B%E8%80%85%E8%8D%A3%E8%80%80-%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/" rel="prev" title="王者荣耀-游戏服务器架构演进">
+                  <i class="fa fa-chevron-left"></i> 王者荣耀-游戏服务器架构演进
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:40</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>
