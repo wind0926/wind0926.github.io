@@ -167,18 +167,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">99</span>
+          <span class="site-state-item-count">101</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-count">22</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-count">75</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -215,6 +215,220 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-CAP-Base%E7%90%86%E8%AE%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-CAP-Base%E7%90%86%E8%AE%BA/" class="post-title-link" itemprop="url">分布式事务-CAP+Base理论</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:23:16 / 修改时间：17:26:00" itemprop="dateCreated datePublished" datetime="2022-10-25T17:23:16+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">分布式事务</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在之前的<a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=Mzg4NjU0NTg2MA==&mid=2247483770&idx=1&sn=8f05f6edef012cfa64ce94553f84f748&chksm=cf994dd1f8eec4c73b768b040d2e42870cb3d03be445311bc1c8cc3b6e657c6be8354e2d03d1&scene=21#wechat_redirect">MySQL（二）、事务 </a>文章中我们介绍了MySQL事务的四个特性（ACID），本系列我们来讲解在分布式系统中事务可能遇到的问题以及对应的解决方案，本篇先来讲一下CAP以及BASE理论。</p>
+<h1 id="事务的一致性"><a href="#事务的一致性" class="headerlink" title="事务的一致性"></a>事务的一致性</h1><ul>
+<li><strong>强一致性</strong>：系统中的某个数据被成功更新后，后续的访问都能看到更新后的值；</li>
+<li><strong>弱一致性</strong>：系统中的某个数据被更新后，后续的访问可能得到更新后的值，也可能是更改前的值；</li>
+<li><strong>最终一致性</strong>：系统中的某个数据被更新，经过一段时间后，最终所有的访问都是更新的值；</li>
+</ul>
+<blockquote>
+<p><strong>刚性事务</strong>：遵循ACID原则，强一致性；</p>
+<p><strong>柔性事务</strong>：遵循BASE理论，最终一致性；</p>
+</blockquote>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-CAP-Base%E7%90%86%E8%AE%BA/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">分布式事务-Seata分布式事务框架</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-10-25 17:22:54 / 修改时间：17:34:16" itemprop="dateCreated datePublished" datetime="2022-10-25T17:22:54+08:00">2022-10-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">分布式事务</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="1-Seata-概述"><a href="#1-Seata-概述" class="headerlink" title="1. Seata 概述"></a>1. <a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=Seata&spm=1001.2101.3001.7020">Seata</a> 概述</h2><p>Seata 是 Simple Extensible Autonomous Transaction Architecture 的简写，由 feascar 改名而来。</p>
+<p>Seata 是阿里开源的<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%88%86%E5%B8%83%E5%BC%8F&spm=1001.2101.3001.7020">分布式</a>事务框架，属于二阶段提交模式。</p>
+<p>目前<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=github&spm=1001.2101.3001.7020">github</a>上已经有 12267 颗星了，也很活跃，最新的提交时间很多都是几天前。</p>
+<p>首先我们回顾一下在单体应用中，例如一个业务调用了3个模块，他们都使用同一个数据源，是靠本地事务来保证事务一致性。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/10/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-Seata%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%A1%86%E6%9E%B6/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1063,224 +1277,8 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/beanDefinition2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/beanDefinition2/" class="post-title-link" itemprop="url">beanDefinition2</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 16:47:30 / 修改时间：16:52:59" itemprop="dateCreated datePublished" datetime="2022-10-25T16:47:30+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>5.5k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>5 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>在上一篇文章里面我们讨论了一个beanDefintion对象的重要性，为了讨论spring当中的beanDefinition对象我们不得不牵扯出spring当中的bean工厂后置处理器也就是BeanFactoryPostProcessor这个类；继而讨论了BeanFactoryPostProcessor的大概执行时机（BeanFactoryPostProcessor的执行时机很重要而且spring内部做的稍微有点复杂，本文重点来讨论spring内部怎么保证这些执行时机得以严禁的执行，还有如何来扩展spring的bean工厂后置处理器）；首先通过一张图简单的理解一下spring容器启动的时候执行调用BeanFactoryPostProcessor后置处理器的大概的方法执行顺序</p>
-<p><img src="/2022/10/25/beanDefinition2/22.png" alt="在这里插入图片描述"></p>
-<p>上图大概分为④步（这里只是讨论spring如何调用BeanFactoryPostProcessor，在调用之前到底执行了那些方法，上图并不是spring容器启动的所有步骤）<br>①启动main方法，在main方法里面调用<br>②AnnotationConfigApplicationContext的无参构造方法，然后②-1在无参构造方法里面首先实例化AnnotatedBeanDefinitionReader对象，实例化这个对象有两个非常重要的意义。 <strong>1、这个对象实例化出来有什么用（问题一） ； 2、实例化这个对象的过程中做了哪些事情（问题二）</strong></p>
-<blockquote>
-<p>所有的<code>问题X</code>，文章后面再解释，这里先把步骤搞清楚</p>
-</blockquote>
-<p>继而②-2spring又实例化了一个ClassPathBeanDefinitionScanner对象，这个对象顾名思义就是能够用来完成spring的扫描功能，但是这里提一句——spring内部完成扫描功能并不是用的这个对象，而是在扫描的时候又new了一个新的ClassPathBeanDefinitionScanner对象；换言之这里spring new的对象我们假设他为a，但是spring在真正完成扫描的时候又new了一个b，但是是同一个类都是ClassPathBeanDefinitionScanner，但是为什么需要两个？ 3、直接用a不就可以了吗？如果spring内部完成扫描时候没用a，那么a被new出来在哪里使用了？（问题三）到此为止第②步完成；<br>③调用register(Appconfig.class);首先会把Appconfig类解析成为一个beanDefintion对象（如何把一个类解析称为beanDefinition对象的？这里其实涉及到②-1AnnotatedBeanDefinitionReader对象的意义，如果你明白了②-1这里也就明白了），然后给解析出来的beanDefinition对象设置一些默认属性，继而put到beanDefintionMap当中；为什么需要put到beanDefintionMap呢？在上一篇我们已经解释过这个map就是单纯用来存储beanDefinition的，spring后面会遍历这个map根据map当中的beanDefinition来实例化bean，如果Appconfig类的beanDefintion存在在map当中那么他必然会被spring容器实例化称为一个bean？为什么Appconfig会需要实例化呢？因为Appconfig当中有很多加了@Bean的方法，这些方法需要被调用，故而需要实例化，但是Appconfig类的实例化很复杂比一般类实例化过程复杂很多，涉及到代理涉及到cglib等等，这个我们后面文章解释；这里还需要解释一个问题，为什么Appconfig类是通过register(Appconfig.class);手动put到map当中呢？为什么不是扫描出来的呢？（一般类都是通过扫描出来的），其实也很简单，因为他无法扫描自己，一般类是spring通过解析Appconfig上的@ComponentScan注解然后被扫描到，所以无法扫描自己；接下来便是第<br>④步，④-1到④-4以后分析，④-5便是我们上篇文章说的执行spring当中的bean工厂后置处理器，也是本文重点讨论的；下图是对上述文字的一个说明——spring容器启动的执行顺序</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/beanDefinition2/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2022/10/25/beanDefinition1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="磐石">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | 默默的小磊磊技术博客">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/10/25/beanDefinition1/" class="post-title-link" itemprop="url">beanDefinition1</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-10-25 16:47:26 / 修改时间：16:50:47" itemprop="dateCreated datePublished" datetime="2022-10-25T16:47:26+08:00">2022-10-25</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>8.9k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>8 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>如果想系统的学习spring源码那么第一个需要搞明白的知识便是spring当中的BeanDefinition——<strong>spring bean的建模对象；</strong></p>
-<blockquote>
-<p>笔者特别强调，beanDefintion的比较枯燥和晦涩难懂，但是非常非常重要，我打算写三篇来把beanDefintion知识讲完；如果你想精读spring源码，请你一定细读三篇beanDefintion的知识，他是spring framework当中的基石；</p>
-</blockquote>
-<p>那么什么是spring bean的建模对象呢？一言概之就是把一个bean实例化出来的模型对象？有人会问把一个bean实例化出来有Class就行了啊，Class也就是我们通常说的类对象，就是一个普通对象的建模对象，那么为什么spring不能用Class来建立bean呢?很简单，因为Class无法完成bean的抽象，比如bean的作用域，bean的注入模型，bean是否是懒加载等等信息，Class是无法抽象出来的，故而需要一个BeanDefinition类来抽象这些信息，以便于spring能够完美的实例化一个bean（关于什么是bean什么是对象，请参考我写的第一篇循环引用笔者有解释）</p>
-<blockquote>
-<p>上述文字可以简单理解spring当中的BeanDefinition就是java当中的Class<br>Class可以用来描述一个类的属性和方法等等其他信息<br>BeanDefintion可以描述springbean当中的scope、lazy，以及属性和方法等等其他信息</p>
-</blockquote>
-<p>用一副图来说明java实例化一个对象的基本流程</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/25/beanDefinition1/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/6/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="extend next" rel="next" href="/page/6/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 </div>
@@ -1309,7 +1307,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">17:03</span>
+    <span title="站点阅读时长">17:14</span>
   </span>
 </div>
 <div class="busuanzi-count">

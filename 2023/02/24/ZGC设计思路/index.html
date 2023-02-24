@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-fill-left.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"wind0926.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"livere","storage":true,"lazyload":false,"nav":null,"activeClass":"livere"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="从G1垃圾收集器开始，后面的垃圾收集器都不再将堆按照新生代和老年代作为整体进行回收，都采用了局部收集的设计思想。 可能是由于G1作为第一代局部收集的垃圾收集器，所以它继续保留了新生代和老年代的概念，笔者认为从局部收集和分区的内存布局来看，按代收集理论已经没有什么特别存在的必要了。 一、ZGC的设计思路1.1 ZGC的内存布局新一代的垃圾收集器ZGC(Z Garbage Collector)就完全抛">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ZGC设计思路">
+<meta property="og:url" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/index.html">
+<meta property="og:site_name" content="默默的小磊磊技术博客">
+<meta property="og:description" content="从G1垃圾收集器开始，后面的垃圾收集器都不再将堆按照新生代和老年代作为整体进行回收，都采用了局部收集的设计思想。 可能是由于G1作为第一代局部收集的垃圾收集器，所以它继续保留了新生代和老年代的概念，笔者认为从局部收集和分区的内存布局来看，按代收集理论已经没有什么特别存在的必要了。 一、ZGC的设计思路1.1 ZGC的内存布局新一代的垃圾收集器ZGC(Z Garbage Collector)就完全抛">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/1.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/2.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/3.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/4.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/5.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/6.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/7.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/8.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/9.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/10.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/11.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/12.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/13.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/14.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/15.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/16.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/17.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/18.png">
+<meta property="og:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/19.png">
+<meta property="article:published_time" content="2023-02-24T05:42:10.000Z">
+<meta property="article:modified_time" content="2023-02-24T05:49:08.965Z">
+<meta property="article:author" content="磐石">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/1.png">
+
+
+<link rel="canonical" href="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/","path":"2023/02/24/ZGC设计思路/","title":"ZGC设计思路"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ZGC设计思路 | 默默的小磊磊技术博客</title>
+  
+
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">默默的小磊磊技术博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81ZGC%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF"><span class="nav-number">1.</span> <span class="nav-text">一、ZGC的设计思路</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-ZGC%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 ZGC的内存布局</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-ZGC%E6%94%AF%E6%8C%81NUMA"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 ZGC支持NUMA</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%9F%93%E8%89%B2%E6%8C%87%E9%92%88"><span class="nav-number">2.</span> <span class="nav-text">二、染色指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81ZGC%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E6%B5%81%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">三、ZGC垃圾收集流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 整体流程</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0"><span class="nav-number">3.1.1.</span> <span class="nav-text">标记</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%BD%AC%E7%A7%BB"><span class="nav-number">3.1.2.</span> <span class="nav-text">转移</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="nav-number">3.1.3.</span> <span class="nav-text">重定位</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-%E6%A0%87%E8%AE%B0%E9%98%B6%E6%AE%B5"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 标记阶段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-%E8%BD%AC%E7%A7%BB%E9%98%B6%E6%AE%B5"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 转移阶段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 重定位</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81ZGC%E7%9A%84%E8%AF%BB%E5%B1%8F%E9%9A%9C"><span class="nav-number">4.</span> <span class="nav-text">4、ZGC的读屏障</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%94%E3%80%81ZGC%E7%9A%84GC%E6%97%B6%E6%9C%BA"><span class="nav-number">5.</span> <span class="nav-text">五、ZGC的GC时机</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#5-1-%E9%A2%84%E7%83%AD%E8%A7%84%E5%88%99"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 预热规则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-2-%E5%9F%BA%E4%BA%8E%E5%88%86%E9%85%8D%E9%80%9F%E7%8E%87%E7%9A%84%E8%87%AA%E9%80%82%E5%BA%94%E7%AE%97%E6%B3%95"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 基于分配速率的自适应算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-3-%E5%9F%BA%E4%BA%8E%E5%9B%BA%E5%AE%9A%E6%97%B6%E9%97%B4%E9%97%B4%E9%9A%94"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 基于固定时间间隔</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-4-%E4%B8%BB%E5%8A%A8%E8%A7%A6%E5%8F%91"><span class="nav-number">5.4.</span> <span class="nav-text">5.4 主动触发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-5-%E9%98%BB%E5%A1%9E%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E8%AF%B7%E6%B1%82%E8%A7%A6%E5%8F%91"><span class="nav-number">5.5.</span> <span class="nav-text">5.5 阻塞内存分配请求触发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-6-%E5%A4%96%E9%83%A8%E8%A7%A6%E5%8F%91"><span class="nav-number">5.6.</span> <span class="nav-text">5.6 外部触发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-7-%E5%85%83%E6%95%B0%E6%8D%AE%E5%88%86%E9%85%8D%E8%A7%A6%E5%8F%91"><span class="nav-number">5.7.</span> <span class="nav-text">5.7 元数据分配触发</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%AD%E3%80%81ZGC%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE"><span class="nav-number">5.8.</span> <span class="nav-text">六、ZGC参数配置</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%A0%86%E5%A4%A7%E5%B0%8F%EF%BC%9A"><span class="nav-number">5.8.1.</span> <span class="nav-text">堆大小：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#GC-%E8%A7%A6%E5%8F%91%E6%97%B6%E6%9C%BA%EF%BC%9A"><span class="nav-number">5.8.2.</span> <span class="nav-text">GC 触发时机：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#GC-%E7%BA%BF%E7%A8%8B%EF%BC%9A"><span class="nav-number">5.8.3.</span> <span class="nav-text">GC 线程：</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="磐石"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">磐石</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">101</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">75</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/wind0926" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;wind0926" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:984564235@qq.com" title="E-Mail → mailto:984564235@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://wind0926.github.io/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="磐石">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ZGC设计思路 | 默默的小磊磊技术博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ZGC设计思路
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2023-02-24 13:42:10 / 修改时间：13:49:08" itemprop="dateCreated datePublished" datetime="2023-02-24T13:42:10+08:00">2023-02-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>从G1垃圾收集器开始，后面的垃圾收集器都不再将堆按照新生代和老年代作为整体进行回收，都采用了局部收集的设计思想。</p>
+<p>可能是由于G1作为第一代局部收集的垃圾收集器，所以它继续保留了新生代和老年代的概念，笔者认为从局部收集和分区的内存布局来看，按代收集理论已经没有什么特别存在的必要了。</p>
+<h3 id="一、ZGC的设计思路"><a href="#一、ZGC的设计思路" class="headerlink" title="一、ZGC的设计思路"></a>一、ZGC的设计思路</h3><h4 id="1-1-ZGC的内存布局"><a href="#1-1-ZGC的内存布局" class="headerlink" title="1.1 ZGC的内存布局"></a>1.1 ZGC的内存布局</h4><p>新一代的垃圾收集器ZGC(Z Garbage Collector)就完全抛弃了按代收集理论，它与G1一样将内存划分成各个小的区域的，但与G1有所不同的是，ZGC的各个内存区域称为页面(Page或者ZPage)，而且页面也不是全部大小相等。ZGC按照页面大小将页面分为三类：小页面、中页面和大页面。</p>
+<p>在x64的硬件平台上，ZGC的页面大小为：</p>
+<ul>
+<li><p>小页面：容量固定为2MB，用于存放小于256KB的小对象</p>
+</li>
+<li><p>中页面：容量固定为32MB，用于存放大于等于256KB但小于4MB的对象</p>
+</li>
+<li><p>大页面：容量不固定，可以动态变化，但必须为2MB的整数倍，用于存放大于等于4MB的对象。每个大页面只会存放一个大对象，也就是虽然它叫大页面，但它的容量可能还没中页面大，最小容量为4MB。</p>
+</li>
+</ul>
+<p>ZGC的内存布局大概是下图这样：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/1.png" alt="img"></p>
+<p>ZGC对于不同页面的回收策略是不同的，简单说就是小页面优先回收，中页面和大页面则尽量不回收。</p>
+<h4 id="1-2-ZGC支持NUMA"><a href="#1-2-ZGC支持NUMA" class="headerlink" title="1.2 ZGC支持NUMA"></a>1.2 ZGC支持NUMA</h4><p>在过去，对于X86架构的计算机，内存控制器还没有整合进CPU，所有对内存的访问都需要通过北桥芯片来完成。X86系统中的所有内存都可以通过CPU进行同等访问。任何CPU访问任何内存的速度是一致的，不必考虑不同内存地址之间的差异，这称为“统一内存访问”（Uniform Memory Access，UMA）。UMA系统的架构示意图如图所示。</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/2.png" alt="img"></p>
+<p>在UMA中，各处理器与内存单元通过互联总线进行连接，各个CPU之间没有主从关系。之后的X86平台经历了一场从“拼频率”到“拼核心数”的转变，越来越多的核心被尽可能地塞进了同一块芯片上，各个核心对于内存带宽的争抢访问成为瓶颈，所以人们希望能够把CPU和内存集成在一个单元上（称Socket），这就是非统一内存访问（Non-Uniform Memory Access，NUMA）。很明显，在NUMA下，CPU访问本地存储器的速度比访问非本地存储器快一些。下图所示是支持NUMA处理器架构示意图。</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/3.png" alt="img"></p>
+<p>ZGC是支持NUMA的，在进行小页面分配时会优先从本地内存分配，当不能分配时才会从远端的内存分配。对于中页面和大页面的分配，ZGC并没有要求从本地内存分配，而是直接交给操作系统，由操作系统找到一块能满足ZGC页面的空间。ZGC这样设计的目的在于，对于小页面，存放的都是小对象，从本地内存分配速度很快，且不会造成内存使用的不平衡，而中页面和大页面因为需要的空间大，如果也优先从本地内存分配，极易造成内存使用不均衡，反而影响性能。</p>
+<h3 id="二、染色指针"><a href="#二、染色指针" class="headerlink" title="二、染色指针"></a>二、染色指针</h3><p>ZGC与G1不同的是在回收整理阶段，G1需要STW，而ZGC可以进行并发回收，即垃圾收集线程可以与应用程序线程同时工作。但在并发整理阶段，如果应用程序要访问某个对象，而该对象被GC线程从原来的内存空间转移到了另一个块内存空间了，那么对于应用程序来说，如何才能知道对象新的内存空间呢？</p>
+<p>ZGC收集器有一个标志性的设计就是它采用染色指针技术(Colored Pointer，也可以称为Tag Pointer或Version Pointer)。在之前如果想要在对象上存储一些额外的、只供垃圾收集器或虚拟机本身使用的数据，通常都会在对象头中添加额外的字段，比如对象的哈希码、分代年龄、锁状态等。</p>
+<p>对于垃圾收集而言，可能更多的关注的是对象的引用指针，比如三色标记，这些标记本质上就只和对象的引用有关，而与对象本身无关，也就是某个对象只有它的引用关系能决定它存活与否，对象上的其他属性不无法影响它的存活判断。</p>
+<p>HotSpot几种收集器的标记实现方案，有的把标记直接记录在对象头(如Serial)，有的把标记记录在与对象完成独立的数据结构上(如G1采用BitMap的结构来记录标记信息，BitMap相当于堆内存大小的1&#x2F;64)。而ZGC的染色指针是最最直接的，直接把标记信息记在引用对象的指针上，这时，与其说可达性分析是遍历对象图来标记对象，还不如说是遍历<strong>引用图</strong>来标记<strong>引用</strong>。</p>
+<p>染色指针是一种直接将少量额外的信息存储到指针上的技术，那指针本身为什么可以存储额外信息呢？</p>
+<p>这里面涉及到了虚拟地址空间的与物理地址的转换，先看一下ZGC中一个对象的引用指针包含了哪些信息。</p>
+<p>在前面介绍对象内存布局的文章中讲过，在ZGC之前的虚拟机中，可以采用指针压缩技术，将35位以内的对象引用地址压缩到32位，而ZGC中的染色指针就是要借助指针的bit位来存储额外信息，以下面的图为例：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/4.png" alt="img"></p>
+<p>ZGC必须要在64bit的机器上才能运行，其中使用低42位来标识堆空间，然后借用几个高位来记录GC中的状态信息，分别为M0、M1、Remapped和一个预留字段，因为对象的引用地址大于35bit，所以在ZGC中是无法使用压缩指针的。</p>
+<p>正如图上所示，这个对象引用地址的64bit表示的是虚拟地址空间，并不是真实的物理地址空间，为什么这么设计呢？</p>
+<p>想一下，在GC的过程中，指针中用于存储额外信息的bit位是变化的，也就是说对象的引用地址一直是在变化的，这怎么可能是物理空间的地址呢，对程序来说，只要这个对象没有被移动，那么它的物理地址空间就一定是不变的，那么ZGC的对象引用地址一直在变，这里指的是对象的虚拟地址，JVM怎么知道真实的物理地址空间呢？</p>
+<p>这里面就涉及到了虚拟地址空间与物理地址空间的映射，不同层次的虚拟内存到物理内存的转换关系可以在硬件层面、操作系统层面以及软件进程层面来实现，如何完成地址转换，是一对一、多对一还是一对多的映射，也可以根据实际需要来设计。</p>
+<p>Linux&#x2F;x86-64平台上的ZGC使用的是多重映射(Multi-Mapping)，即将多个不同的虚拟内存地址映射到同一个物理内存地址上，这种多对一映射，意味着ZGC在虚拟地址中看到的地址空间要比实际的堆空间容量更大，因为在虚拟空间中，ZGC的对象占45bit，而在物理内存空间中，只有其中的41bit表示内存地址。</p>
+<p>有个多重映射，ZGC在GC过程中，不论M0、M1和Remapped对应的bit位怎么变化，它们对应的具体的对象的内存空间都是同一个。</p>
+<p>下面可以通过一个例子演示Linux多视图映射，Linux中主要通过系统函数<code>mmap</code>完成视图映射。多个视图映射就是多次调用mmap函数，多次调用的返回结果就是不同的虚拟地址</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//创建一个共享内存的文件描述符</span></span><br><span class="line">    <span class="type">int</span> fd = <span class="built_in">shm_open</span>(<span class="string">&quot;/example&quot;</span>, O_RDWR | O_CREAT | O_EXCL, <span class="number">0600</span>);</span><br><span class="line">    <span class="keyword">if</span> (fd == <span class="number">-1</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//防止资源泄露,需要删除。执行之后共享对象仍然存活,但是不能通过名字访问</span></span><br><span class="line">    <span class="built_in">shm_unlink</span>(<span class="string">&quot;/example&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//将共享内存对象的大小设置为4字节</span></span><br><span class="line">    <span class="type">size_t</span> size = <span class="built_in">sizeof</span>(<span class="type">uint32_t</span>);</span><br><span class="line">    <span class="built_in">ftruncate</span>(fd, size);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//3次调用mmap,把一个共享内存对象映射到3个虚拟地址上</span></span><br><span class="line">    <span class="type">int</span> prot = PROT_READ | PROT_WRITE;</span><br><span class="line">    <span class="type">uint32_t</span> *remapped = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, size, prot, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">    <span class="type">uint32_t</span> *m0 = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, size, prot, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">    <span class="type">uint32_t</span> *m1 = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, size, prot, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//关闭文件描述符</span></span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//测试,通过一个虚拟地址设置数据,3个虚拟地址得到相同的数据</span></span><br><span class="line">    *remapped = <span class="number">0xdeafbeef</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;48bit of remapped is: %p, value of 32bit is: 0x%x\n&quot;</span>, remapped, *remapped);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;48bit of m0 is: %p, value of 32bit is: 0x%x\n&quot;</span>, m0, *m0);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;48bit of m1 is: %p, value of 32bit is: 0x%x\n&quot;</span>, m1, *m1);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>输出的结果如下：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/5.png" alt="在这里插入图片描述"></p>
+<p>从结果我们可以发现，3个变量对应3个不同的虚拟地址,但它们的真实物理内存地址都是一样。</p>
+<p>实地址(32位指针)：<code>0xdeafbeef</code> &lt;一位16进制代表4位二进制&gt;</p>
+<p>虚地址(48位指针):</p>
+<p><code>0x7f93aef8e000</code> &lt;虚地址remapped&gt;</p>
+<p><code>0x7f93aef8d000</code> &lt;虚地址m0&gt;</p>
+<p><code>0x7f93aef8c000</code> &lt;虚地址m1&gt;</p>
+<p>但是因为它们都是通过mmap映射同一个内存共享对象，所以它们的物理地址是一样的，并且它们的值都是<code>0xdeafbeef</code>。</p>
+<p>ZGC染色指针的三个bit位在GC过程中扮演着非常重要的作用，下面介绍ZGC的收集过程中会详细介绍各个bit位的作用。</p>
+<h3 id="三、ZGC垃圾收集流程"><a href="#三、ZGC垃圾收集流程" class="headerlink" title="三、ZGC垃圾收集流程"></a>三、ZGC垃圾收集流程</h3><h4 id="3-1-整体流程"><a href="#3-1-整体流程" class="headerlink" title="3.1 整体流程"></a>3.1 整体流程</h4><p>ZGC的垃圾收集过程与G1有所不同，因为它支持并发整理，所以一次ZGC的垃圾收集过程主要包括两个阶段：标记阶段和转移阶段。严格来说一次完整的GC过程需要跨越两次GC，即每一次GC会遗留一些问题，然后在下一次GC时处理，先看宏观上以下一次GC的流程，大概如下图所示：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/6.png" alt="img"></p>
+<p>从ZGC完成的垃圾收集算法流程来说，ZGC分为三个阶段：</p>
+<ul>
+<li><h5 id="标记"><a href="#标记" class="headerlink" title="标记"></a>标记</h5><p>从<code>GC Roots</code>出发，标记活跃对象，此时内存中存在活跃对象和垃圾对象。</p>
+<p>在标记阶段，与G1基本相同，唯一的不同在于，在初始标记的时候，G1只能单线程进行，而ZGC为了追求性能，使用多线程(多个GC线程)进行。</p>
+<p>ZGC的再标记过程与G1的最终标记是一样，都是为了处理漏标对象，也是通过原始快照(STAB)算法解决，因为内存布局都是基于<code>Region/Page</code>。</p>
+</li>
+<li><h5 id="转移"><a href="#转移" class="headerlink" title="转移"></a>转移</h5><p>将活跃对象转移(复制)到新的内存上，原来的内存空间可回收，在并发转移阶段准备阶段，如果发现某个页全部都是垃圾对象，直接在该过程就把这些区域全部回收了。</p>
+</li>
+<li><h5 id="重定位"><a href="#重定位" class="headerlink" title="重定位"></a>重定位</h5><p>因为活跃对象的地址发生了变化，所以所有指向对象老地址的指针需要调整到新的对象地址上。</p>
+</li>
+</ul>
+<h4 id="3-2-标记阶段"><a href="#3-2-标记阶段" class="headerlink" title="3.2 标记阶段"></a>3.2 标记阶段</h4><p>上面已经讲了染色指针，通过M0、M1和Remapped来标记指针的状态，其中M0和M1主要用于区分连续的两次GC，ZGC的整个GC过程涉及到两次连续的GC，并不是一次GC就把所有工作都做了。</p>
+<p>下面我们给M0、M1和Remapped三种状态赋予不同的颜色，方便理解：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/7.png" alt="在这里插入图片描述"></p>
+<p>假设现在有四个对象，都在小页面(对象大小&lt;2MB)A中，因为此时还没开始进行GC，所以所有引用的指针都处于<code>Remapped</code>状态</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/8.png" alt="在这里插入图片描述"></p>
+<p>经过初始标记阶段后，对象A被<code>GC Root</code>引用，对象D被任何对象引用，A对象引用的指针颜色发生变化：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/9.png" alt="在这里插入图片描述"></p>
+<p>然后进行并发标记，并发标记过程中，将所有存活对象的指针状态全部改成<code>M0</code>，由于D对象不可达，所以它的指针颜色还是蓝色，但在并发标记阶段，B对象又引用了一个新的对象E，因为是新的对象还没有被GC扫描过，所以指针颜色是蓝色：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/10.png" alt="在这里插入图片描述"></p>
+<p>而在重新标记阶段，根据**原始快照(STAB)**会从B对象继续开始扫描，然后把E对象的指针变为绿色：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/11.png" alt="在这里插入图片描述"></p>
+<p>至此标记阶段就完成，剩下的对象指针为<code>Remapped</code>的都是垃圾对象，转移阶段进行回收</p>
+<h4 id="3-3-转移阶段"><a href="#3-3-转移阶段" class="headerlink" title="3.3 转移阶段"></a>3.3 转移阶段</h4><p>在并发转移阶段，会分析最有价值的GC分页，这个过程类似于G1筛选回收阶段的成本于收益比分析。</p>
+<p>在初始转移阶段，只会转移初始标记的存活对象，同时做对象的重定位，假设小页面A的对象都要转移到小页面B中，经过初始转移后，对象的位置及指针颜色如下：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/12.png" alt="img"></p>
+<p>因为A对象转移到新的页面时进行了重定位，所以A对象的指针状态变为Remapped蓝色。但对B对象的引用指针还是绿色。</p>
+<p>然后进行并发转移，把B、C、E对象也都转移到小页面B中：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/13.png" alt="img"></p>
+<p>在并发转移阶段，只会把B、C、E对象转移到新的小页面B中，并不会修改它们对应的引用指针，也就是B对C的引用还指向原来小页面中的旧地址，并没有对转移对象做重定位。</p>
+<p>但对象既然转移了，那肯定需要根据之前旧的地址找到新的地址，所以每个页面都会维护一张<code>转发表</code>，这个转发表就记录了指针旧地址到新地址的映射。</p>
+<p><strong>注：对象转移与转发表插入记录这是一个原子操作，要么都成功，要么都失败。</strong></p>
+<p>至此ZGC的一次垃圾收集过程就结束了，但前面我们也说了，ZGC的整个垃圾收集流程是涉及到两次GC的。</p>
+<h4 id="3-4-重定位"><a href="#3-4-重定位" class="headerlink" title="3.4 重定位"></a>3.4 重定位</h4><p>在第一次GC的时候，只是用了<code>M0</code>，在第二次GC的时候，就会用到<code>M1</code>，这两个标志位就是为了区分两次不同的垃圾回收的。</p>
+<p>在第一次GC完成和第二次GC开始的间隙，A对象又引用了一个新的对象F，如下图所示：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/14.png" alt="img"></p>
+<p>因为是一个新创建的对象，所以指针状态为<code>Remapped</code>。</p>
+<p>当第二次GC开始，由于上一次GC使用<code>M0</code>来标识存活对象，那么这一次就采用<code>M1</code>来标识存活对象，然后经过初始标记后，对象A的引用就变成了红色：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/15.png" alt="img"></p>
+<p>然后进行并发标记，在并发标记的过程中，因为F对象的指针为蓝色，就将其直接改为红色。当对象A扫描引用B时，发现它的指针颜色为绿色，状态为<code>M0</code>，它就会到原来的小页面A的转发表取到对象B的新地址进行重定位，然后再从转发表删除B指针的记录，重定位和删除转发表同样也是原子操作。C对象和E对象的操作是一样，经过并发标记后，新的对象布局如下：</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/16.png" alt="在这里插入图片描述"></p>
+<p>然后依次类推，下一次GC做标记时，在使用<code>M0</code>来标记存活对象。</p>
+<p>为什么要把重定向放到下一次GC的并发标记过程来做呢？</p>
+<p>重定向需要遍历所有存活对象，而下一次GC并发标记的时候也需要遍历所有存活，直接利用并发标记过程中遍历对象顺带做重定位减少一次扫描全部存活对象的开销，这样可以非常显著地提高垃圾收集性能。</p>
+<h3 id="4、ZGC的读屏障"><a href="#4、ZGC的读屏障" class="headerlink" title="4、ZGC的读屏障"></a>4、ZGC的读屏障</h3><p>上面介绍了并发标记阶段会进行对象的重定位以及删除对应的转发表，在ZGC中是通过读屏障来实现的。</p>
+<p>读屏障就是JVM向应用程序代码中插入一小段代码的技术，当应用程序线程需要从堆中读取对象引用时，就会执行这段代码。</p>
+<p><strong>注：仅从堆中读取对象引用时才会触发这段代码</strong></p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/17.png" alt="img"></p>
+<h3 id="五、ZGC的GC时机"><a href="#五、ZGC的GC时机" class="headerlink" title="五、ZGC的GC时机"></a>五、ZGC的GC时机</h3><h4 id="5-1-预热规则"><a href="#5-1-预热规则" class="headerlink" title="5.1 预热规则"></a>5.1 预热规则</h4><p>服务刚启动时出现，一般不需要关注。日志中关键字是“Warmup”。</p>
+<p>JVM启动预热，如果从来没有发生过GC，则在堆内存使用超过10%、20%、30%时，分别触发一次GC，以收集GC数据。</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/18.png" alt="img"></p>
+<h4 id="5-2-基于分配速率的自适应算法"><a href="#5-2-基于分配速率的自适应算法" class="headerlink" title="5.2 基于分配速率的自适应算法"></a>5.2 基于分配速率的自适应算法</h4><p>最主要的GC触发方式（默认方式），其算法原理可简单描述为<strong>ZGC根据近期的对象分配速率以及GC时间，计算出当内存占用达到什么阈值时触发下一次GC</strong>。通过<code>ZAllocationSpikeTolerance</code>参数控制阈值大小，该参数默认2，数值越大，越早的触发GC。日志中关键字是<strong>Allocation Rate</strong>。</p>
+<p><img src="/2023/02/24/ZGC%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF/19.png" alt="img"></p>
+<h4 id="5-3-基于固定时间间隔"><a href="#5-3-基于固定时间间隔" class="headerlink" title="5.3 基于固定时间间隔"></a>5.3 基于固定时间间隔</h4><p>通过<code>ZCollectionInterval</code>控制，适合应对突增流量场景。</p>
+<p>流量平稳变化时，自适应算法可能在堆使用率达到95%以上才触发GC。流量突增时，自适应算法触发的时机可能会过晚，导致部分线程阻塞。我们通过调整此参数解决流量突增场景的问题，比如定时活动、秒杀等场景。</p>
+<h4 id="5-4-主动触发"><a href="#5-4-主动触发" class="headerlink" title="5.4 主动触发"></a>5.4 主动触发</h4><p>类似于固定间隔规则，但时间间隔不固定，是ZGC自行算出来的时机，服务因为已经加了基于固定时间间隔的触发机制，所以通过<code>-ZProactive</code>参数将该功能关闭，以免GC频繁，影响服务可用性</p>
+<h4 id="5-5-阻塞内存分配请求触发"><a href="#5-5-阻塞内存分配请求触发" class="headerlink" title="5.5 阻塞内存分配请求触发"></a>5.5 阻塞内存分配请求触发</h4><p>当垃圾来不及回收，垃圾将堆占满时，会导致部分线程阻塞。我们应当避免出现这种触发方式。日志中关键字是<strong>Allocation Stall</strong></p>
+<h4 id="5-6-外部触发"><a href="#5-6-外部触发" class="headerlink" title="5.6 外部触发"></a>5.6 外部触发</h4><p>代码中显式调用<code>System.gc()</code>触发。 日志中关键字是System.gc()。</p>
+<h4 id="5-7-元数据分配触发"><a href="#5-7-元数据分配触发" class="headerlink" title="5.7 元数据分配触发"></a>5.7 元数据分配触发</h4><p>元数据区不足时导致，一般不需要关注。 日志中关键字是<code>Metadata GC Threshold</code>。</p>
+<h4 id="六、ZGC参数配置"><a href="#六、ZGC参数配置" class="headerlink" title="六、ZGC参数配置"></a>六、ZGC参数配置</h4><p>ZGC 优势不仅在于其超低的 STW 停顿，也在于其参数的简单，绝大部分生产场景都可以自适应。当然，极端情况下，还是有可能需要对 ZGC 个别参数做个调整，大致可以分为三类：</p>
+<ul>
+<li><h5 id="堆大小："><a href="#堆大小：" class="headerlink" title="堆大小："></a>堆大小：</h5><p>Xmx。当分配速率过高，超过回收速率，造成堆内存不够时，会触发 Allocation Stall，这类 Stall 会减缓当前的用户线程。因此，当我们在 GC 日志中看到 Allocation Stall，通常可以认为堆空间偏小或者 concurrent gc threads数偏小。</p>
+</li>
+<li><h5 id="GC-触发时机："><a href="#GC-触发时机：" class="headerlink" title="GC 触发时机："></a>GC 触发时机：</h5><p><code>ZAllocationSpikeTolerance,ZCollectionInterval</code>。</p>
+<p><code>ZAllocationSpikeTolerance</code> 用来估算当前的堆内存分配速率，在当前剩余的堆内存下，<code>ZAllocationSpikeTolerance </code>越大，估算的达到 OOM 的时间越快，ZGC 就会更早地进行触发 GC。<code>ZCollectionInterval </code>用来指定 GC 发生的间隔，以秒为单位触发 GC。</p>
+</li>
+<li><h5 id="GC-线程："><a href="#GC-线程：" class="headerlink" title="GC 线程："></a>GC 线程：</h5><p><code>ParallelGCThreads</code>， <code>ConcGCThreads</code>。<code>ParallelGCThreads</code> 是设置 STW 任务的 GC 线程数目，默认为 CPU 个数的 60%；</p>
+<p><code>ConcGCThreads</code> 是并发阶段 GC 线程的数目，默认为 CPU 个数的 12.5%。增加 GC 线程数目，可以加快 GC 完成任务，减少各个阶段的时间，但也会增加 CPU 的抢占开销，可根据生产情况调整。</p>
+</li>
+</ul>
+<p>由上可以看出 ZGC 需要调整的参数十分简单，通常设置 Xmx 即可满足业务的需求，大大减轻 Java 开发者的负担。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="reward-container">
+  <div>Buy me a coffee</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.png" alt="磐石 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/images/qrcode_for_gh_08ce048a33bc_258.jpg">
+          <span class="icon">
+            <i class="fab fa-weixin"></i>
+          </span>
+
+          <span class="label">微信公众号</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/JVM/" rel="tag"># JVM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/01/17/MySQL-MySQL%E4%B8%ADDDL%E6%93%8D%E4%BD%9C%E8%83%8C%E5%90%8E%E7%9A%84%E5%B9%B6%E5%8F%91%E5%8E%9F%E7%90%86/" rel="prev" title="MySQL-MySQL中DDL操作背后的并发原理">
+                  <i class="fa fa-chevron-left"></i> MySQL-MySQL中DDL操作背后的并发原理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="lv-container" data-id="city" data-uid="MTAyMC81NzQ3NS8zMzk0MA=="></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">磐石</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">17:14</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.0/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+  <script class="next-config" data-name="pdf" type="application/json">{"object_url":{"url":"https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.js","integrity":"sha256-tu9j5pBilBQrWSDePOOajCUdz6hWsid/lBNzK4KgEPM="},"url":"/lib/pdf/web/viewer.html"}</script>
+  <script src="/js/third-party/tags/pdf.js"></script>
+
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Wechat,QQZone,Weibo,Douban,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><script src="/js/third-party/comments/livere.js"></script>
+
+</body>
+</html>
